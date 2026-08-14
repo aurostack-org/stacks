@@ -150,5 +150,14 @@ than at the schema.
     └── files/          the runnable superset app
 ```
 
-`~/.claude` is not a git repository. `git init ~/.claude/stacks` if you want
-these versioned independently — nothing here depends on the path.
+This directory is its own git repository, pushed to
+[wesscoby/stacks](https://github.com/wesscoby/stacks) — `~/.claude` around it is
+not. Nothing here depends on the path, so it can be cloned anywhere; the CLI
+resolves the templates relative to its own location.
+
+Clone it onto a new machine with:
+
+```sh
+git clone git@github.com:wesscoby/stacks.git ~/.claude/stacks
+bash ~/.claude/stacks/install.sh
+```
