@@ -1,0 +1,18 @@
+{
+	"name": "stacks",
+	"description": "House project templates and the generator that stamps them out.",
+	"owner": {
+		"name": "wc"
+	},
+	"plugins": [
+		{
+			"name": "stacks",
+			"description": "Scaffold new projects from house templates: a NestJS API, a Turborepo React monorepo, a Node worker and a Python worker. Templates are subtractive — each one is a complete runnable app with every optional feature switched on, and generating a project deletes what you did not pick. Includes the `stack` CLI (plain Node, no dependencies, no build step).",
+			"version": "0.1.0",
+			"source": "./",
+			"author": {
+				"name": "wc"
+			}
+		}
+	]
+}

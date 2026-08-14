@@ -1,0 +1,114 @@
+import { AppFactory } from '@test/factory/app';
+
+// `GET /ping` on AppController carries @Throttle({ limit: 30, ttl: 60_000 }).
+const PING = '/ping';
+const PING_LIMIT = 30;
+
+describe('Rate limiting', () => {
+	let app: AppFactory;
+
+	beforeAll(async () => {
+		app = await AppFactory.init();
+		await app.refresh();
+	});
+
+	afterAll(async () => {
+		await app.close();
+	});
+
+	// Buckets live in Redis and outlive a single test.
+	beforeEach(async () => {
+		await app.cache.truncate();
+	});
+
+	describe(`GET ${PING}`, () => {
+		it('allows requests up to the route limit', async () => {
+			for (let i = 0; i < PING_LIMIT; i++) {
+				const response = await app.request.get(PING);
+				expect(response.status).toBe(200);
+			}
+		});
+
+		it('returns 429 once the limit is exceeded', async () => {
+			for (let i = 0; i < PING_LIMIT; i++) {
+				await app.request.get(PING);
+			}
+
+			const response = await app.request.get(PING);
+			expect(response.status).toBe(429);
+		});
+
+		it('sets Retry-After to the seconds remaining on the block', async () => {
+			for (let i = 0; i < PING_LIMIT; i++) {
+				await app.request.get(PING);
+			}
+
+			const response = await app.request.get(PING);
+			const retryAfter = Number(response.headers['retry-after']);
+			expect(retryAfter).toBeGreaterThan(0);
+			expect(retryAfter).toBeLessThanOrEqual(60);
+		});
+
+		it('exposes the remaining allowance while under the limit', async () => {
+			const response = await app.request.get(PING);
+			expect(response.status).toBe(200);
+			expect(Number(response.headers['x-ratelimit-limit'])).toBe(PING_LIMIT);
+			expect(Number(response.headers['x-ratelimit-remaining'])).toBe(
+				PING_LIMIT - 1
+			);
+		});
+
+		it('keeps counting per-route, so a different route is unaffected', async () => {
+			for (let i = 0; i < PING_LIMIT + 1; i++) {
+				await app.request.get(PING);
+			}
+			expect((await app.request.get(PING)).status).toBe(429);
+
+			// Anonymous, separate handler → separate bucket.
+			expect((await app.request.get('/')).status).not.toBe(429);
+		});
+	});
+
+	describe('storage', () => {
+		// Guards against silently falling back to throttler's in-memory storage,
+		// which would give each process its own buckets once we scale out.
+		it('keeps counters in Redis, not in process memory', async () => {
+			expect(await app.cache.db.keys('throttle:*')).toHaveLength(0);
+
+			await app.request.get(PING);
+
+			const keys = await app.cache.db.keys('throttle:default:*');
+			expect(keys).toHaveLength(1);
+			expect(await app.cache.db.get(keys[0])).toBe('1');
+		});
+
+		it('sets a TTL on the bucket so the window rolls over', async () => {
+			await app.request.get(PING);
+
+			const [key] = await app.cache.db.keys('throttle:default:*');
+			const ttl = await app.cache.db.pttl(key);
+			expect(ttl).toBeGreaterThan(0);
+			expect(ttl).toBeLessThanOrEqual(60_000);
+		});
+
+		it('writes a block key once the limit is exceeded', async () => {
+			for (let i = 0; i < PING_LIMIT + 1; i++) {
+				await app.request.get(PING);
+			}
+
+			expect(await app.cache.db.keys('throttle:default:*:block')).toHaveLength(
+				1
+			);
+		});
+	});
+
+	describe('exempt routes', () => {
+		it('does not throttle the index route', async () => {
+			// Well past any configured limit.
+			for (let i = 0; i < PING_LIMIT + 5; i++) {
+				const response = await app.request.get('/');
+				expect(response.status).not.toBe(429);
+			}
+		});
+	});
+});

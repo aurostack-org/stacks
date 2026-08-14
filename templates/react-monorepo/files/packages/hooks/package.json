@@ -1,0 +1,16 @@
+{
+	"name": "@inerds/hooks",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@inerds/config": "workspace:*"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"extends": "@inerds/config/tsconfig/react.json",
+	"compilerOptions": {
+		"types": ["vite/client"],
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": ["src"]
+}

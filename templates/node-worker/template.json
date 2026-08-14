@@ -1,0 +1,170 @@
+{
+	"name": "node-worker",
+	"version": "0.1.0",
+	"title": "Node background worker",
+	"description": "A standalone TypeScript worker: BullMQ consumers, Prisma against the same database as your API, pino logging, and PM2 + Docker for deployment. For jobs that should not share a process with the HTTP server — scrapers, schedulers, long-running imports.",
+	"aliasRoots": {
+		"#app/": "src/",
+		"#utils/": "src/utils/",
+		"#lib/": "src/lib/",
+		"#prisma/": null
+	},
+	"generatedPaths": [
+		"prisma/generated/**",
+		"prisma/generated"
+	],
+	"source": {
+		"path": "~/Projects/inerds/web/collector",
+		"skipDirs": [
+			"migrations",
+			"logs",
+			"tmp",
+			".yarn",
+			"prisma"
+		],
+		"include": [
+			"src/**",
+			".bin/**",
+			"package.json",
+			"tsconfig.json",
+			"prisma.config.ts",
+			"ecosystem.config.cjs",
+			"eslint.config.js",
+			".prettierrc",
+			".prettierignore",
+			".nvmrc",
+			".gitignore",
+			"Dockerfile",
+			"Dockerfile.dev",
+			".dockerignore",
+			".forgejo/**"
+		],
+		"exclude": [
+			"src/lib/**",
+			"src/workers/stock-price-bars/**",
+			"CLAUDE.md",
+			"**/.env",
+			"**/.env.*",
+			".yarnrc.yml"
+		]
+	},
+	"replacements": [
+		{
+			"from": "Investment Nerds",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "collector",
+			"to": "{{name}}"
+		},
+		{
+			"from": "inerds",
+			"to": "{{name}}"
+		}
+	],
+	"features": {
+		"prisma": {
+			"title": "Prisma database access",
+			"description": "Shares the schema with your API, so the worker reads and writes the same models rather than going through HTTP.",
+			"core": true
+		},
+		"logging": {
+			"title": "pino structured logging",
+			"core": true
+		},
+		"queue": {
+			"title": "BullMQ consumers",
+			"description": "Worker processes pulling from the same Redis queues your API produces to.",
+			"default": true,
+			"files": [
+				"src/utils/worker.ts",
+				"src/workers/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"bullmq"
+				]
+			}
+		},
+		"browser": {
+			"title": "Headless browser (Puppeteer)",
+			"description": "For scraping pages that need JavaScript executed. Heavy — the Docker image grows by roughly 300 MB.",
+			"files": [
+				"src/utils/browser.ts"
+			],
+			"packageJson": {
+				"dependencies": [
+					"puppeteer"
+				]
+			}
+		},
+		"pm2": {
+			"title": "PM2 process manager",
+			"description": "ecosystem.config.cjs for running the worker under PM2 outside Docker.",
+			"default": true,
+			"files": [
+				"ecosystem.config.cjs"
+			]
+		},
+		"docker": {
+			"title": "Docker image",
+			"default": true,
+			"files": [
+				"Dockerfile",
+				"Dockerfile.dev",
+				".dockerignore"
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		},
+		"secrets": {
+			"title": "Infisical secret sync",
+			"default": true,
+			"files": [
+				".bin/secrets.ts"
+			],
+			"packageJson": {
+				"scripts": [
+					"secrets"
+				]
+			}
+		}
+	},
+	"hooks": [
+		{
+			"title": "seed .env",
+			"run": "cp -n .env.example .env || true",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "prisma generate",
+			"run": "yarn db:generate",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the node-worker template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Bring in the API's Prisma models: copy its prisma/schema/*.prisma beside prisma/schema/base.prisma, or share one schema via a submodule.",
+		"Edit .env — DATABASE_URL and REDIS_* must match the API's.",
+		"yarn db:generate && yarn dev"
+	]
+}

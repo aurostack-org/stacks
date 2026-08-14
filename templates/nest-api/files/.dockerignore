@@ -1,0 +1,8 @@
+dist/
+node_modules/
+package-lock.json
+yarn.lock
+.npmrc.example
+.env
+.env.example
+.env.test

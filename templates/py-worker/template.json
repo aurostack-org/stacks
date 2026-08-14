@@ -1,0 +1,117 @@
+{
+	"name": "py-worker",
+	"version": "0.1.0",
+	"title": "Python background worker",
+	"description": "A Python BullMQ worker that consumes the same Redis queues your Node API produces to, with SQLAlchemy models over the same Postgres database, structured logging and graceful shutdown. For work that belongs in Python \u2014 data processing, ML, scientific libraries.",
+	"aliasRoots": {},
+	"generatedPaths": [
+		"**/__pycache__/**"
+	],
+	"source": {
+		"path": "~/Projects/inerds/web/py",
+		"skipDirs": [
+			"input",
+			"output",
+			"logs",
+			".vscode"
+		],
+		"include": [
+			"worker.py",
+			"config.py",
+			"utils/**",
+			"workers/**",
+			"requirements.txt",
+			".env.example",
+			".gitignore",
+			"Dockerfile",
+			".dockerignore",
+			".forgejo/**",
+			"README.md",
+			"models/decorators.py",
+			"models/mixins.py",
+			"models/enums.py"
+		],
+		"exclude": [
+			"test.py",
+			"**/.env",
+			"**/__pycache__/**"
+		]
+	},
+	"replacements": [
+		{
+			"from": "Investment Nerds",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "inerds",
+			"to": "{{name}}"
+		}
+	],
+	"features": {
+		"queue": {
+			"title": "BullMQ consumers",
+			"description": "Workers pulling from the same Redis queues your Node API produces to, with graceful SIGINT/SIGTERM shutdown.",
+			"core": true
+		},
+		"logging": {
+			"title": "Structured logging",
+			"core": true
+		},
+		"database": {
+			"title": "SQLAlchemy over Postgres",
+			"description": "Direct database access to the same schema your API owns. Models are hand-written here rather than generated, so they must be kept in step with the Prisma schema by hand.",
+			"default": true,
+			"files": [
+				"utils/db.py",
+				"models/**"
+			],
+			"requirements": [
+				"SQLAlchemy",
+				"psycopg2-binary",
+				"greenlet"
+			]
+		},
+		"docker": {
+			"title": "Docker image",
+			"default": true,
+			"files": [
+				"Dockerfile",
+				".dockerignore"
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		}
+	},
+	"hooks": [
+		{
+			"title": "seed .env",
+			"run": "cp -n .env.example .env || true",
+			"optional": true
+		},
+		{
+			"title": "create a virtualenv",
+			"run": "python3 -m venv .venv",
+			"optional": true
+		},
+		{
+			"title": "install requirements",
+			"run": ".venv/bin/pip install -q -r requirements.txt",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the py-worker template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Edit .env \u2014 DB_* and REDIS_* must match the API's.",
+		"source .venv/bin/activate",
+		"python worker.py"
+	]
+}

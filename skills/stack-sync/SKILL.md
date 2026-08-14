@@ -1,0 +1,158 @@
+---
+name: stack-sync
+description: Fold improvements from a live codebase back into the house templates, or add a new feature/template to them. USE THIS when someone says "update the template", "sync the boilerplate", "the starter is out of date", "add X to the template", "make this a feature", "pull my changes into the stack", or after a piece of generic infrastructure has been built in a real project and should be reusable. Also use when `stack doctor` fails. It is the maintenance side of the templates that `stack-new` generates from.
+---
+
+# Maintaining the house templates
+
+Templates live in `~/.claude/stacks/templates/<name>/` as a `template.json`
+manifest plus a `files/` tree. The CLI is `~/.claude/stacks/cli/stack.mjs`.
+
+`stack extract` is deliberately mechanical: it copies whatever the manifest's
+include/exclude globs say. Deciding what is generic infrastructure and what is
+domain code is judgement work, and that judgement lives in the manifest — **your
+job here, not the CLI's.**
+
+## Refreshing a template from its source repo
+
+```
+node ~/.claude/stacks/cli/stack.mjs extract <template> [--source <dir>] [--prune]
+```
+
+- **copied** — new or identical files, written.
+- **conflicts** — the template's copy differs from the source. These are *not*
+  automatically overwritten, because they are usually files you hand-edited to
+  add `@feature` markers or strip domain code. Review each one: take the
+  source's improvement, re-apply the annotations, write the merged result. Only
+  pass `--overwrite` when you genuinely want the source version verbatim, and
+  expect to re-annotate afterwards.
+- **template-only** — files the globs claim but the source no longer has.
+  `--prune` deletes these. Files *outside* the include globs (a hand-written
+  `.env.example`, a template-only seeder) can never be pruned, by construction.
+
+After any extract, run `stack doctor <template>` before considering it done.
+
+## Derived templates
+
+`react-app` has no `source` block. It is derived from `react-monorepo` — same
+stack, one deployment — by `templates/react-app/derive.sh`, which re-flattens
+`packages/*` into `src/shared/*`, rewrites `@scope/x` to `@/shared/x`, and then
+copies `overrides/` on top.
+
+So the direction of a change matters:
+
+- shared code (UI kit, data layer, auth, layouts) and the page components — edit
+  **`react-monorepo`**, then `bash templates/react-app/derive.sh`;
+- routing, config, build, Docker — edit whichever template it belongs to; the
+  script does not touch those;
+- a file that genuinely has to differ in a monolith — add it to
+  `templates/react-app/overrides/`, which is the complete list of intentional
+  divergences and should stay short.
+
+Run `stack doctor react-app` after every derive.
+
+## Adding a new optional feature
+
+1. **Put the working code in `files/`**, with every feature switched on. The
+   template must stay a runnable app.
+2. **Annotate the composition roots** it touches. Three marker forms, comment
+   syntax agnostic:
+
+   ```ts
+   import { Gateway } from 'realtime';        // @feature realtime
+
+   // @feature:start realtime, notifications  ← OR across the list
+   ...
+   // @feature:else                           ← kept only when none matched
+   ...
+   // @feature:end
+
+   // @feature:start !realtime                ← negation
+   ```
+
+   **The sharp edge:** an inline marker deletes exactly *one line*. Parking one
+   on the closing line of a multi-line import or object literal leaves the
+   construct half-open. The template still compiles (every feature is on), so
+   nothing catches it until someone generates without that feature. Wrap
+   multi-line constructs in `@feature:start`/`@feature:end` instead. `doctor`
+   checks for this, which is why you must run it.
+
+   **Avoid `@feature:else` in TypeScript.** Both branches are present in the
+   template at once, so at most one of them can compile. Prefer indirection
+   whose members are individually annotated — a type alias, a constant array —
+   over an either/or block. `@feature:else` is fine in `.env`, YAML and Markdown.
+
+   **Stripping leaves valid but unformatted code**, and the generated CI runs
+   `format:check`. An array that loses an element now fits on one line; a list
+   that empties reads `[\n]`; a trailing comma is left on what is now the last
+   entry. Do not hand-tune the template for how each combination happens to
+   strip — that is unwinnable. The post-generation `yarn format` hook fixes it
+   for real, so every template with a Prettier config has one. Only reach for
+   structure when a construct would otherwise *empty*: keep one permanent
+   element (`['', 'app']` — an absolute path's first segment is empty anyway),
+   which is both honest and stable in every combination.
+
+3. **Declare it in `template.json`**:
+
+   ```json
+   "realtime": {
+     "title": "Socket.IO realtime layer",
+     "description": "What it gives you, and what it costs.",
+     "default": false,
+     "requires": ["cache", "auth"],
+     "files": ["src/realtime/**"],
+     "packageJson": { "dependencies": ["socket.io"] },
+     "requirements": ["websockets"]
+   }
+   ```
+
+   - `files` — deleted wholesale when the feature is off. Include its tests.
+   - `packageJson` — JSON cannot carry comments, so dependency and script keys
+     are pruned by name instead. Takes a `file` for a monorepo package.
+   - `requirements` — the same, for `requirements.txt` (match the distribution
+     name only; pins and extras are handled).
+   - `core: true` — always on, cannot be removed.
+
+   Two manifest fields at the top level are easy to forget and silently weaken
+   `doctor`: **`aliasRoots`** (`{"@/": "src/"}`) is what lets the dangling-import
+   check follow path-aliased imports at all — without it every `@/...` import is
+   simply skipped, and doctor passes on a template it never examined — and
+   **`generatedPaths`**, which stops build output (a Prisma client, generated
+   OpenAPI types) being reported as missing.
+
+4. **Run `stack doctor <template>`** and fix what it reports.
+
+## What `doctor` actually checks
+
+Across the two extremes of the feature space *and* each optional feature
+flipped on its own (dropping a feature also drops everything that requires it):
+
+- every `@feature` name is declared in the manifest — a typo'd
+  `@feature realtimee` silently deletes code otherwise;
+- every feature's `files` globs match something;
+- TypeScript brackets stay balanced after stripping (the multi-line trap above);
+- JSON still parses (tsconfig-style comments and trailing commas are tolerated);
+- **nothing imports a file the selection deleted** — this is the one that
+  catches a barrel re-exporting a module that is no longer there.
+
+## Judging generic vs domain
+
+Before pulling something in, ask whether a project in an unrelated business
+would want it unchanged. Infrastructure (a Redis cache service, a throttler
+storage, an upload pipeline) travels. Anything naming a domain concept does not,
+even when the code is generic — a `CurrencyService` or a `forum:feed` room
+constant is a rename away from a template that reads like someone else's app.
+Rename such things to their generic shape (`channel:<id>`), or exclude them.
+
+Two things must never enter a template: **secrets** (extract excludes `.env*`
+for exactly this reason — write a `.env.example` by hand instead) and
+**migrations**, which belong to one database's history and would fight the first
+migration a generated project creates.
+
+## Adding a whole new template
+
+Create `templates/<name>/template.json` with `source` globs pointing at the real
+repo, run `extract`, then work through the composition roots as above. Copy the
+shape of an existing manifest — `nest-api` is the most complete. Register
+nothing else; `list`, `info`, `new` and `doctor` discover templates from the
+directory.

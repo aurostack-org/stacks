@@ -1,0 +1,98 @@
+# Builds and pushes all four frontend apps from one Dockerfile.
+#
+# Unlike web-backend / web-coming-soon this repo produces FOUR images, so the
+# tag is generated once in a separate job and shared by every matrix leg —
+# otherwise each app would get its own random tag and there would be no way to
+# deploy a matching set.
+#
+# Vite compiles the VITE_* URLs into each bundle at build time, so these images
+# are specific to one environment. See frontend/docker/README.md.
+
+name: Build and Push
+
+on:
+  push:
+    branches:
+      - main
+  # Day-to-day work happens on `development`; this lets a build be cut without
+  # merging to main first.
+  workflow_dispatch:
+
+jobs:
+  # One tag for the whole set, so `web-client:26_07_26_12345` and
+  # `web-auth:26_07_26_12345` are guaranteed to be from the same commit.
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.TAG }}
+      owner: ${{ steps.tag.outputs.OWNER }}
+    steps:
+      - name: Generate image tag
+        id: tag
+        run: |
+          DATE=$(date +'%y_%m_%d')
+          RAND=$(printf '%05d' "$((RANDOM % 100000))")
+          echo "TAG=${DATE}_${RAND}" >> "$GITHUB_OUTPUT"
+          # Derived from `github.repository` (which web-backend's workflow already
+          # relies on) rather than `github.repository_owner`, so this doesn't
+          # depend on a context variable Forgejo may not populate. This repo is
+          # `investment-nerds/web-frontend`, so OWNER=investment-nerds and the
+          # images land as <registry>/investment-nerds/web-<app>, matching
+          # stack/frontend.compose.yml.
+          echo "OWNER=$(echo '${{ github.repository }}' | cut -d/ -f1)" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: meta
+    strategy:
+      # Report every app's result rather than cancelling siblings on the first
+      # failure. Note this means a partial set can be pushed — re-run the job.
+      fail-fast: false
+      matrix:
+        app: [landing, auth, client, admin]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.DK_USER }}
+          password: ${{ secrets.DK_ACCESS_TOKEN }}
+
+      - name: Build and Push ${{ matrix.app }}
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          # Every value goes to every app; each app reads only what it needs.
+          # Passing an unused build arg is harmless and keeps this matrix from
+          # needing per-app argument lists. Note `landing` is NOT argument-free:
+          # it calls the API and renders the support address.
+          build-args: |
+            APP=${{ matrix.app }}
+            VITE_APP_API_URL=${{ secrets.VITE_APP_API_URL }}
+            VITE_APP_AUTH_HOST=${{ secrets.VITE_APP_AUTH_HOST }}
+            VITE_APP_CLIENT_HOST=${{ secrets.VITE_APP_CLIENT_HOST }}
+            VITE_APP_ADMIN_HOST=${{ secrets.VITE_APP_ADMIN_HOST }}
+            VITE_APP_LANDING=${{ secrets.VITE_APP_LANDING }}
+            VITE_APP_SUPPORT_EMAIL=${{ secrets.VITE_APP_SUPPORT_EMAIL }}
+            VITE_APP_SITE_URL=${{ secrets.VITE_APP_SITE_URL }}
+          tags: |
+            ${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:latest
+            ${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:${{ needs.meta.outputs.tag }}
+          # Optional speed-up: each matrix leg runs its own `yarn install`, so a
+          # registry layer cache cuts most of that. Enable only after confirming
+          # the registry accepts OCI cache manifests — some reject them and the
+          # push then fails.
+          # cache-from: type=registry,ref=${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:buildcache
+          # cache-to: type=registry,ref=${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:buildcache,mode=max
+
+      - name: Summary
+        run: |
+          echo "Pushed web-${{ matrix.app }}:${{ needs.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"

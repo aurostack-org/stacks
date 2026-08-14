@@ -1,0 +1,17 @@
+{
+	"name": "stacks",
+	"description": "Scaffold new projects from battle-tested house templates. Subtractive templates (a runnable superset app minus the features you didn't pick) plus a zero-dependency generator CLI. Ships four stacks: a NestJS API (Prisma + Redis + BullMQ + better-auth + Vitest), a Turborepo React monorepo, a standalone Node worker, and a Python worker. Two skills: /stack-new to scaffold, /stack-sync to fold improvements from a live codebase back into the template.",
+	"version": "0.1.0",
+	"author": {
+		"name": "wc"
+	},
+	"keywords": [
+		"scaffold",
+		"boilerplate",
+		"template",
+		"generator",
+		"nestjs",
+		"turborepo",
+		"starter"
+	]
+}

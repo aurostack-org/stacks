@@ -1,0 +1,19 @@
+# The CLI has no dependencies and no build step, and the templates are source
+# only — nothing in this repo is generated. These rules exist to keep an
+# accidental local install or build inside a template's files/ tree from being
+# committed as if it were part of the template.
+node_modules/
+.yarn/
+dev-dist/
+*.tsbuildinfo
+
+# Belt and braces. Templates ship `.env.example` files and never a real `.env`;
+# `stack extract` excludes `.env*` from every source repo for that reason, and
+# this is the second line of defence if one is ever created in place.
+.env
+.env.*
+!*.example
+
+# OS / editor
+.DS_Store
+*.log

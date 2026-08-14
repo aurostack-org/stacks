@@ -1,0 +1,285 @@
+{
+	"name": "react-monorepo",
+	"version": "0.1.0",
+	"title": "React monorepo (Turborepo)",
+	"description": "Yarn workspaces + Turborepo: one or more Vite/React 19 apps over shared packages — an RTK Query data layer with a single baseApi, better-auth session handling, a shadcn-style UI kit with light/dark theming, layouts and state screens, and generated OpenAPI types.",
+	"defaults": {
+		"port": 3000
+	},
+	"aliasRoots": {},
+	"generatedPaths": [
+		"**/node_modules/**"
+	],
+	"source": {
+		"path": "~/Projects/inerds/web/frontend",
+		"skipDirs": [
+			"public",
+			"og",
+			"docker",
+			"logs"
+		],
+		"include": [
+			"package.json",
+			"turbo.json",
+			".gitignore",
+			".editorconfig",
+			".prettierrc",
+			".prettierignore",
+			".nvmrc",
+			".yarnrc.yml",
+			".husky/**",
+			".forgejo/**",
+			"Dockerfile",
+			".dockerignore",
+			"build.sh",
+			"packages/**",
+			"apps/*/package.json",
+			"apps/*/tsconfig.json",
+			"apps/*/vite.config.ts",
+			"apps/*/eslint.config.mjs",
+			"apps/*/.bin/**",
+			"apps/*/src/main.tsx",
+			"apps/*/src/App.tsx",
+			"apps/*/src/vite-env.d.ts",
+			"apps/*/src/app/store.ts",
+			"apps/*/src/lib/env.ts",
+			"apps/auth/src/**",
+			"apps/auth/index.html",
+			"apps/auth/src/app/**"
+		],
+		"exclude": [
+			".husky/_/**",
+			"packages/types/openapi.json",
+			"packages/types/src/types/api/**",
+			"**/.env",
+			"**/.env.*",
+			"**/*.tsbuildinfo",
+			"**/.turbo/**",
+			"apps/*/index.html",
+			"apps/admin/src/app/**",
+			"apps/client/src/app/**",
+			"apps/landing/src/app/**",
+			"apps/admin/src/routes/**",
+			"apps/client/src/routes/**",
+			"apps/landing/src/routes/**",
+			"apps/landing/src/main.tsx",
+			"apps/landing/src/App.tsx",
+			"apps/landing/src/features/**",
+			"packages/types/README.md",
+			"apps/landing/package.json"
+		]
+	},
+	"replacements": [
+		{
+			"from": "@inerds/",
+			"to": "@{{scope}}/"
+		},
+		{
+			"from": "inerds-frontend",
+			"to": "{{name}}"
+		},
+		{
+			"from": "Investment Nerds",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "InvestmentNerds",
+			"to": "{{pascal}}"
+		},
+		{
+			"from": "investment-nerds",
+			"to": "{{name}}"
+		},
+		{
+			"from": "inerds",
+			"to": "{{name}}"
+		}
+	],
+	"features": {
+		"ui": {
+			"title": "UI kit (@scope/ui)",
+			"description": "shadcn-style Radix components, a Formik+Zod form helper, light/dark theming with a no-flash init script, and page-meta helpers.",
+			"core": true
+		},
+		"api": {
+			"title": "Data layer (@scope/api)",
+			"description": "One shared RTK Query baseApi that every feature extends via injectEndpoints, a configured store, and an upload-aware base query. Endpoint names and tagTypes live in one global namespace — collisions are silent, so keep them unique.",
+			"core": true
+		},
+		"auth": {
+			"title": "Auth client (@scope/auth)",
+			"description": "better-auth browser client, session slice, route guards and login redirects, shared across every app via a cross-subdomain cookie.",
+			"core": true
+		},
+		"layouts": {
+			"title": "Layouts (@scope/layouts)",
+			"description": "App shell, auth layout, marketing layout, error boundary and the loading/empty/forbidden/not-found state screens.",
+			"core": true
+		},
+		"config": {
+			"title": "Shared config (@scope/config)",
+			"description": "Base tsconfigs, the shared Vite config factory, the ESLint base and the Tailwind theme.",
+			"core": true
+		},
+		"hooks": {
+			"title": "Shared hooks (@scope/hooks)",
+			"default": true,
+			"files": [
+				"packages/hooks/**"
+			]
+		},
+		"types": {
+			"title": "Generated API types (@scope/types)",
+			"description": "OpenAPI-generated request/response types and Zod schemas, regenerated from the backend's /openapi-json.",
+			"default": true,
+			"files": [
+				"packages/types/**"
+			]
+		},
+		"app-auth": {
+			"title": "Auth app",
+			"description": "Login, signup, forgot/reset password, email verification. The one app that owns the session; the others redirect here.",
+			"default": true,
+			"files": [
+				"apps/auth/**"
+			]
+		},
+		"app-client": {
+			"title": "Client app",
+			"description": "The authenticated product surface — app shell, protected routing, feature directories.",
+			"default": true,
+			"files": [
+				"apps/client/**"
+			]
+		},
+		"app-admin": {
+			"title": "Admin console",
+			"description": "Role-gated internal console over the same data layer.",
+			"files": [
+				"apps/admin/**"
+			]
+		},
+		"app-landing": {
+			"title": "Marketing site",
+			"description": "Public landing site with a prerender step for static routes.",
+			"files": [
+				"apps/landing/**"
+			]
+		},
+		"realtime": {
+			"title": "Socket.IO client",
+			"description": "socket.io-client wired to the backend's /realtime path, with room helpers and shared event-name constants. Pairs with the nest-api realtime feature.",
+			"files": [
+				"packages/api/src/socket.ts",
+				"packages/api/src/realtime-events.ts"
+			],
+			"packageJson": {
+				"file": "packages/api/package.json",
+				"dependencies": [
+					"socket.io-client"
+				]
+			}
+		},
+		"pwa": {
+			"title": "Installable PWA (client app)",
+			"description": "vite-plugin-pwa: app-shell offline caching, auto-update with an update prompt, and a custom install button.",
+			"requires": [
+				"app-client"
+			],
+			"packageJson": {
+				"file": "apps/client/package.json",
+				"devDependencies": [
+					"vite-plugin-pwa"
+				]
+			}
+		},
+		"charts": {
+			"title": "Charts (client app)",
+			"description": "ApexCharts via react-apexcharts, theme-aware through the shared chart palette.",
+			"requires": [
+				"app-client"
+			],
+			"packageJson": {
+				"file": "apps/client/package.json",
+				"dependencies": [
+					"apexcharts",
+					"react-apexcharts"
+				]
+			}
+		},
+		"husky": {
+			"title": "Git hooks + lint-staged",
+			"default": true,
+			"files": [
+				".husky/**"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"husky",
+					"lint-staged"
+				],
+				"scripts": [
+					"prepare"
+				]
+			}
+		},
+		"docker": {
+			"title": "Docker image",
+			"description": "Multi-stage build producing a static bundle per app, served by the nginx config in docker/ (cache rules, SPA fallback, security headers).",
+			"default": true,
+			"files": [
+				"docker/nginx.conf",
+				"Dockerfile",
+				".dockerignore",
+				"build.sh"
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		},
+		"secrets": {
+			"title": "Infisical secret sync",
+			"default": true,
+			"files": [
+				"apps/*/.bin/**",
+				"packages/types/.bin/**"
+			],
+			"packageJson": {
+				"scripts": [
+					"secrets"
+				]
+			}
+		}
+	},
+	"hooks": [
+		{
+			"title": "seed each app's .env from .env.example",
+			"run": "for d in apps/*/; do [ -f \"$d.env.example\" ] && cp -n \"$d.env.example\" \"$d.env\"; done; true",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the react-monorepo template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Edit apps/*/.env — each app needs VITE_APP_API_URL and the sibling app origins.",
+		"yarn dev            # turbo runs every app's Vite server",
+		"yarn typecheck      # turbo, across apps and packages"
+	]
+}

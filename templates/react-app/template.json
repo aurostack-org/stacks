@@ -1,0 +1,222 @@
+{
+	"name": "react-app",
+	"version": "0.1.0",
+	"title": "React app (single Vite app)",
+	"description": "One Vite/React 19 app carrying the whole frontend: an RTK Query data layer with a single baseApi, better-auth session handling and route guards, the login/signup/reset screens as routes, a shadcn-style UI kit with light/dark theming, layouts and state screens, and generated OpenAPI types. Same stack as react-monorepo, one deployment.",
+	"derivedFrom": "react-monorepo",
+	"defaults": {
+		"port": 3000
+	},
+	"aliasRoots": {
+		"@/": "src/"
+	},
+	"generatedPaths": [
+		"**/node_modules/**",
+		"src/shared/types/api/**"
+	],
+	"replacements": [
+		{
+			"from": "inerds-app",
+			"to": "{{name}}"
+		},
+		{
+			"from": "Investment Nerds",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "InvestmentNerds",
+			"to": "{{pascal}}"
+		},
+		{
+			"from": "investment-nerds",
+			"to": "{{name}}"
+		},
+		{
+			"from": "inerds",
+			"to": "{{name}}"
+		}
+	],
+	"features": {
+		"ui": {
+			"title": "UI kit (src/shared/ui)",
+			"description": "shadcn-style Radix components, a Formik+Zod form helper, light/dark theming with a no-flash init script, and page-meta helpers.",
+			"core": true
+		},
+		"api": {
+			"title": "Data layer (src/shared/api)",
+			"description": "One RTK Query baseApi that every feature extends via injectEndpoints, a configured store, and an upload-aware base query. Endpoint names and tagTypes live in one global namespace — collisions are silent, so keep them unique.",
+			"core": true
+		},
+		"auth": {
+			"title": "Auth (src/shared/auth)",
+			"description": "better-auth browser client, session slice, and route guards. Single origin, so the guard navigates to /login rather than redirecting to another host.",
+			"core": true
+		},
+		"layouts": {
+			"title": "Layouts (src/shared/layouts)",
+			"description": "App shell, auth layout, marketing layout, error boundary and the loading/empty/forbidden/not-found state screens.",
+			"core": true
+		},
+		"auth-screens": {
+			"title": "Auth screens",
+			"description": "Login, signup, forgot/reset password, email verification as routes. Drop this only if you are bringing your own /login — the guards and the 401 handler both send unauthenticated users there.",
+			"default": true,
+			"files": [
+				"src/routes/auth/**",
+				"src/features/auth/**"
+			]
+		},
+		"hooks": {
+			"title": "Shared hooks (src/shared/hooks)",
+			"default": true,
+			"files": [
+				"src/shared/hooks/**"
+			]
+		},
+		"types": {
+			"title": "Generated API types (src/shared/types)",
+			"description": "OpenAPI-generated request/response types and Zod schemas, regenerated from the backend's /openapi-json by `yarn gen`.",
+			"default": true,
+			"files": [
+				"src/shared/types/**",
+				"openapi-ts.config.ts",
+				".bin/openapi.js"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"@hey-api/client-fetch",
+					"@hey-api/openapi-ts",
+					"axios",
+					"dotenv",
+					"tiny-invariant"
+				],
+				"scripts": [
+					"gen",
+					"gen:schema",
+					"gen:types"
+				]
+			}
+		},
+		"marketing": {
+			"title": "Marketing site",
+			"description": "A public landing page at `/`, an SEO route table, and build-time robots.txt / sitemap.xml / security.txt. Including it moves the authenticated app to /app so the landing page can own the root — see src/lib/paths.ts.",
+			"files": [
+				"src/routes/marketing/**",
+				"src/features/seo/**"
+			]
+		},
+		"admin": {
+			"title": "Admin console",
+			"description": "A role-gated /admin branch with its own nav, over the same data layer. The guard decides what renders; the API still has to enforce the role.",
+			"files": [
+				"src/routes/admin/**"
+			]
+		},
+		"realtime": {
+			"title": "Socket.IO client",
+			"description": "socket.io-client wired to the backend's /realtime path, with room helpers and shared event-name constants. Pairs with the nest-api realtime feature.",
+			"files": [
+				"src/shared/api/socket.ts",
+				"src/shared/api/realtime-events.ts"
+			],
+			"packageJson": {
+				"dependencies": [
+					"socket.io-client"
+				]
+			}
+		},
+		"pwa": {
+			"title": "Installable PWA",
+			"description": "vite-plugin-pwa: app-shell offline caching and an update prompt rather than a silent takeover.",
+			"packageJson": {
+				"devDependencies": [
+					"vite-plugin-pwa"
+				]
+			}
+		},
+		"charts": {
+			"title": "Charts",
+			"description": "ApexCharts via react-apexcharts, theme-aware through the shared chart palette.",
+			"packageJson": {
+				"dependencies": [
+					"apexcharts",
+					"react-apexcharts"
+				]
+			}
+		},
+		"husky": {
+			"title": "Git hooks + lint-staged",
+			"default": true,
+			"files": [
+				".husky/**"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"husky",
+					"lint-staged"
+				],
+				"scripts": [
+					"prepare"
+				]
+			}
+		},
+		"docker": {
+			"title": "Docker image",
+			"description": "Multi-stage build producing a static bundle, served by the nginx config in docker/ (cache rules, SPA fallback, security headers).",
+			"default": true,
+			"files": [
+				"Dockerfile",
+				".dockerignore",
+				"build.sh",
+				"docker/**"
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		},
+		"secrets": {
+			"title": "Infisical secret sync",
+			"default": true,
+			"files": [
+				".bin/secrets.js"
+			],
+			"packageJson": {
+				"scripts": [
+					"secrets"
+				]
+			}
+		}
+	},
+	"hooks": [
+		{
+			"title": "seed .env from .env.example",
+			"run": "cp -n .env.example .env; true",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the react-app template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Edit .env — VITE_APP_API_URL must point at your backend.",
+		"yarn dev            # http://localhost:{{port}}",
+		"yarn typecheck      # app + build config",
+		"Routes live in src/routes; shared code in src/shared; see src/lib/paths.ts for where the app is mounted."
+	]
+}

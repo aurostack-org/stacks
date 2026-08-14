@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# yarn (berry, node-modules linker)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+yarn-error.log
+
+# build output
+dist/
+.turbo/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+.env.test
+.env.production
+
+# editor / os
+.DS_Store
+*.log
+
+# generated OpenAPI schema dump
+openapi.json
+
+dev-dist/
+# Intermediate SSR bundle for the landing prerender pass (MAI-88).
+.prerender/

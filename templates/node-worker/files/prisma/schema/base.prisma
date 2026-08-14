@@ -1,0 +1,36 @@
+// Datasource + generators only.
+//
+// This worker ships a single placeholder model (below). It reads and writes the same
+// database your API owns, so the schema belongs there — copy the API's
+// `prisma/schema/*.prisma` in beside this file, or (better) point both repos at
+// one shared schema via a git submodule, so a migration on one side cannot
+// leave the other compiling against columns that no longer exist.
+//
+// `yarn db:generate` writes the client to `prisma/generated`, which the
+// `#prisma/*` subpath import in package.json resolves to.
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated"
+  moduleFormat = "esm"
+}
+
+/// Placeholder so `prisma generate` emits a usable client on a fresh scaffold —
+/// a model-less schema generates nothing, and every `#prisma/client.js` import
+/// then fails to resolve.
+///
+/// It is `User` with an `email` specifically because `src/db.ts` ships
+/// `findById` / `findByEmail` client extensions typed against this model.
+/// Replace it with the API's real `User` (and the rest of its schema) rather
+/// than deleting it outright, or those extensions stop compiling.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("user")
+}

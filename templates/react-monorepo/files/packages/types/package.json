@@ -1,0 +1,29 @@
+{
+	"name": "@inerds/types",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./zod": "./src/types/api/zod.gen.ts"
+	},
+	"scripts": {
+		"gen:schema": "node .bin/openapi.js",
+		"gen:types": "openapi-ts",
+		"gen": "node .bin/openapi.js && openapi-ts",
+		"secrets": "node .bin/secrets.js",
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@hey-api/client-fetch": "^0.5.2",
+		"@hey-api/openapi-ts": "^0.59.1",
+		"@inerds/config": "workspace:*",
+		"axios": "^1.7.9",
+		"dotenv": "^16.4.7",
+		"tiny-invariant": "^1.3.3"
+	}
+}

@@ -1,0 +1,17 @@
+enum Gender {
+  male
+  female
+}
+
+// @feature:start notifications
+/// Every kind of notification the app can raise. Extend this enum and the
+/// producer's `NotificationsService.dispatch` call together — a value here with
+/// no producer is dead, and a producer with no value will not compile.
+enum NotificationType {
+  system
+  mention
+  comment
+  reply
+}
+
+// @feature:end
