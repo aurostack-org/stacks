@@ -18,7 +18,7 @@ alias stack='node ~/.claude/stacks/cli/stack.mjs'
 
 | Template | What you get |
 |---|---|
-| `nest-api` | NestJS 10 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, Docker Compose for local Postgres/Redis, Scalar API reference at `/docs` |
+| `nest-api` | NestJS 12 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, Docker Compose for local Postgres/Redis, Scalar API reference at `/docs` |
 | `react-monorepo` | Yarn workspaces + Turborepo; Vite/React 19 apps over shared packages — one RTK Query `baseApi`, better-auth session handling, a shadcn-style UI kit with light/dark theming, layouts, generated OpenAPI types |
 | `react-app` | The same stack as one Vite app: shared code under `src/shared`, auth screens as routes, optional marketing site and admin console. One deployment instead of four |
 | `node-worker` | Standalone TypeScript worker — BullMQ consumers, Prisma against the API's database, pino, PM2 + Docker |

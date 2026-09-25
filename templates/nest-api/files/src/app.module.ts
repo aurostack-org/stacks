@@ -29,6 +29,7 @@ import { MediaModule } from 'media/media.module'; // @feature media
 import { RealtimeModule } from 'realtime/realtime.module'; // @feature realtime
 import { NotificationsModule } from 'notifications/notifications.module'; // @feature notifications
 import { AppController } from 'app.controller';
+import { AppResolver } from 'app.resolver'; // @feature graphql
 import { ac, roles } from 'lib/access';
 import { AUTH_RATE_LIMIT_RULES } from 'lib/rate-limit'; // @feature rate-limit
 import { OriginBuilder } from 'common/misc';
@@ -237,7 +238,7 @@ import { OriginBuilder } from 'common/misc';
 		GraphQLModule.forRoot<ApolloDriverConfig>({
 			driver: ApolloDriver,
 			autoSchemaFile: true,
-			playground: false
+			graphiql: false
 		}),
 		// @feature:end
 		ScheduleModule.forRoot(), // @feature scheduler
@@ -248,6 +249,7 @@ import { OriginBuilder } from 'common/misc';
 	],
 	controllers: [AppController],
 	providers: [
+		AppResolver, // @feature graphql
 		// Order matters: Nest runs global guards in registration order, so floods
 		// are rejected before AuthGuard does a session lookup and hits the DB.
 		// @feature:start rate-limit

@@ -1,5 +1,5 @@
 import { TestBed, type Mocked } from '@suites/unit';
-import { HealthCheckError } from '@nestjs/terminus';
+import { HealthIndicatorService } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from 'common/misc/prisma.indicator';
 import { PrismaService } from 'common/services';
 
@@ -8,9 +8,9 @@ describe('PrismaHealthIndicator', () => {
 	let db: Mocked<PrismaService>;
 
 	beforeAll(async () => {
-		const { unit, unitRef } = await TestBed.solitary(
-			PrismaHealthIndicator
-		).compile();
+		const { unit, unitRef } = await TestBed.sociable(PrismaHealthIndicator)
+			.expose(HealthIndicatorService)
+			.compile();
 		indicator = unit;
 		db = unitRef.get(PrismaService);
 	});
@@ -28,11 +28,12 @@ describe('PrismaHealthIndicator', () => {
 		expect(result).toEqual({ database: { status: 'up' } });
 	});
 
-	it('should throw HealthCheckError when query fails', async () => {
+	it('should return down status when query fails', async () => {
 		db.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
 
-		await expect(indicator.isHealthy('database')).rejects.toBeInstanceOf(
-			HealthCheckError
-		);
+		const result = await indicator.isHealthy('database');
+		expect(result).toEqual({
+			database: { status: 'down', message: 'Database check failed' }
+		});
 	});
 });

@@ -35,6 +35,7 @@ export class RedisIoAdapter extends IoAdapter {
 	}
 
 	createIOServer(port: number, options?: ServerOptions) {
+		// IoAdapter types this as the full ServerOptions; socket.io fills the rest.
 		const server = super.createIOServer(port, {
 			...options,
 			path: SOCKET_PATH,
@@ -43,7 +44,7 @@ export class RedisIoAdapter extends IoAdapter {
 				origin: CORS_OPTIONS.origin,
 				credentials: true
 			}
-		});
+		} as ServerOptions);
 
 		// `connectToRedis` may not have run in envs where scaling is unnecessary
 		// (e.g. tests); fall back to the default in-memory adapter in that case.

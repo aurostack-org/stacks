@@ -16,9 +16,18 @@ import { ToCase, ToNumber } from './transforms.decorator';
 
 type Optional = { optional?: boolean };
 
-type PropertyOptions = Omit<ApiPropertyOptions, 'example'> & Optional;
+// ApiPropertyOptions is a union; a plain Omit would merge its members.
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+	? Omit<T, K>
+	: never;
 
-type BinaryPropertyOptions = Omit<ApiPropertyOptions, 'type' | 'format'> &
+type PropertyOptions = DistributiveOmit<ApiPropertyOptions, 'example'> &
+	Optional;
+
+type BinaryPropertyOptions = DistributiveOmit<
+	Exclude<ApiPropertyOptions, { type: 'object' }>,
+	'type' | 'format'
+> &
 	Optional;
 
 export function Hidden() {

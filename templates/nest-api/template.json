@@ -2,7 +2,7 @@
 	"name": "nest-api",
 	"version": "0.1.0",
 	"title": "NestJS API",
-	"description": "NestJS 10 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, with Docker Compose for local Postgres/Redis and a Scalar API reference.",
+	"description": "NestJS 12 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, with Docker Compose for local Postgres/Redis and a Scalar API reference.",
 	"defaults": {
 		"port": 5000
 	},
@@ -384,11 +384,15 @@
 		"graphql": {
 			"title": "GraphQL endpoint",
 			"description": "Code-first GraphQL via Apollo, registered alongside the REST controllers. Resolvers in any feature module are picked up automatically.",
+			"files": [
+				"src/app.resolver.ts"
+			],
 			"packageJson": {
 				"dependencies": [
 					"@nestjs/graphql",
 					"@nestjs/apollo",
 					"@apollo/server",
+					"@as-integrations/express5",
 					"graphql"
 				]
 			}
