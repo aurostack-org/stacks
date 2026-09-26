@@ -30,6 +30,15 @@ namespace Config {
 	export interface Logger {
 		level: string;
 	}
+
+	/** Limits past which /health reports the process as down. */
+	export interface Health {
+		heapMaxMb: number;
+		rssMaxMb: number;
+		/** Fraction of `diskPath`'s volume that may be used, 0–1. */
+		diskThreshold: number;
+		diskPath: string;
+	}
 	// @feature:end
 
 	export interface Database {
@@ -117,6 +126,7 @@ namespace Config {
 	export interface Env {
 		app: App;
 		logger: Logger; // @feature observability
+		health: Health; // @feature observability
 		database: Database;
 		redis: Redis; // @feature cache
 		basicAuth: BasicAuth; // @feature openapi, queue, observability
@@ -153,6 +163,10 @@ namespace Config {
 		OAUTH_GOOGLE_CLIENT_SECRET: Joi.string().optional().allow(''),
 		// @feature:start observability
 		LOG_LEVEL: Joi.string().default('info'),
+		HEALTH_HEAP_MAX_MB: Joi.number().positive().default(300),
+		HEALTH_RSS_MAX_MB: Joi.number().positive().default(300),
+		HEALTH_DISK_THRESHOLD: Joi.number().min(0).max(1).default(0.8),
+		HEALTH_DISK_PATH: Joi.string().default('/'),
 		// @feature:end
 		// @feature:start openapi, queue, observability
 		BASIC_AUTH_USER: Joi.string().required(),
@@ -209,6 +223,14 @@ namespace Config {
 		// @feature:start observability
 		logger: {
 			level: env.LOG_LEVEL || 'info'
+		},
+		health: {
+			heapMaxMb: Number(env.HEALTH_HEAP_MAX_MB) || 300,
+			rssMaxMb: Number(env.HEALTH_RSS_MAX_MB) || 300,
+			diskThreshold: env.HEALTH_DISK_THRESHOLD
+				? Number(env.HEALTH_DISK_THRESHOLD)
+				: 0.8,
+			diskPath: env.HEALTH_DISK_PATH || '/'
 		},
 		// @feature:end
 		database: {
@@ -298,6 +320,10 @@ export class CustomConfigService {
 	// @feature:start observability
 	get logger() {
 		return this.config.get('logger', { infer: true });
+	}
+
+	get health() {
+		return this.config.get('health', { infer: true });
 	}
 	// @feature:end
 

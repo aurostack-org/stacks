@@ -37,6 +37,13 @@ describe('HealthController', () => {
 
 	it('should delegate to HealthCheckService.check with proper indicators', async () => {
 		config.app = { host: 'http://localhost:5000' } as any;
+		// Non-default values, so the assertions prove config reaches the checks.
+		config.health = {
+			heapMaxMb: 512,
+			rssMaxMb: 768,
+			diskThreshold: 0.9,
+			diskPath: '/data'
+		};
 		health.check.mockImplementation(async (fns) => {
 			for (const fn of fns) {
 				if (typeof fn === 'function') await fn();
@@ -54,9 +61,13 @@ describe('HealthController', () => {
 		expect(health.check).toHaveBeenCalled();
 		expect(http.pingCheck).toHaveBeenCalledWith('http', config.app.host);
 		expect(prisma.isHealthy).toHaveBeenCalledWith('database');
-		expect(memory.checkHeap).toHaveBeenCalled();
-		expect(memory.checkRSS).toHaveBeenCalled();
-		expect(disk.checkStorage).toHaveBeenCalled();
+		const MB = 1024 * 1024;
+		expect(memory.checkHeap).toHaveBeenCalledWith('memory_heap', 512 * MB);
+		expect(memory.checkRSS).toHaveBeenCalledWith('memory_rss', 768 * MB);
+		expect(disk.checkStorage).toHaveBeenCalledWith('disk_storage', {
+			thresholdPercent: 0.9,
+			path: '/data'
+		});
 		expect(result).toEqual({ status: 'ok' });
 	});
 });
