@@ -136,6 +136,12 @@
 			"to": "PORT='{{port}}'",
 			"regex": true,
 			"flags": "gm"
+		},
+		{
+			"from": "^EXPOSE 5000$",
+			"to": "EXPOSE {{port}}",
+			"regex": true,
+			"flags": "gm"
 		}
 	],
 	"features": {
@@ -425,8 +431,7 @@
 					"@types/supertest",
 					"fishery",
 					"unplugin-swc",
-					"dotenv-cli",
-					"@faker-js/faker"
+					"dotenv-cli"
 				],
 				"scripts": [
 					"test",

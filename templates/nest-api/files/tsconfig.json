@@ -28,6 +28,6 @@
 			"@test/*": ["../test/*"],
 			"@db/*": ["../prisma/generated/*"],
 		},
-		"types": ["vitest/globals", "node"]
+		"types": ["node"]
   },
 }
