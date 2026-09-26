@@ -62,9 +62,9 @@ import { OriginBuilder } from 'common/misc';
 					// better-auth's limiter only guards `/auth/*` — every other route
 					// is covered by ThrottlerGuard below.
 					rateLimit: {
-						// Defaults to production-only; we want it in dev too. Tests opt
-						// out so a shared window cannot leak between specs.
-						enabled: config.app.env !== 'test',
+						// better-auth defaults to production-only; follow RATE_LIMIT_ENABLED
+						// instead, so dev is limited too and tests can opt out (and back in).
+						enabled: config.rateLimit.enabled,
 						window: config.rateLimit.authWindow,
 						max: config.rateLimit.authMax,
 						customRules: AUTH_RATE_LIMIT_RULES,

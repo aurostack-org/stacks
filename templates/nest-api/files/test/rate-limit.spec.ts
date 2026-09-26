@@ -1,4 +1,7 @@
 import { AppFactory } from '@test/factory/app';
+import { TEST_USER } from '@test/factory/constants';
+import { createAuthRateLimitStorage } from 'common/services';
+import { AUTH_RATE_LIMIT_RULES } from 'lib/rate-limit';
 
 // `GET /ping` on AppController carries @Throttle({ limit: 30, ttl: 60_000 }).
 const PING = '/ping';
@@ -106,6 +109,62 @@ describe('Rate limiting', () => {
 			expect(await app.cache.db.keys('throttle:default:*:block')).toHaveLength(
 				1
 			);
+		});
+	});
+
+	// better-auth's own limiter on /auth/*, backed by createAuthRateLimitStorage.
+	describe('auth endpoints', () => {
+		const SIGN_IN = '/auth/sign-in/email';
+		const SIGN_IN_LIMIT = AUTH_RATE_LIMIT_RULES['/sign-in/email'].max;
+
+		// better-auth keys buckets on the client IP and skips limiting entirely
+		// when it cannot resolve one, so every request names its client.
+		const signIn = (ip = '203.0.113.7') =>
+			app.request
+				.post(SIGN_IN)
+				.set('x-forwarded-for', ip)
+				.send({ email: TEST_USER.email, password: 'wrong-password' });
+
+		it('returns 429 once the sign-in limit is exceeded', async () => {
+			for (let i = 0; i < SIGN_IN_LIMIT; i++) {
+				expect((await signIn()).status).not.toBe(429);
+			}
+
+			const response = await signIn();
+			expect(response.status).toBe(429);
+			const retryAfter = Number(response.headers['x-retry-after']);
+			expect(retryAfter).toBeGreaterThan(0);
+			expect(retryAfter).toBeLessThanOrEqual(60);
+		});
+
+		it('keeps separate buckets per client IP', async () => {
+			for (let i = 0; i < SIGN_IN_LIMIT + 1; i++) await signIn();
+
+			expect((await signIn('198.51.100.9')).status).not.toBe(429);
+		});
+
+		it('keeps its counters in Redis with the rule window as TTL', async () => {
+			await signIn();
+
+			const keys = await app.cache.db.keys('auth:rl:*');
+			expect(keys).toHaveLength(1);
+			expect(await app.cache.db.get(keys[0])).toBe('1');
+			const ttl = await app.cache.db.pttl(keys[0]);
+			expect(ttl).toBeGreaterThan(0);
+			expect(ttl).toBeLessThanOrEqual(60_000);
+		});
+
+		it('admits exactly `max` concurrent requests', async () => {
+			// The storage checks and increments in one Redis call; a read-then-write
+			// would let every concurrent request see a below-limit count.
+			const storage = createAuthRateLimitStorage(app.cache);
+			const rule = { window: 60, max: 5 };
+
+			const results = await Promise.all(
+				Array.from({ length: 50 }, () => storage.consume('concurrency', rule))
+			);
+
+			expect(results.filter((r) => r.allowed)).toHaveLength(rule.max);
 		});
 	});
 
