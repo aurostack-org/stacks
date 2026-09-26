@@ -7,7 +7,7 @@ import {
 	DiskHealthIndicator,
 	MemoryHealthIndicator
 } from '@nestjs/terminus';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler'; // @feature rate-limit
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { Op } from 'common/decorators';
 import { CustomConfigService } from '../services';
@@ -15,9 +15,11 @@ import { PrismaHealthIndicator } from '../misc';
 
 @ApiTags('App')
 @Controller({ path: 'health', version: VERSION_NEUTRAL })
+// @feature:start rate-limit
 // Probed on a fixed interval by orchestrators; throttling it would take the
 // service out of rotation under exactly the load it exists to report on.
 @SkipThrottle()
+// @feature:end
 export class HealthController {
 	constructor(
 		private health: HealthCheckService,

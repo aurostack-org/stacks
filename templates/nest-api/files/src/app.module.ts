@@ -87,6 +87,9 @@ import { OriginBuilder } from 'common/misc';
 						crossSubDomainCookies: {
 							enabled: true,
 							domain: config.betterAuth.cookieDomain
+						},
+						database: {
+							joins: true
 						}
 					},
 					user: {
@@ -159,10 +162,7 @@ import { OriginBuilder } from 'common/misc';
 					trustedOrigins: [
 						config.app.frontendHost,
 						...OriginBuilder.build(config.app.miscCorsOrigins)
-					],
-					experimental: {
-						joins: true
-					}
+					]
 				}),
 				middleware: (req, _, next) => {
 					req.url = req.originalUrl;

@@ -28,7 +28,9 @@ describe('ConfigService', () => {
 					load: [Config.getVariables],
 					validationSchema: Config.schema,
 					validationOptions: {
-						abortEarly: true
+						libraryOptions: {
+							abortEarly: true
+						}
 					}
 				})
 			],

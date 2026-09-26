@@ -140,7 +140,7 @@ namespace Config {
 		APP_NAME: Joi.string().required(),
 		SERVER_HOST: Joi.string().required(),
 		FRONTEND_HOST: Joi.string().required(),
-		MISC_CORS_ORIGINS: Joi.string().default(''),
+		MISC_CORS_ORIGINS: Joi.string().allow('').default(''),
 		PORT: Joi.number().default(5000).required(),
 		DATABASE_URL: Joi.string().required(),
 		BETTER_AUTH_SECRET: Joi.string().required(),

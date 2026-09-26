@@ -1,4 +1,5 @@
-import { TestBed, type Mocked } from '@suites/unit';
+import { TestBed } from '@suites/unit';
+import type { Mock } from 'vitest';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { MailService } from 'common/services';
@@ -13,12 +14,13 @@ import {
 
 describe('MailService', () => {
 	let service: MailService;
-	let queue: Mocked<Queue>;
+	// Only `add` is exercised; Mocked<Queue> is too deep a type for tsc.
+	let queue: { add: Mock<Queue['add']> };
 
 	beforeAll(async () => {
 		const { unit, unitRef } = await TestBed.solitary(MailService).compile();
 		service = unit;
-		queue = unitRef.get<Mocked<Queue>>(getQueueToken('mail'));
+		queue = unitRef.get(getQueueToken('mail'));
 	});
 
 	beforeEach(() => {

@@ -22,6 +22,7 @@ export class Entity {
 			banReason: F.lorem.sentence(),
 			role: 'user',
 			banExpires: null,
+			onboardingCompletedAt: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		}));

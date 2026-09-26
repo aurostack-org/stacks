@@ -18,7 +18,7 @@ services:
     image: postgres:15.3
     restart: always
     ports:
-      - 5433:5432
+      - 5499:5432
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: postgres
@@ -29,5 +29,5 @@ services:
     image: redis:7.4.1
     restart: always
     ports:
-      - 6380:6379
+      - 6399:6379
   # @feature:end

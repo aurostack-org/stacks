@@ -39,7 +39,7 @@ describe('HealthController', () => {
 		config.app = { host: 'http://localhost:5000' } as any;
 		health.check.mockImplementation(async (fns) => {
 			for (const fn of fns) {
-				await fn();
+				if (typeof fn === 'function') await fn();
 			}
 			return { status: 'ok' } as any;
 		});

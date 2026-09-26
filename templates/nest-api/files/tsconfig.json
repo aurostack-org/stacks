@@ -28,7 +28,6 @@
 			"@test/*": ["../test/*"],
 			"@db/*": ["../prisma/generated/*"],
 		},
-		"ignoreDeprecations": "6.0",
 		"types": ["vitest/globals", "node"]
   },
 }

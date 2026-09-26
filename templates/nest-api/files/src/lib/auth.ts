@@ -19,7 +19,7 @@ const db = new PrismaClient({
 export const auth = betterAuth({
 	appName: env.APP_NAME,
 	secret: env.BETTER_AUTH_SECRET,
-	baseUrl: env.BETTER_AUTH_URL,
+	baseURL: env.BETTER_AUTH_URL,
 	basePath: '/auth',
 	database: prismaAdapter(db, {
 		provider: 'postgresql'
@@ -28,10 +28,17 @@ export const auth = betterAuth({
 		enabled: true,
 		requireEmailVerification: true // @feature mail
 	},
-	cookiePrefix: env.BETTER_AUTH_COOKIE_PREFIX,
-	crossSubDomainCookies: {
-		enabled: true,
-		domain: env.BETTER_AUTH_COOKIE_DOMAIN
+	advanced: {
+		// Must match the runtime instance: the realtime gateway validates socket
+		// sessions through this one, so a different cookie name would reject them.
+		cookiePrefix: env.BETTER_AUTH_COOKIE_PREFIX,
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: env.BETTER_AUTH_COOKIE_DOMAIN
+		},
+		database: {
+			joins: true
+		}
 	},
 	socialProviders: {
 		google: {
@@ -63,10 +70,7 @@ export const auth = betterAuth({
 	trustedOrigins: [
 		env.FRONTEND_HOST!,
 		...OriginBuilder.build(env.MISC_CORS_ORIGINS)
-	],
-	experimental: {
-		joins: true
-	}
+	]
 });
 
 export type BetterAuth = typeof auth;
