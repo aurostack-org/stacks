@@ -1,4 +1,4 @@
-FROM aurostack.org/wesnetech/python:3.14
+FROM aurostack.dev/wesnetech/python:3.14
 
 WORKDIR /app
 

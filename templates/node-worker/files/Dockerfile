@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM aurostack.org/wesnetech/nodejs:24 AS build
+FROM aurostack.dev/wesnetech/nodejs:24 AS build
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
@@ -20,7 +20,7 @@ RUN yarn build
 RUN yarn install --production
 
 # Stage 2: Production
-FROM aurostack.org/wesnetech/nodejs:24
+FROM aurostack.dev/wesnetech/nodejs:24
 WORKDIR /app
 
 RUN apk update
