@@ -155,9 +155,7 @@ export const enableOpenAPI = async (app: INestApplication) => {
 	const auth = app.get(AuthService);
 	const document = SwaggerModule.createDocument(app, SWAGGER_OPTIONS);
 	SwaggerModule.setup('/openapi', app, document, {
-		customSiteTitle: config.app.name,
-		customCssUrl: '/css/theme-flattop.css',
-		customfavIcon: '/images/logo_mark.png'
+		customSiteTitle: config.app.name
 	});
 
 	const authSchema = await auth.api.generateOpenAPISchema();

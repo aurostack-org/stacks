@@ -9,7 +9,6 @@ import {
 	Body,
 	Section,
 	Text,
-	Img,
 	Hr,
 	Button
 } from '@react-email/components';
@@ -44,7 +43,6 @@ const MainLayout = ({
 	children,
 	subject = 'Email Title',
 	preview,
-	host = 'https://api.inerds.wess.app',
 	appName = 'API Starter',
 	footerText = 'API Starter, 354 Oyster Point Blvd, South San Francisco, CA 94080'
 }: Props) => {
@@ -81,11 +79,8 @@ const MainLayout = ({
 				<Body className="bg-[#f6f9fc] font-poppins py-10">
 					<Container className="px-0 pt-5 pb-12 mx-auto my-0 bg-white border border-gray-100 border-solid rounded-md shadow-md">
 						<Section className="px-12 py-0">
-							<Img
-								src={`${host}/images/logo.png`}
-								height="40"
-								alt="Investment Nerds Logo"
-							/>
+							{/* Text wordmark: swap in an <Img> once the project has a hosted logo. */}
+							<Text className="text-xl font-semibold text-[#333]">{appName}</Text>
 							<Hr className={CN.hr} />
 							{children}
 							<Text className={CN.text}>— {appName} Team</Text>
