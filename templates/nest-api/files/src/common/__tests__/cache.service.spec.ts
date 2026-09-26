@@ -159,7 +159,8 @@ describe('CacheService', () => {
 				expect(service.db.hget).toHaveBeenCalled();
 				expect(service.db.hget).toHaveBeenCalledWith('users', 'uid:25');
 				expect(response).not.toBe(null);
-				expect(response?.id).toBe(25);
+				// User ids are strings; the cached JSON round-trips them unchanged.
+				expect(response?.id).toBe('25');
 			});
 		});
 	});
