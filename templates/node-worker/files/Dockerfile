@@ -1,12 +1,22 @@
 # Stage 1: Build
 FROM aurostack.dev/wesnetech/nodejs:24 AS build
 
+# @feature:start browser
+# Chromium comes from apk in the runtime stage; don't download a second copy.
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# @feature:end
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --network-timeout 300000 --network-concurrency 1
+# The image bundles Yarn 1.x; corepack switches to the Yarn 4 release pinned by
+# package.json's `packageManager`, which is what can read yarn.lock.
+RUN corepack enable
+
+# yarn.lock and .yarnrc.yml must both land here: --immutable requires a lockfile,
+# and without .yarnrc.yml Yarn uses PnP, which Prisma cannot generate under.
+COPY package.json yarn.lock .yarnrc.yml ./
+# Long timeout, one request at a time: tolerant of a slow or flaky registry.
+RUN YARN_HTTP_TIMEOUT=300000 YARN_NETWORK_CONCURRENCY=1 yarn install --immutable
 
 COPY tsconfig*.json prisma.config.ts ./
 COPY .bin ./.bin
@@ -16,14 +26,15 @@ RUN yarn db:generate
 COPY src ./src
 RUN yarn build
 
-# Remove dev dependencies after build is done
-RUN yarn install --production
+# Remove dev dependencies after build is done. Yarn 4 has no
+# `install --production`; focusing the root workspace is its equivalent.
+RUN yarn workspaces focus --all --production
 
 # Stage 2: Production
 FROM aurostack.dev/wesnetech/nodejs:24
 WORKDIR /app
 
-RUN apk update
+# @feature:start browser
 RUN apk add --no-cache \
 	chromium \
 	nss \
@@ -35,10 +46,18 @@ RUN apk add --no-cache \
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 	PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# @feature:end
 
 COPY package.json ./
+# @feature:start pm2
 COPY ecosystem.config.cjs ./
+# @feature:end
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
+# @feature:start pm2
+# pm2-runtime ships in the base image.
 CMD [ "pm2-runtime", "start", "ecosystem.config.cjs" ]
+# @feature:else
+CMD [ "node", "dist/src/index.js" ]
+# @feature:end
