@@ -7,13 +7,20 @@ const PING_LIMIT = 30;
 describe('Rate limiting', () => {
 	let app: AppFactory;
 
+	// .env.test turns throttling off so buckets cannot leak between specs; this
+	// spec is the one that needs it on, so it flips the flag before the app boots
+	// and restores it afterwards (spec files run one at a time).
+	const previous = process.env.RATE_LIMIT_ENABLED;
+
 	beforeAll(async () => {
+		process.env.RATE_LIMIT_ENABLED = 'true';
 		app = await AppFactory.init();
 		await app.refresh();
 	});
 
 	afterAll(async () => {
 		await app.close();
+		process.env.RATE_LIMIT_ENABLED = previous;
 	});
 
 	// Buckets live in Redis and outlive a single test.

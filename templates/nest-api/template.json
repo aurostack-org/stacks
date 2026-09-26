@@ -367,7 +367,8 @@
 			],
 			"files": [
 				"src/notifications/**",
-				"prisma/schema/notification.prisma"
+				"prisma/schema/notification.prisma",
+				"test/notifications.spec.ts"
 			]
 		},
 		"feature-flags": {

@@ -1,5 +1,6 @@
 import { AppFactory } from '@test/factory/app';
 import { TEST_ADMIN, TEST_USER } from '@test/factory/constants';
+import { NotificationsService } from 'notifications/services/notifications.service';
 
 describe('Notifications', () => {
 	let app: AppFactory;
@@ -7,25 +8,10 @@ describe('Notifications', () => {
 	let adminCookie: string;
 	let userId: string;
 
-	// TEST_USER owns the content; TEST_ADMIN acts on it to generate the alerts.
-	const createPost = (cookie: string) =>
-		app.request.post('/v1/posts').set('Cookie', cookie).send({
-			type: 'question',
-			title: 'How is dividend withholding tax handled on the GSE?',
-			body: 'Is the 8% automatic or do I file it myself?'
-		});
-
-	const comment = (cookie: string, postId: string, body?: object) =>
-		app.request
-			.post(`/v1/posts/${postId}/comments`)
-			.set('Cookie', cookie)
-			.send({ body: 'The registrar deducts it at source.', ...body });
-
-	const votePost = (cookie: string, postId: string, value: 1 | -1) =>
-		app.request
-			.post(`/v1/posts/${postId}/vote`)
-			.set('Cookie', cookie)
-			.send({ value });
+	// Seed through the service's write side — the same call other modules make —
+	// so these specs exercise the endpoints without depending on any producer.
+	const dispatch = (recipientId = userId, data: object = { message: 'Hi' }) =>
+		app.instance.get(NotificationsService).dispatch(recipientId, 'system', data);
 
 	const listNotifications = (cookie: string, query = '') =>
 		app.request.get(`/v1/notifications${query}`).set('Cookie', cookie);
@@ -83,87 +69,48 @@ describe('Notifications', () => {
 		});
 	});
 
-	describe('generation from forum activity', () => {
-		it('notifies the post author when someone comments', async () => {
-			const post = await createPost(userCookie);
-			await comment(adminCookie, post.body.id);
+	describe('dispatch', () => {
+		it('lists a dispatched notification for its recipient', async () => {
+			await dispatch(userId, { message: 'Welcome aboard' });
 
 			const response = await listNotifications(userCookie);
 			expect(response.status).toBe(200);
 			expect(response.body.total).toBe(1);
 			expect(response.body.list[0]).toMatchObject({
 				userId,
-				type: 'comment',
+				type: 'system',
 				readAt: null,
-				data: { postId: post.body.id }
+				data: { message: 'Welcome aboard' }
 			});
-			expect(response.body.list[0].data.commentId).toEqual(expect.any(String));
 		});
 
-		it('notifies the parent-comment author when someone replies', async () => {
-			const post = await createPost(adminCookie);
-			// TEST_USER leaves a top-level comment; admin replies to it.
-			const parent = await comment(userCookie, post.body.id);
-			await comment(adminCookie, post.body.id, { parentId: parent.body.id });
+		it("does not show one user's notifications to another", async () => {
+			await dispatch();
 
-			const response = await listNotifications(userCookie);
-			const reply = response.body.list.find(
-				(n: { type: string }) => n.type === 'reply'
-			);
-			// `commentId` points at the reply itself (for deep-linking), not the parent.
-			expect(reply).toMatchObject({
-				userId,
-				type: 'reply',
-				data: { postId: post.body.id }
-			});
-			expect(reply.data.commentId).toEqual(expect.any(String));
-			expect(reply.data.commentId).not.toBe(parent.body.id);
+			const response = await listNotifications(adminCookie);
+			expect(response.body.total).toBe(0);
 		});
 
-		it('notifies the post author on an upvote', async () => {
-			const post = await createPost(userCookie);
-			await votePost(adminCookie, post.body.id, 1);
+		it('filters to unread with ?unread=true', async () => {
+			const first = await dispatch();
+			await dispatch();
+			await app.request
+				.patch(`/v1/notifications/${first!.id}/read`)
+				.set('Cookie', userCookie);
 
 			const response = await listNotifications(userCookie, '?unread=true');
-			const upvote = response.body.list.find(
-				(n: { type: string }) => n.type === 'upvote'
-			);
-			expect(upvote).toMatchObject({
-				type: 'upvote',
-				data: { target: 'post', postId: post.body.id }
-			});
-		});
-
-		it('does not notify you about your own comment', async () => {
-			const post = await createPost(userCookie);
-			await comment(userCookie, post.body.id);
-
-			const response = await listNotifications(userCookie);
-			expect(response.body.total).toBe(0);
-		});
-
-		it('does not notify you about your own upvote', async () => {
-			const post = await createPost(userCookie);
-			await votePost(userCookie, post.body.id, 1);
-
-			const response = await listNotifications(userCookie);
-			expect(response.body.total).toBe(0);
-		});
-
-		it('does not notify on a downvote', async () => {
-			const post = await createPost(userCookie);
-			await votePost(adminCookie, post.body.id, -1);
-
-			const response = await listNotifications(userCookie);
-			expect(response.body.total).toBe(0);
+			expect(response.body.total).toBe(1);
 		});
 	});
 
 	describe('GET /v1/notifications/unread-count', () => {
 		it('counts only unread notifications', async () => {
-			const post = await createPost(userCookie);
-			await comment(adminCookie, post.body.id);
-			await votePost(adminCookie, post.body.id, 1);
+			const first = await dispatch();
+			await dispatch();
+			await dispatch();
+			await app.request
+				.patch(`/v1/notifications/${first!.id}/read`)
+				.set('Cookie', userCookie);
 
 			const response = await unreadCount(userCookie);
 			expect(response.status).toBe(200);
@@ -173,10 +120,7 @@ describe('Notifications', () => {
 
 	describe('PATCH /v1/notifications/:id/read', () => {
 		it('marks a single notification read and drops the unread count', async () => {
-			const post = await createPost(userCookie);
-			await comment(adminCookie, post.body.id);
-			const { body: list } = await listNotifications(userCookie);
-			const id = list.list[0].id;
+			const { id } = (await dispatch())!;
 
 			const read = await app.request
 				.patch(`/v1/notifications/${id}/read`)
@@ -189,10 +133,7 @@ describe('Notifications', () => {
 		});
 
 		it("404s when marking another user's notification", async () => {
-			const post = await createPost(userCookie);
-			await comment(adminCookie, post.body.id);
-			const { body: list } = await listNotifications(userCookie);
-			const id = list.list[0].id;
+			const { id } = (await dispatch())!;
 
 			// Admin has no such notification — it belongs to TEST_USER.
 			const response = await app.request
@@ -204,9 +145,8 @@ describe('Notifications', () => {
 
 	describe('POST /v1/notifications/read-all', () => {
 		it('marks every notification read', async () => {
-			const post = await createPost(userCookie);
-			await comment(adminCookie, post.body.id);
-			await votePost(adminCookie, post.body.id, 1);
+			await dispatch();
+			await dispatch();
 
 			const response = await app.request
 				.post('/v1/notifications/read-all')
