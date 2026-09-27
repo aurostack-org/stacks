@@ -173,6 +173,7 @@ import { OriginBuilder } from 'common/misc';
 		}),
 		// @feature:start mail
 		MailerModule.forRootAsync({
+			imports: [],
 			inject: [CustomConfigService],
 			useFactory: async (config: CustomConfigService) => ({
 				defaults: {

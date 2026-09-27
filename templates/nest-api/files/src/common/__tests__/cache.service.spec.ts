@@ -29,7 +29,7 @@ describe('CacheService', () => {
 			it('should store string data with default expiry of 24hrs', async () => {
 				const key = 'example-key';
 				const data = 'exampleData';
-				on(service.db, 'setex').mock;
+				on(service.db, 'setex');
 
 				await service.store(key, data);
 				expect(service.db.setex).toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe('CacheService', () => {
 			it('should store object data with default expiry of 24hrs', async () => {
 				const key = 'testKey';
 				const testData = { id: 1, name: 'Test' };
-				on(service.db, 'setex').mock;
+				on(service.db, 'setex');
 
 				await service.store(key, testData);
 				expect(service.db.setex).toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe('CacheService', () => {
 			it('should store string data with specified EXP', async () => {
 				const key = 'example-key';
 				const data = 'exampleData';
-				on(service.db, 'setex').mock;
+				on(service.db, 'setex');
 
 				await service.store(key, data, EXP);
 				expect(service.db.setex).toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('CacheService', () => {
 			it('should store object data with specified EXP', async () => {
 				const key = 'testKey';
 				const testData = { id: 1, name: 'Test' };
-				on(service.db, 'setex').mock;
+				on(service.db, 'setex');
 
 				await service.store(key, testData, EXP);
 				expect(service.db.setex).toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe('CacheService', () => {
 	describe('hashStore', () => {
 		it('should call hset with correct arguments', async () => {
 			const user = Entity.user.build();
-			on(service.db, 'hset').mock;
+			on(service.db, 'hset');
 
 			await service.hashStore('Users', user);
 			expect(service.db.hset).toHaveBeenCalled();
@@ -194,7 +194,7 @@ describe('CacheService', () => {
 
 	describe('hashDelete', () => {
 		it('should delete data with specified key', async () => {
-			on(service.db, 'hdel').mock;
+			on(service.db, 'hdel');
 
 			await service.hashDelete('Users', 25);
 			expect(service.db.hdel).toHaveBeenCalled();
@@ -204,7 +204,7 @@ describe('CacheService', () => {
 
 	describe('deleteKey', () => {
 		it('should delete data with specified key', async () => {
-			on(service.db, 'del').mock;
+			on(service.db, 'del');
 
 			await service.deleteKey('Users');
 			expect(service.db.del).toHaveBeenCalled();

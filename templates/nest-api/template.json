@@ -34,7 +34,7 @@
 			"tsconfig.build.json",
 			"global.d.ts",
 			"vitest.config.ts",
-			".eslintrc.js",
+			"eslint.config.mjs",
 			".prettierrc",
 			".swcrc",
 			".nvmrc",

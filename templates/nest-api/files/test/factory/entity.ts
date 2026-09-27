@@ -4,7 +4,6 @@ import { UserSession } from '@thallesp/nestjs-better-auth';
 import { User } from '@db/client';
 import { OKEntity } from 'common/entity';
 import { FileEntity } from 'media/entity'; // @feature media
-import { Gen } from './gen';
 
 export class Entity {
 	static get ok() {

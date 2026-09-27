@@ -40,7 +40,6 @@ export default defineConfig({
 					// a single worker AND no file-level parallelism. Otherwise two
 					// refresh() cycles (truncate + reseed) overlap and deadlock.
 					maxWorkers: 1,
-					minWorkers: 1,
 					fileParallelism: false,
 					// refresh() truncates + fully reseeds (incl. password hashing for
 					// seeded users) before every spec; on slow CI runners that

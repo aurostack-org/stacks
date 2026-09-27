@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { HealthIndicatorResult, HealthIndicatorService } from '@nestjs/terminus';
+import {
+	HealthIndicatorResult,
+	HealthIndicatorService
+} from '@nestjs/terminus';
 import { PrismaService } from 'common/services';
 
 @Injectable()
@@ -14,7 +17,7 @@ export class PrismaHealthIndicator {
 		try {
 			await this.db.$queryRawUnsafe('SELECT 1');
 			return indicator.up();
-		} catch (e) {
+		} catch {
 			return indicator.down({ message: 'Database check failed' });
 		}
 	}
