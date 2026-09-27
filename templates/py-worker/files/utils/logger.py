@@ -2,7 +2,8 @@
 @File: logger.py
 @Version: 1.1
 
-Logger wrapper to manage logs in one place with log rotate
+Logger wrapper to manage logs in one place with log rotate. Records also go to
+stdout, so `docker logs` shows them.
 
 Logger('daily') will create daily.log file in the logs folder
 Logger('my.daily') will create my.daily.log file in the logs folder
@@ -35,6 +36,7 @@ except Exception as e:
 import logging
 import os
 import pathlib
+import sys
 from logging import handlers
 
 from config import CONFIG
@@ -49,7 +51,7 @@ class Logger(object):
         if module is not None:
             directory = f"{directory}/{module}"
             logger_name = f"{module}_{name}"
-            pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
         filename = f"{directory}/{name}.log"
         formatter = "%(asctime)s %(levelname)-10s %(message)s"
@@ -73,6 +75,11 @@ class Logger(object):
                 formatter, datefmt='%Y-%m-%d %H:%M:%S')
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
+
+            console = logging.StreamHandler(sys.stdout)
+            console.setLevel(logging.INFO)
+            console.setFormatter(formatter)
+            self.logger.addHandler(console)
 
     def debug(self, message, exc_info=None):
         self.__call(self.logger.debug, message, exc_info)

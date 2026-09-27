@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationType, Prisma } from '@db/client';
 import { PrismaService, LoggerService } from 'common/services';
 import { ok } from 'common/entity';
-import { RealtimeService } from 'realtime/services/realtime.service';
+import { RealtimeService } from 'realtime/services/realtime.service'; // @feature realtime
 import {
 	NotificationEntity,
 	PaginatedNotificationEntity,
@@ -14,7 +14,7 @@ import { NotificationFilters } from '../dto';
 export class NotificationsService {
 	constructor(
 		private readonly db: PrismaService,
-		private readonly realtime: RealtimeService,
+		private readonly realtime: RealtimeService, // @feature realtime
 		private readonly logger: LoggerService
 	) {}
 
@@ -36,9 +36,11 @@ export class NotificationsService {
 			const notification = await this.db.notification.create({
 				data: { userId, type, data }
 			});
+			// @feature:start realtime
 			// Sockets bypass the HTTP serializer; encode through the same schema so
 			// the event has exactly the shape the REST endpoints return.
 			this.realtime.notifyUser(userId, NotificationEntity.parse(notification));
+			// @feature:end
 			return notification;
 		} catch (err) {
 			this.logger.warn(

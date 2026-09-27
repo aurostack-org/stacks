@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,6 +52,11 @@ const env = normalizeEnv(parseEnvArg());
 const envFile = ENV_FILES[env];
 
 console.log(`Fetching secrets for '${slug}' (${env}) -> ${envFile}...`);
-execSync(`infisical export --projectId="${PROJECT_ID}" --path="${secretPath}" --env=${env} > ${envFile}`, {
-	stdio: 'inherit'
+// Export first and write only on success: a shell `>` redirect would empty
+// the existing file before infisical had the chance to fail. execSync throws
+// (and the process exits non-zero) when infisical fails.
+const output = execSync(`infisical export --projectId="${PROJECT_ID}" --path="${secretPath}" --env=${env}`, {
+	stdio: ['inherit', 'pipe', 'inherit']
 });
+writeFileSync(envFile, output);
+console.log(`Wrote ${envFile}`);

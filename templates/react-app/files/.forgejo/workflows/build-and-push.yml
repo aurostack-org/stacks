@@ -47,6 +47,9 @@ jobs:
             VITE_APP_API_URL=${{ secrets.VITE_APP_API_URL }}
             VITE_APP_SITE_URL=${{ secrets.VITE_APP_SITE_URL }}
             VITE_APP_SUPPORT_EMAIL=${{ secrets.VITE_APP_SUPPORT_EMAIL }}
+            VITE_OPENOBSERVE_URL=${{ secrets.VITE_OPENOBSERVE_URL }} # @feature telemetry
+            VITE_OPENOBSERVE_ORG=${{ secrets.VITE_OPENOBSERVE_ORG }} # @feature telemetry
+            VITE_OPENOBSERVE_CLIENT_TOKEN=${{ secrets.VITE_OPENOBSERVE_CLIENT_TOKEN }} # @feature telemetry
           tags: |
             ${{ secrets.REGISTRY }}/${{ steps.tag.outputs.OWNER }}/web:latest
             ${{ secrets.REGISTRY }}/${{ steps.tag.outputs.OWNER }}/web:${{ steps.tag.outputs.TAG }}

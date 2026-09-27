@@ -120,9 +120,10 @@ export const enableHelmet = (app: INestApplication) => {
 // @feature:start openapi, queue
 /**
  * Lock the operator-facing surfaces behind basic auth. Every path added here is
- * something that leaks internals if left open — the API reference and the queue
- * dashboard — so a new one belongs in this list on
- * the same commit that mounts it.
+ * something that leaks internals if left open — the API reference (Scalar at
+ * /docs, Swagger UI at /openapi, the raw document at /openapi-json) and the
+ * queue dashboard — so a new one belongs in this list on the same commit that
+ * mounts it.
  */
 export const enableBasicAuth = (app: INestApplication) => {
 	const config = app.get(CustomConfigService);
@@ -131,6 +132,7 @@ export const enableBasicAuth = (app: INestApplication) => {
 	app.use(
 		[
 			'/docs', // @feature openapi
+			'/openapi', // @feature openapi
 			'/openapi-json', // @feature openapi
 			'/dashboard' // @feature queue
 		],

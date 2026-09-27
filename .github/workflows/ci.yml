@@ -60,6 +60,10 @@ jobs:
           - { variant: without users, args: --without users, tests: true }
           - { variant: minimal, args: '--without users,media,observability', tests: true }
           - { variant: without testing, args: --without testing, tests: false }
+          # Opt-ins that sit on optional code paths: notifications without
+          # realtime, and an API without the queue stack.
+          - { variant: with notifications, args: --with notifications, tests: true }
+          - { variant: without queue, args: '--without queue,mail,media', tests: true }
     # Ports and credentials match the templates' .env.test.example.
     services:
       postgres:
@@ -153,6 +157,8 @@ jobs:
             args: ''
           - variant: with temporal
             args: --with temporal
+          - variant: without database
+            args: --without database
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -166,6 +172,10 @@ jobs:
       - name: Compile every module
         working-directory: /tmp/stack-ci/app
         run: .venv/bin/python -m compileall -q -x '/\.venv/' .
+      # compileall misses a dangling import; importing the entry point doesn't.
+      - name: Import the entry point
+        working-directory: /tmp/stack-ci/app
+        run: HOME_PATH="$PWD" .venv/bin/python -c 'import worker'
 
   react:
     name: ${{ matrix.template }} (${{ matrix.variant }})
@@ -205,13 +215,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        template: [nest-api, node-worker]
+        template: [nest-api, node-worker, react-app, react-monorepo]
         args: ['']
         include:
           # Temporal's native core needs glibc, so this variant builds on Debian
           # instead of the Alpine house image.
           - template: node-worker
             args: --with temporal
+          # Static bundles need their API URL at build time; react-monorepo builds
+          # one app per image, and its Dockerfile copies each workspace's
+          # package.json, so build it with the default and the full app set.
+          - template: react-app
+            build_args: --build-arg VITE_APP_API_URL=https://api.example.com
+          - template: react-monorepo
+            args: ''
+            build_args: --build-arg APP=client --build-arg VITE_APP_API_URL=https://api.example.com
+          - template: react-monorepo
+            args: --all
+            build_args: --build-arg APP=landing --build-arg VITE_APP_SITE_URL=https://example.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -222,4 +243,4 @@ jobs:
       - name: Generate
         run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-image ${{ matrix.args }} --strict
       - name: Build
-        run: docker build -t ci-image "$APP"
+        run: docker build ${{ matrix.build_args }} -t ci-image "$APP"

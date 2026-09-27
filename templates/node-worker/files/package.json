@@ -72,6 +72,7 @@
 		"@types/node": "^26.1.0",
 		"@types/shelljs": "^0.10.0",
 		"@types/yargs": "^17.0.35",
+		"dotenv-cli": "^7.2.1",
 		"eslint": "^10.6.0",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.7.0",

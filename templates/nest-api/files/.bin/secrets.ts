@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import shell from 'shelljs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -52,9 +53,7 @@ const getCmd = (env: string) => {
 	if (!PROJECT_ID) {
 		throw new Error('INFISICAL_PROJECT_ID is not set — nothing to fetch from.');
 	}
-	return `infisical export --projectId="${PROJECT_ID}" --path=${SECRET_PATH} --env=${env} > ${getEnvFile(
-		env
-	)}`;
+	return `infisical export --projectId="${PROJECT_ID}" --path=${SECRET_PATH} --env=${env}`;
 };
 
 const log = (env: string) => console.log(`Fetching secrets for '${env}'...`);
@@ -62,7 +61,17 @@ const log = (env: string) => console.log(`Fetching secrets for '${env}'...`);
 (async () => {
 	const env = await getArg();
 	const command = getCmd(env);
+	const file = getEnvFile(env);
 	log(env);
-	shell.exec(command);
-	process.exit(0);
-})().catch(console.error);
+	// Export first and write only on success: a shell `>` redirect would empty
+	// the existing file before infisical had the chance to fail.
+	const result = shell.exec(command, { silent: true });
+	if (result.code !== 0) {
+		throw new Error(result.stderr.trim() || `infisical exited with ${result.code}`);
+	}
+	fs.writeFileSync(file, result.stdout);
+	console.log(`Wrote ${file}`);
+})().catch((err: unknown) => {
+	console.error(err instanceof Error ? err.message : err);
+	process.exit(1);
+});

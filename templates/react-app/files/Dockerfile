@@ -35,6 +35,16 @@ ARG VITE_APP_SUPPORT_EMAIL
 ENV VITE_APP_API_URL=$VITE_APP_API_URL \
 	VITE_APP_SITE_URL=$VITE_APP_SITE_URL \
 	VITE_APP_SUPPORT_EMAIL=$VITE_APP_SUPPORT_EMAIL
+# @feature:start telemetry
+# Browser monitoring. Leave unset and the bundle ships with telemetry off. The
+# client token is a RUM token, write-only and meant to be public.
+ARG VITE_OPENOBSERVE_URL
+ARG VITE_OPENOBSERVE_ORG
+ARG VITE_OPENOBSERVE_CLIENT_TOKEN
+ENV VITE_OPENOBSERVE_URL=$VITE_OPENOBSERVE_URL \
+	VITE_OPENOBSERVE_ORG=$VITE_OPENOBSERVE_ORG \
+	VITE_OPENOBSERVE_CLIENT_TOKEN=$VITE_OPENOBSERVE_CLIENT_TOKEN
+# @feature:end
 
 # Fail loudly rather than silently producing a bundle with `undefined` URLs baked
 # in — that failure is invisible until the app 404s at runtime.

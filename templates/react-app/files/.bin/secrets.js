@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 
 // Pulls this app's env from Infisical into the matching .env file.
 //
@@ -42,6 +43,11 @@ const env = normalizeEnv(parseEnvArg());
 const envFile = ENV_FILES[env];
 
 console.log(`Fetching secrets (${env}) -> ${envFile}...`);
-execSync(`infisical export --projectId="${PROJECT_ID}" --path="${SECRET_PATH}" --env=${env} > ${envFile}`, {
-	stdio: 'inherit'
+// Export first and write only on success: a shell `>` redirect would empty
+// the existing file before infisical had the chance to fail. execSync throws
+// (and the process exits non-zero) when infisical fails.
+const output = execSync(`infisical export --projectId="${PROJECT_ID}" --path="${SECRET_PATH}" --env=${env}`, {
+	stdio: ['inherit', 'pipe', 'inherit']
 });
+writeFileSync(envFile, output);
+console.log(`Wrote ${envFile}`);

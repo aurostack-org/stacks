@@ -7,7 +7,8 @@ import { LoggerService } from '../services';
 import {
 	PINO_CONSOLE_TARGET,
 	PINO_FILE_TARGET,
-	PINO_CONSOLE_TARGET_PROD
+	PINO_CONSOLE_TARGET_PROD,
+	PRETTY_AVAILABLE
 } from '../constants';
 
 @Global()
@@ -23,7 +24,7 @@ import {
 				pinoHttp: {
 					level: config.logger.level,
 					transport:
-						config.app.env === 'production'
+						config.app.env === 'production' || !PRETTY_AVAILABLE
 							? { targets: [PINO_CONSOLE_TARGET_PROD, PINO_FILE_TARGET] }
 							: { targets: [PINO_CONSOLE_TARGET, PINO_FILE_TARGET] },
 					autoLogging: {
