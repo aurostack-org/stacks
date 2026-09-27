@@ -1,37 +1,25 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsDateString, IsString, Min, MinLength } from 'class-validator';
-import { faker as F } from '@faker-js/faker';
-import { ValidateOptional } from '../validators';
+import { z } from 'zod';
+import { search } from '../schemas';
 
-export class CommonFiltersDto {
-	@ApiPropertyOptional({ example: F.lorem.word() })
-	@ValidateOptional()
-	@IsString()
-	@MinLength(3)
-	search?: string;
+// Query strings arrive as text, so numbers are coerced before they are checked.
+const pageNumber = () => z.coerce.number().int().min(1).optional();
 
-	@ApiPropertyOptional()
-	@ValidateOptional()
-	@Transform(({ value }) => Number.parseInt(value))
-	@Min(1)
-	limit?: number;
+export const CommonFilters = z.object({
+	search: search(),
+	limit: pageNumber(),
+	page: pageNumber()
+});
+export type CommonFilters = z.output<typeof CommonFilters>;
 
-	@ApiPropertyOptional()
-	@ValidateOptional()
-	@Transform(({ value }) => Number.parseInt(value))
-	@Min(1)
-	page?: number;
-}
+// ISO 8601: a date, or a date-time with an offset.
+const isoDateOrDateTime = () =>
+	z
+		.union([z.iso.date(), z.iso.datetime({ offset: true })])
+		.optional()
+		.meta({ example: '2026-01-01T00:00:00.000Z' });
 
-export class DateFiltersDto {
-	@ApiPropertyOptional({ example: '2026-01-01T00:00:00.000Z' })
-	@ValidateOptional()
-	@IsDateString()
-	from?: string;
-
-	@ApiPropertyOptional({ example: '2026-12-31T23:59:59.999Z' })
-	@ValidateOptional()
-	@IsDateString()
-	to?: string;
-}
+export const DateFilters = z.object({
+	from: isoDateOrDateTime(),
+	to: isoDateOrDateTime()
+});
+export type DateFilters = z.output<typeof DateFilters>;

@@ -1,10 +1,8 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { CommonFiltersDto } from 'common/dto';
-import { IsExists, ValidateOptional } from 'common/validators';
+import { z } from 'zod';
+import { CommonFilters } from 'common/dto';
 
-export class UserFiltersDto extends CommonFiltersDto {
-	@ApiPropertyOptional()
-	@ValidateOptional()
-	@IsExists('user', 'role')
-	role?: string;
-}
+export const UserFilters = CommonFilters.extend({
+	// Whether any user holds this role is checked in UsersService, against the DB.
+	role: z.string().optional()
+});
+export type UserFilters = z.output<typeof UserFilters>;

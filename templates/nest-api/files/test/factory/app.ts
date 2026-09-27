@@ -13,14 +13,12 @@ import * as setup from 'app.setup';
 
 type Cookie = string[] | undefined;
 
-/**
- * Per-spec overrides. Each member is feature-gated on its own, so this narrows
- * to `{}` in a build that dropped every optional integration rather than
- * referring to a service that no longer exists.
- */
+// @feature:start feature-flags
+/** Per-spec overrides for the integrations AppFactory replaces. */
 type AppFactoryOverrides = {
-	flags?: Partial<FeatureFlagService>; // @feature feature-flags
+	flags?: Partial<FeatureFlagService>;
 };
+// @feature:end
 
 /**
  * Boots the *real* Nest application against the real test Postgres and Redis —
@@ -88,7 +86,9 @@ export class AppFactory {
 		await this.app.close();
 	}
 
-	static async init(overrides: AppFactoryOverrides = {}) {
+	static async init(
+		overrides: AppFactoryOverrides = {} // @feature feature-flags
+	) {
 		// @feature:start mail
 		// No-op MailService so nothing is enqueued to the BullMQ `mail` queue.
 		// cache.truncate() (Redis flushall) runs between specs and would wipe
@@ -155,14 +155,13 @@ export class AppFactory {
 			bufferLogs: true
 		});
 
-		setup.usePinoLogger(app); // @feature observability
+		setup.usePinoLogger(app);
 		setup.enableVersioning(app);
 		setup.setStatic(app);
 		setup.enableJsonBodyParser(app);
 		setup.useGlobalPipes(app);
 		setup.useGlobalInterceptors(app);
 		setup.useGlobalFilters(app);
-		setup.useClassValidatorContainer(app);
 		await setup.enableOpenAPI(app); // @feature openapi
 		setup.enableCors(app);
 		setup.enableHelmet(app);

@@ -10,7 +10,7 @@ import * as setup from './app.setup';
 		bodyParser: false,
 		bufferLogs: true
 	});
-	setup.usePinoLogger(app); // @feature observability
+	setup.usePinoLogger(app);
 	setup.enableBasicAuth(app); // @feature openapi, queue, observability
 	setup.enableVersioning(app);
 	setup.setStatic(app);
@@ -18,7 +18,6 @@ import * as setup from './app.setup';
 	setup.useGlobalPipes(app);
 	setup.useGlobalInterceptors(app);
 	setup.useGlobalFilters(app);
-	setup.useClassValidatorContainer(app);
 	await setup.enableOpenAPI(app); // @feature openapi
 	setup.enableCors(app);
 	setup.enableHelmet(app);

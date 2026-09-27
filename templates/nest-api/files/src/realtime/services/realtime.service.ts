@@ -39,7 +39,11 @@ export class RealtimeService {
 
 	/** Push an update to everyone in one channel's room. */
 	emitToChannel(channelId: string, payload: unknown) {
-		this.emitToRoom(channelRoom(channelId), ServerEvent.CHANNEL_UPDATE, payload);
+		this.emitToRoom(
+			channelRoom(channelId),
+			ServerEvent.CHANNEL_UPDATE,
+			payload
+		);
 	}
 
 	/** Low-level: emit to a specific room. */

@@ -1,33 +1,66 @@
 import { TestBed, type Mocked } from '@suites/unit';
 import { Entity } from '@test/factory/entity';
 import { PrismaService } from 'common/services';
-import { MediaService } from 'media/services';
-import { FileEntity } from 'media/entity';
+import { MediaService } from 'media/services'; // @feature media
+import { FileEntity } from 'media/entity'; // @feature media
 import { CurrentUserService } from '../services';
+import { CurrentUserEntity } from '../entity';
 
 describe('CurrentUserService', () => {
 	let service: CurrentUserService;
-	let media: Mocked<MediaService>;
+	let media: Mocked<MediaService>; // @feature media
 	let db: Mocked<PrismaService>;
 
 	beforeAll(async () => {
-		const { unit, unitRef } = await TestBed.solitary(
-			CurrentUserService
-		).compile();
+		const { unit, unitRef } =
+			await TestBed.solitary(CurrentUserService).compile();
 		service = unit;
-		media = unitRef.get(MediaService);
+		media = unitRef.get(MediaService); // @feature media
 		db = unitRef.get(PrismaService);
 	});
 
+	// @feature:start media
 	beforeEach(() => {
 		media.uploadAvatar.mockReset();
 		media.deleteFile.mockReset();
 	});
+	// @feature:end
 
 	it('should be defined', () => {
 		expect(service).toBeDefined();
 	});
 
+	describe('completeOnboarding', () => {
+		it('stamps onboardingCompletedAt on the session user', async () => {
+			const user = Entity.requestUser.build();
+			db.user.update.mockResolvedValue(
+				Entity.user.build({ id: user.id, onboardingCompletedAt: new Date() })
+			);
+
+			await service.completeOnboarding(user);
+
+			expect(db.user.update).toHaveBeenCalledWith({
+				where: { id: user.id },
+				data: { onboardingCompletedAt: expect.any(Date) }
+			});
+		});
+
+		it('returns the updated user as a CurrentUserEntity', async () => {
+			const user = Entity.requestUser.build();
+			const at = new Date('2026-04-05T06:07:08.000Z');
+			db.user.update.mockResolvedValue(
+				Entity.user.build({ id: user.id, onboardingCompletedAt: at })
+			);
+
+			const result = await service.completeOnboarding(user);
+
+			expect(result.id).toBe(user.id);
+			expect(result.onboardingCompletedAt).toBe(at);
+			expect(CurrentUserEntity.safeParse(result).success).toBe(true);
+		});
+	});
+
+	// @feature:start media
 	describe('updateAvatar', () => {
 		const file = {
 			originalname: 'avatar.png',
@@ -75,7 +108,7 @@ describe('CurrentUserService', () => {
 				file
 			);
 
-			expect(result).toBeInstanceOf(FileEntity);
+			expect(FileEntity.safeParse(result).success).toBe(true);
 			expect(result.path).toBe(newImageUrl);
 		});
 
@@ -122,4 +155,5 @@ describe('CurrentUserService', () => {
 			expect(media.deleteFile).not.toHaveBeenCalled();
 		});
 	});
+	// @feature:end
 });

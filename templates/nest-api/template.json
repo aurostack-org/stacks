@@ -2,7 +2,7 @@
 	"name": "nest-api",
 	"version": "0.1.0",
 	"title": "NestJS API",
-	"description": "NestJS 10 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, with Docker Compose for local Postgres/Redis and a Scalar API reference.",
+	"description": "NestJS 12 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, with Docker Compose for local Postgres/Redis and a Scalar API reference.",
 	"defaults": {
 		"port": 5000
 	},
@@ -34,7 +34,7 @@
 			"tsconfig.build.json",
 			"global.d.ts",
 			"vitest.config.ts",
-			".eslintrc.js",
+			"eslint.config.mjs",
 			".prettierrc",
 			".swcrc",
 			".nvmrc",
@@ -122,8 +122,8 @@
 			"to": "{{name}}"
 		},
 		{
-			"from": "Joi\\.number\\(\\)\\.default\\(5000\\)",
-			"to": "Joi.number().default({{port}})",
+			"from": "\\bnum\\(\\)\\.default\\(5000\\)",
+			"to": "num().default({{port}})",
 			"regex": true
 		},
 		{
@@ -136,6 +136,12 @@
 			"to": "PORT='{{port}}'",
 			"regex": true,
 			"flags": "gm"
+		},
+		{
+			"from": "^EXPOSE 5000$",
+			"to": "EXPOSE {{port}}",
+			"regex": true,
+			"flags": "gm"
 		}
 	],
 	"features": {
@@ -145,7 +151,7 @@
 			"core": true
 		},
 		"config": {
-			"title": "Joi-validated config service",
+			"title": "Zod-validated config service",
 			"description": "CustomConfigService wrapping @nestjs/config; app code never reads process.env directly.",
 			"core": true
 		},
@@ -252,32 +258,23 @@
 			"core": true
 		},
 		"observability": {
-			"title": "Structured logs, metrics and health",
-			"description": "nestjs-pino request logging, a Prometheus /metrics endpoint, and Terminus health checks including a Prisma indicator.",
+			"title": "Metrics and health checks",
+			"description": "A Prometheus /metrics endpoint and Terminus health checks, including a Prisma indicator. Structured pino logging is always included.",
 			"default": true,
 			"files": [
 				"src/common/modules/metrics.module.ts",
-				"src/common/modules/logger.module.ts",
-				"src/common/services/logger.service.ts",
 				"src/common/controllers/metrics.controller.ts",
 				"src/common/controllers/health.controller.ts",
 				"src/common/interceptors/metrics.interceptor.ts",
-				"src/common/constants/pino.ts",
 				"src/common/misc/prisma.indicator.ts",
 				"src/common/__tests__/health.controller.spec.ts",
 				"src/common/__tests__/prisma.indicator.spec.ts"
 			],
 			"packageJson": {
 				"dependencies": [
-					"nestjs-pino",
-					"pino",
-					"pino-http",
 					"prom-client",
 					"@willsoto/nestjs-prometheus",
 					"@nestjs/terminus"
-				],
-				"devDependencies": [
-					"pino-pretty"
 				]
 			}
 		},
@@ -302,7 +299,8 @@
 				"auth"
 			],
 			"files": [
-				"src/media/**"
+				"src/media/**",
+				"src/users/dto/avatar.dto.ts"
 			],
 			"packageJson": {
 				"dependencies": [
@@ -361,7 +359,8 @@
 			],
 			"files": [
 				"src/notifications/**",
-				"prisma/schema/notification.prisma"
+				"prisma/schema/notification.prisma",
+				"test/notifications.spec.ts"
 			]
 		},
 		"feature-flags": {
@@ -384,11 +383,15 @@
 		"graphql": {
 			"title": "GraphQL endpoint",
 			"description": "Code-first GraphQL via Apollo, registered alongside the REST controllers. Resolvers in any feature module are picked up automatically.",
+			"files": [
+				"src/app.resolver.ts"
+			],
 			"packageJson": {
 				"dependencies": [
 					"@nestjs/graphql",
 					"@nestjs/apollo",
 					"@apollo/server",
+					"@as-integrations/express5",
 					"graphql"
 				]
 			}
@@ -421,8 +424,7 @@
 					"@types/supertest",
 					"fishery",
 					"unplugin-swc",
-					"dotenv-cli",
-					"@faker-js/faker"
+					"dotenv-cli"
 				],
 				"scripts": [
 					"test",

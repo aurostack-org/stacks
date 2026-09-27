@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
 		"jsx": "react",
-    "module": "commonjs",
+    // node20 models require(esm): the app stays CommonJS while Nest 12 ships ESM.
+    "module": "node20",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
-		"moduleResolution": "node10",
+		"moduleResolution": "node16",
     "target": "ES2021",
 		"allowJs": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
 		"strict": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -23,12 +23,13 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
 		"paths": {
-			"@seeders/*": ["../seeders/*"],
-			"@emails/*": ["../emails/*"],
-			"@test/*": ["../test/*"],
-			"@db/*": ["../prisma/generated/*"],
+			// Bare imports like `common/services` resolve from src/ (replaces baseUrl).
+			"*": ["./src/*"],
+			"@seeders/*": ["./seeders/*"],
+			"@emails/*": ["./emails/*"],
+			"@test/*": ["./test/*"],
+			"@db/*": ["./prisma/generated/*"],
 		},
-		"ignoreDeprecations": "6.0",
-		"types": ["vitest/globals", "node"]
+		"types": ["node"]
   },
 }

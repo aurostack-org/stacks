@@ -2,13 +2,12 @@ import { Factory } from 'fishery';
 import { faker as F } from '@faker-js/faker';
 import { UserSession } from '@thallesp/nestjs-better-auth';
 import { User } from '@db/client';
-import { OKEntity } from 'common/entity';
+import { ok } from 'common/entity';
 import { FileEntity } from 'media/entity'; // @feature media
-import { Gen } from './gen';
 
 export class Entity {
 	static get ok() {
-		return new OKEntity();
+		return ok();
 	}
 
 	static get user() {
@@ -22,6 +21,7 @@ export class Entity {
 			banReason: F.lorem.sentence(),
 			role: 'user',
 			banExpires: null,
+			onboardingCompletedAt: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		}));

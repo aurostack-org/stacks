@@ -76,6 +76,22 @@ describe('App', () => {
 		});
 	});
 
+	// @feature:start graphql
+	describe('POST: /graphql', () => {
+		it('should answer the root info query', async () => {
+			const response = await app.request
+				.post('/graphql')
+				.send({ query: '{ info { title description } }' });
+			expect(response.status).toBe(200);
+			const { info } = SWAGGER_OPTIONS;
+			expect(response.body.data.info).toEqual({
+				title: info.title,
+				description: info.description
+			});
+		});
+	});
+	// @feature:end
+
 	describe('OPTIONS: / (CORS preflight)', () => {
 		it('should respond with CORS headers for allowed origin', async () => {
 			const response = await app.request.get('/');

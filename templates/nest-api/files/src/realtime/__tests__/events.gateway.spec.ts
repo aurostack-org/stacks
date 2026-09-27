@@ -13,7 +13,7 @@ const makeSocket = (rooms: string[] = []) =>
 		join: vi.fn().mockResolvedValue(undefined),
 		leave: vi.fn().mockResolvedValue(undefined),
 		to: vi.fn().mockReturnValue({ emit: vi.fn() })
-	} as unknown as Socket);
+	}) as unknown as Socket;
 
 const makeGateway = () =>
 	new EventsGateway(

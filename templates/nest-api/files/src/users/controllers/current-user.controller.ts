@@ -1,25 +1,22 @@
 import {
-	BadRequestException,
+	BadRequestException, // @feature media
 	Controller,
 	Get,
 	HttpCode,
 	Post,
-	UploadedFile,
-	UseInterceptors
+	UploadedFile, // @feature media
+	UseInterceptors // @feature media
 } from '@nestjs/common';
-import {
-	ApiBadRequestResponse,
-	ApiBody,
-	ApiOkResponse,
-	ApiTags
-} from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody } from '@nestjs/swagger'; // @feature media
+import { FileInterceptor } from '@nestjs/platform-express'; // @feature media
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
-import { MultipartFormData, Op } from 'common/decorators';
-import { FileEntity } from 'media/entity';
+import { Op, Returns } from 'common/decorators';
+import { MultipartFormData } from 'common/decorators'; // @feature media
+import { FileEntity } from 'media/entity'; // @feature media
 import { CurrentUserService } from '../services';
-import { CurrentUserEntity } from '../entity';
-import { AvatarDto } from '../dto';
+import { CurrentUserEntity, toCurrentUser } from '../entity';
+import { AVATAR_UPLOAD_SCHEMA } from '../dto'; // @feature media
 
 @ApiTags('Current User')
 @Controller({ path: 'user', version: '1' })
@@ -28,9 +25,9 @@ export class CurrentUserController {
 
 	@Get()
 	@Op('user', '/v1/user', 'Get current user')
-	@ApiOkResponse({ type: CurrentUserEntity, description: 'The current user' })
+	@Returns(CurrentUserEntity, { description: 'The current user' })
 	getCurrentUser(@Session() { user }: UserSession) {
-		return new CurrentUserEntity(user);
+		return toCurrentUser(user);
 	}
 
 	@Post('onboarding')
@@ -40,11 +37,12 @@ export class CurrentUserController {
 		"Mark the current user's onboarding as complete"
 	)
 	@HttpCode(200)
-	@ApiOkResponse({ type: CurrentUserEntity, description: 'The updated user' })
+	@Returns(CurrentUserEntity, { description: 'The updated user' })
 	completeOnboarding(@Session() { user }: UserSession) {
 		return this.service.completeOnboarding(user);
 	}
 
+	// @feature:start media
 	@Post('avatar')
 	@Op(
 		'avatar',
@@ -52,7 +50,7 @@ export class CurrentUserController {
 		'Upload a new avatar image for the current user'
 	)
 	@MultipartFormData()
-	@ApiBody({ type: AvatarDto })
+	@ApiBody({ schema: AVATAR_UPLOAD_SCHEMA })
 	@UseInterceptors(
 		FileInterceptor('file', {
 			limits: { fileSize: 1 * 1024 * 1024 }, // 1MB limit
@@ -70,10 +68,7 @@ export class CurrentUserController {
 		})
 	)
 	@HttpCode(200)
-	@ApiOkResponse({
-		type: FileEntity,
-		description: 'The uploaded avatar file entity'
-	})
+	@Returns(FileEntity, { description: 'The uploaded avatar file entity' })
 	@ApiBadRequestResponse({
 		description: 'Invalid file upload (e.g., wrong format, file too large)'
 	})
@@ -83,4 +78,5 @@ export class CurrentUserController {
 	) {
 		return this.service.updateAvatar(user, file);
 	}
+	// @feature:end
 }

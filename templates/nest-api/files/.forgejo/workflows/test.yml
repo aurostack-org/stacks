@@ -40,7 +40,7 @@ jobs:
       - name: Fetch secrets
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
-          INFISICAL_API_URL: https://secrets.aurostack.org
+          INFISICAL_API_URL: https://inf.aurostack.co
         run: yarn secrets -e test
 
       - name: Generate Prisma client

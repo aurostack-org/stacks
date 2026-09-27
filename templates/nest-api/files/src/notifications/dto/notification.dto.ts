@@ -1,17 +1,11 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsBoolean } from 'class-validator';
-import { ValidateOptional } from 'common/validators';
-import { CommonFiltersDto } from 'common/dto';
+import { z } from 'zod';
+import { CommonFilters } from 'common/dto';
 
-export class NotificationFiltersDto extends CommonFiltersDto {
-	@ApiPropertyOptional({
-		description: 'Return only unread notifications',
-		example: true
-	})
-	@ValidateOptional()
-	// Query strings arrive as text; coerce the usual truthy spellings.
-	@Transform(({ value }) => value === true || value === 'true' || value === '1')
-	@IsBoolean()
-	unread?: boolean;
-}
+export const NotificationFilters = CommonFilters.extend({
+	// "true"/"1"/"yes"/"on" and their opposites; anything else is rejected.
+	unread: z
+		.stringbool()
+		.optional()
+		.meta({ description: 'Return only unread notifications', example: true })
+});
+export type NotificationFilters = z.output<typeof NotificationFilters>;

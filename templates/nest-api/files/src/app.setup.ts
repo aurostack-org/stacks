@@ -1,9 +1,8 @@
 import {
 	BadRequestException,
-	ClassSerializerInterceptor,
 	INestApplication,
-	ValidationError,
-	ValidationPipe,
+	StandardSchemaSerializerInterceptor,
+	StandardSchemaValidationPipe,
 	VersioningType,
 	Logger
 } from '@nestjs/common';
@@ -12,12 +11,10 @@ import { HttpAdapterHost, Reflector } from '@nestjs/core';
 import helmet from 'helmet';
 import express from 'express';
 import expressBasicAuth from 'express-basic-auth'; // @feature openapi, queue, observability
-import { useContainer } from 'class-validator';
 import { apiReference } from '@scalar/nestjs-api-reference'; // @feature openapi
 import { AuthService } from '@thallesp/nestjs-better-auth'; // @feature openapi
-import { Logger as PinoLogger } from 'nestjs-pino'; // @feature observability
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { join } from 'path';
-import { AppModule } from 'app.module';
 import {
 	PrismaClientKnownRequestExceptionFilter,
 	PrismaClientValidationExceptionFilter
@@ -33,12 +30,10 @@ export const enableVersioning = (app: INestApplication) => {
 	});
 };
 
-// @feature:start observability
 export const usePinoLogger = (app: INestApplication) => {
 	const logger = app.get(PinoLogger);
 	app.useLogger(logger);
 };
-// @feature:end
 
 export const setStatic = (app: INestApplication) => {
 	app.use(express.static(join(__dirname, '..', '..', 'public')));
@@ -58,38 +53,37 @@ export const enableJsonBodyParser = (app: INestApplication) => {
 	});
 };
 
-// binds ValidationPipe to the entire application
+/**
+ * Validate every `@Body/@Query/@Param({ schema })` against its Zod schema; the
+ * handler receives the schema's output (coerced, defaulted, transformed).
+ * Failures keep the API's error contract: one 400 whose message is
+ * `Validation: <field>: <first problem>`.
+ */
 export const useGlobalPipes = (app: INestApplication) => {
 	app.useGlobalPipes(
-		new ValidationPipe({
-			transform: true,
-			whitelist: true,
-			forbidNonWhitelisted: true,
-			stopAtFirstError: true,
-			exceptionFactory: (errors: ValidationError[] = []) => {
-				if (errors.length === 0) {
-					return new BadRequestException('Validation failed');
-				}
+		new StandardSchemaValidationPipe({
+			exceptionFactory: (issues) => {
+				const [first] = issues;
+				if (!first) return new BadRequestException('Validation failed');
 
-				if (!errors[0].constraints) {
-					return new BadRequestException('Validation failed');
-				}
-
-				const message = Object.values(errors[0].constraints).flat()[0];
-				return new BadRequestException(`Validation: ${message}`);
+				const path = (first.path ?? [])
+					.map((segment) =>
+						typeof segment === 'object' ? segment.key : segment
+					)
+					.join('.');
+				return new BadRequestException(
+					`Validation: ${path ? `${path}: ` : ''}${first.message}`
+				);
 			}
 		})
 	);
 };
 
-// enable Dependency Injection for class-validator
-export const useClassValidatorContainer = (app: INestApplication) => {
-	useContainer(app.select(AppModule), { fallbackOnErrors: true });
-};
-
-// apply transform to all responses
+// Serialize responses through the schema a handler declares with @Returns().
 export const useGlobalInterceptors = (app: INestApplication) => {
-	app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+	app.useGlobalInterceptors(
+		new StandardSchemaSerializerInterceptor(app.get(Reflector))
+	);
 };
 
 // apply PrismaClientExceptionFilter to entire application,
@@ -155,9 +149,7 @@ export const enableOpenAPI = async (app: INestApplication) => {
 	const auth = app.get(AuthService);
 	const document = SwaggerModule.createDocument(app, SWAGGER_OPTIONS);
 	SwaggerModule.setup('/openapi', app, document, {
-		customSiteTitle: config.app.name,
-		customCssUrl: '/css/theme-flattop.css',
-		customfavIcon: '/images/logo_mark.png'
+		customSiteTitle: config.app.name
 	});
 
 	const authSchema = await auth.api.generateOpenAPISchema();

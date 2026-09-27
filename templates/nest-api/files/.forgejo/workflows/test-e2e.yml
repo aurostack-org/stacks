@@ -61,12 +61,15 @@ jobs:
       - name: Fetch secrets
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
-          INFISICAL_API_URL: https://secrets.aurostack.org
+          INFISICAL_API_URL: https://inf.aurostack.co
         run: yarn secrets -e test
 
+      # Point the fetched env at this job's service containers. Whole-line
+      # replacements, so they apply whatever host, port or credentials the
+      # vault's test env holds.
       - name: Fix service URLs for CI
         run: |
-          sed -i 's/localhost:5421/database:5432/g' .env.test
+          sed -i "s|^DATABASE_URL=.*|DATABASE_URL='postgresql://root:Secretto123@database:5432/starter-db'|" .env.test
           sed -i "s/^REDIS_HOST=.*/REDIS_HOST='redis'/" .env.test
           sed -i "s/^REDIS_PORT=.*/REDIS_PORT='6379'/" .env.test
 

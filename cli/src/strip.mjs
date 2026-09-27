@@ -21,8 +21,9 @@
  * `!` negates: `@feature:start realtime, notifications` keeps the block if
  * either is on; `@feature:start !realtime` keeps it only when realtime is off.
  *
- * JSON files cannot carry comments, so package.json / tsconfig.json are edited
- * through manifest-declared key lists instead — see `jsonSurgery` in generate.mjs.
+ * Strict JSON cannot carry comments, so package.json is pruned through the
+ * manifest's per-feature `packageJson` lists instead — see `prunePackageJson`
+ * in generate.mjs. JSONC files (tsconfig.json) take markers like any other.
  */
 
 const START = /@feature:start\b/;

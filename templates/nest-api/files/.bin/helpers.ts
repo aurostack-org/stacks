@@ -31,8 +31,8 @@ export abstract class Argv {
 		return ['test', 'testing'].includes(env)
 			? 'test'
 			: ['prod', 'production'].includes(env)
-			? 'prod'
-			: 'dev';
+				? 'prod'
+				: 'dev';
 	}
 
 	clear() {

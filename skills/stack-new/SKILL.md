@@ -77,7 +77,7 @@ Print the template's `nextSteps`, then say plainly:
 - which features are in and which were left out;
 - that `.env` was seeded from `.env.example` and **still holds placeholders** —
   `DATABASE_URL`, `BETTER_AUTH_SECRET` and any credentials must be set before
-  the app will boot, because config is Joi-validated at startup and a missing
+  the app will boot, because config is Zod-validated at startup and a missing
   variable fails the process immediately;
 - for `nest-api`: `yarn dc:up` starts Postgres and Redis, then `yarn db:migrate`
   creates the initial migration. The template ships **no** migrations — the

@@ -11,7 +11,7 @@ const contextFor = (user?: Partial<SocketUser>) =>
 		switchToWs: () => ({
 			getClient: () => ({ data: user ? { user } : {} })
 		})
-	} as unknown as ExecutionContext);
+	}) as unknown as ExecutionContext;
 
 const guardWith = (required: unknown) => {
 	const reflector = {

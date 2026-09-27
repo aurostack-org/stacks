@@ -1,11 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
 import { faker as F } from '@faker-js/faker';
 
-export class FileEntity {
-	@ApiProperty({ example: F.image.avatar() })
-	path: string;
-
-	constructor(file: string) {
-		this.path = file;
-	}
-}
+export const FileEntity = z
+	.object({ path: z.string().meta({ example: F.image.avatar() }) })
+	.meta({ id: 'FileEntity' });
+export type FileEntity = z.input<typeof FileEntity>;

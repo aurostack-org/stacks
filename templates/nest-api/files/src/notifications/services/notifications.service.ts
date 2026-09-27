@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationType, Prisma } from '@db/client';
 import { PrismaService, LoggerService } from 'common/services';
-import { OKEntity } from 'common/entity';
+import { ok } from 'common/entity';
 import { RealtimeService } from 'realtime/services/realtime.service';
 import {
 	NotificationEntity,
 	PaginatedNotificationEntity,
 	UnreadCountEntity
 } from '../entity';
-import { NotificationFiltersDto } from '../dto';
+import { NotificationFilters } from '../dto';
 
 @Injectable()
 export class NotificationsService {
@@ -36,9 +36,10 @@ export class NotificationsService {
 			const notification = await this.db.notification.create({
 				data: { userId, type, data }
 			});
-			const entity = new NotificationEntity(notification);
-			this.realtime.notifyUser(userId, entity);
-			return entity;
+			// Sockets bypass the HTTP serializer; encode through the same schema so
+			// the event has exactly the shape the REST endpoints return.
+			this.realtime.notifyUser(userId, NotificationEntity.parse(notification));
+			return notification;
 		} catch (err) {
 			this.logger.warn(
 				{ err, userId, type },
@@ -48,7 +49,10 @@ export class NotificationsService {
 		}
 	}
 
-	async list(userId: string, filters: NotificationFiltersDto) {
+	async list(
+		userId: string,
+		filters: NotificationFilters
+	): Promise<PaginatedNotificationEntity> {
 		const where: Prisma.NotificationWhereInput = { userId };
 		if (filters.unread) where.readAt = null;
 
@@ -59,30 +63,29 @@ export class NotificationsService {
 			orderBy: { createdAt: 'desc' }
 		});
 
-		return new PaginatedNotificationEntity({ list, ...meta });
+		return { list, ...meta };
 	}
 
-	async unreadCount(userId: string) {
+	async unreadCount(userId: string): Promise<UnreadCountEntity> {
 		const count = await this.db.notification.count({
 			where: { userId, readAt: null }
 		});
-		return new UnreadCountEntity(count);
+		return { count };
 	}
 
-	async markRead(userId: string, id: string) {
+	async markRead(userId: string, id: string): Promise<NotificationEntity> {
 		const existing = await this.db.notification.findFirst({
 			where: { id, userId }
 		});
 		if (!existing) throw new NotFoundException('Notification not found');
 
 		// Idempotent: re-reading an already-read notification is a no-op.
-		if (existing.readAt) return new NotificationEntity(existing);
+		if (existing.readAt) return existing;
 
-		const updated = await this.db.notification.update({
+		return this.db.notification.update({
 			where: { id },
 			data: { readAt: new Date() }
 		});
-		return new NotificationEntity(updated);
 	}
 
 	async markAllRead(userId: string) {
@@ -90,6 +93,6 @@ export class NotificationsService {
 			where: { userId, readAt: null },
 			data: { readAt: new Date() }
 		});
-		return new OKEntity();
+		return ok();
 	}
 }

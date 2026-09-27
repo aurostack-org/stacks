@@ -29,6 +29,7 @@ import { MediaModule } from 'media/media.module'; // @feature media
 import { RealtimeModule } from 'realtime/realtime.module'; // @feature realtime
 import { NotificationsModule } from 'notifications/notifications.module'; // @feature notifications
 import { AppController } from 'app.controller';
+import { AppResolver } from 'app.resolver'; // @feature graphql
 import { ac, roles } from 'lib/access';
 import { AUTH_RATE_LIMIT_RULES } from 'lib/rate-limit'; // @feature rate-limit
 import { OriginBuilder } from 'common/misc';
@@ -61,9 +62,9 @@ import { OriginBuilder } from 'common/misc';
 					// better-auth's limiter only guards `/auth/*` — every other route
 					// is covered by ThrottlerGuard below.
 					rateLimit: {
-						// Defaults to production-only; we want it in dev too. Tests opt
-						// out so a shared window cannot leak between specs.
-						enabled: config.app.env !== 'test',
+						// better-auth defaults to production-only; follow RATE_LIMIT_ENABLED
+						// instead, so dev is limited too and tests can opt out (and back in).
+						enabled: config.rateLimit.enabled,
 						window: config.rateLimit.authWindow,
 						max: config.rateLimit.authMax,
 						customRules: AUTH_RATE_LIMIT_RULES,
@@ -86,6 +87,9 @@ import { OriginBuilder } from 'common/misc';
 						crossSubDomainCookies: {
 							enabled: true,
 							domain: config.betterAuth.cookieDomain
+						},
+						database: {
+							joins: true
 						}
 					},
 					user: {
@@ -158,10 +162,7 @@ import { OriginBuilder } from 'common/misc';
 					trustedOrigins: [
 						config.app.frontendHost,
 						...OriginBuilder.build(config.app.miscCorsOrigins)
-					],
-					experimental: {
-						joins: true
-					}
+					]
 				}),
 				middleware: (req, _, next) => {
 					req.url = req.originalUrl;
@@ -172,6 +173,7 @@ import { OriginBuilder } from 'common/misc';
 		}),
 		// @feature:start mail
 		MailerModule.forRootAsync({
+			imports: [],
 			inject: [CustomConfigService],
 			useFactory: async (config: CustomConfigService) => ({
 				defaults: {
@@ -237,7 +239,7 @@ import { OriginBuilder } from 'common/misc';
 		GraphQLModule.forRoot<ApolloDriverConfig>({
 			driver: ApolloDriver,
 			autoSchemaFile: true,
-			playground: false
+			graphiql: false
 		}),
 		// @feature:end
 		ScheduleModule.forRoot(), // @feature scheduler
@@ -248,6 +250,7 @@ import { OriginBuilder } from 'common/misc';
 	],
 	controllers: [AppController],
 	providers: [
+		AppResolver, // @feature graphql
 		// Order matters: Nest runs global guards in registration order, so floods
 		// are rejected before AuthGuard does a session lookup and hits the DB.
 		// @feature:start rate-limit

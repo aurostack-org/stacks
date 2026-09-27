@@ -88,7 +88,7 @@
 		},
 		"browser": {
 			"title": "Headless browser (Puppeteer)",
-			"description": "For scraping pages that need JavaScript executed. Heavy — the Docker image grows by roughly 300 MB.",
+			"description": "For scraping pages that need JavaScript executed. Heavy — the Docker image grows by roughly 800 MB (Chromium and its fonts).",
 			"files": [
 				"src/utils/browser.ts"
 			],

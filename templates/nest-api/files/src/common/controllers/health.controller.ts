@@ -7,17 +7,21 @@ import {
 	DiskHealthIndicator,
 	MemoryHealthIndicator
 } from '@nestjs/terminus';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler'; // @feature rate-limit
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { Op } from 'common/decorators';
 import { CustomConfigService } from '../services';
 import { PrismaHealthIndicator } from '../misc';
 
+const MB = 1024 * 1024;
+
 @ApiTags('App')
 @Controller({ path: 'health', version: VERSION_NEUTRAL })
+// @feature:start rate-limit
 // Probed on a fixed interval by orchestrators; throttling it would take the
 // service out of rotation under exactly the load it exists to report on.
 @SkipThrottle()
+// @feature:end
 export class HealthController {
 	constructor(
 		private health: HealthCheckService,
@@ -34,15 +38,16 @@ export class HealthController {
 	@HealthCheck()
 	@AllowAnonymous()
 	async check() {
+		const { heapMaxMb, rssMaxMb, diskThreshold, diskPath } = this.config.health;
 		return this.health.check([
 			() => this.http.pingCheck('http', this.config.app.host),
 			() => this.prisma.isHealthy('database'),
-			() => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
-			() => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
+			() => this.memory.checkHeap('memory_heap', heapMaxMb * MB),
+			() => this.memory.checkRSS('memory_rss', rssMaxMb * MB),
 			() =>
 				this.disk.checkStorage('disk_storage', {
-					thresholdPercent: 0.8,
-					path: '/'
+					thresholdPercent: diskThreshold,
+					path: diskPath
 				})
 		]);
 	}

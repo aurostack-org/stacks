@@ -1,31 +1,27 @@
 import { Factory } from 'fishery';
-import {
-	plainToInstance,
-	ClassConstructor,
-	ClassTransformOptions
-} from 'class-transformer';
-import { validate as dtoValidate } from 'class-validator';
-import { CommonFiltersDto } from 'common/dto';
-import { UserFiltersDto } from 'users/dto';
+import type { z } from 'zod';
+import { CommonFilters } from 'common/dto';
+import { UserFilters } from 'users/dto'; // @feature users
 
 export class Dto {
-	static async parse<T extends object, V>(
-		cls: ClassConstructor<T>,
-		plain: V,
-		options?: ClassTransformOptions
-	) {
-		const dto = plainToInstance(cls, plain, options);
-		return await dtoValidate(dto);
+	/**
+	 * Run a request schema over `plain` the way the validation pipe does, and
+	 * return the Zod result (`success`, then `data` or `error`).
+	 */
+	static parse<T extends z.ZodType>(schema: T, plain: unknown) {
+		return schema.safeParse(plain);
 	}
 
 	static get commonFilters() {
-		return Factory.define<CommonFiltersDto>(() => ({}));
+		return Factory.define<CommonFilters>(() => ({}));
 	}
 
+	// @feature:start users
 	static get userFilters() {
-		return Factory.define<UserFiltersDto>(() => ({
+		return Factory.define<UserFilters>(() => ({
 			page: 1,
 			limit: 10
 		}));
 	}
+	// @feature:end
 }

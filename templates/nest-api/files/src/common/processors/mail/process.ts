@@ -1,5 +1,5 @@
 import { Job } from 'bullmq';
-import { ISendMailOptions } from '@nestjs-modules/mailer/dist/interfaces/send-mail-options.interface';
+import { ISendMailOptions } from '@nestjs-modules/mailer';
 import { render } from '@react-email/render';
 import Activation from '@emails/activation';
 import ActivationTwofa from '@emails/activation-twofa';

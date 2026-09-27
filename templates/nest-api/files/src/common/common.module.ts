@@ -1,7 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus'; // @feature observability
-import { MetricsModule, LoggerModule } from './modules'; // @feature observability
+import { LoggerModule } from './modules';
+import { MetricsModule } from './modules'; // @feature observability
 // The queue module itself is generic; here it is only needed to register the
 // `mail` queue, so it rides on the mail feature.
 import { QueueModule } from './modules'; // @feature mail
@@ -17,11 +18,6 @@ import { RedisThrottlerStorage } from './services'; // @feature rate-limit
 import { FeatureFlagService } from './services'; // @feature feature-flags
 import { HealthController } from './controllers'; // @feature observability
 import { MailProcessor } from './processors'; // @feature mail
-import {
-	UniqueValidator,
-	ExistsValidator,
-	ExistsArrayValidator
-} from './validators';
 import { FeatureFlagGuard } from './guards'; // @feature feature-flags
 import { PrismaHealthIndicator } from './misc'; // @feature observability
 import Config from './services/config.service';
@@ -36,15 +32,12 @@ import Config from './services/config.service';
 	imports: [
 		ConfigModule.forRoot({
 			load: [Config.getVariables],
-			validationSchema: Config.schema,
-			validationOptions: {
-				abortEarly: true
-			}
+			validationSchema: Config.schema
 		}),
+		LoggerModule,
 		// @feature:start observability
 		TerminusModule,
 		MetricsModule,
-		LoggerModule,
 		// @feature:end
 		QueueModule.register('mail') // @feature mail
 	],
@@ -57,9 +50,6 @@ import Config from './services/config.service';
 		GeneratorService,
 		PrismaService,
 		CustomAuthService,
-		UniqueValidator,
-		ExistsValidator,
-		ExistsArrayValidator,
 		CacheService, // @feature cache
 		MailService, // @feature mail
 		MailProcessor, // @feature mail
@@ -73,9 +63,6 @@ import Config from './services/config.service';
 		GeneratorService,
 		PrismaService,
 		CustomAuthService,
-		UniqueValidator,
-		ExistsValidator,
-		ExistsArrayValidator,
 		CacheService, // @feature cache
 		MailService, // @feature mail
 		RedisThrottlerStorage, // @feature rate-limit

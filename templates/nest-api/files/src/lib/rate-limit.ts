@@ -18,11 +18,3 @@ export const AUTH_RATE_LIMIT_RULES: Record<string, AuthRateLimitRule> = {
 	'/forget-password': { window: 3600, max: 3 },
 	'/reset-password': { window: 3600, max: 5 }
 };
-
-/**
- * Longest window across the rules above. Storage entries are given this TTL —
- * expiring sooner would reset a counter mid-window and weaken the limit.
- */
-export const AUTH_RATE_LIMIT_MAX_WINDOW = Math.max(
-	...Object.values(AUTH_RATE_LIMIT_RULES).map((rule) => rule.window)
-);

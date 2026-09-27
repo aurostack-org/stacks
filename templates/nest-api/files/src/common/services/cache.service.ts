@@ -68,7 +68,7 @@ export class CacheService implements OnModuleDestroy {
 
 		try {
 			return JSON.parse(cached) as T;
-		} catch (_) {
+		} catch {
 			return cached as T;
 		}
 	}

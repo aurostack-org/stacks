@@ -13,7 +13,7 @@
 
 # ---------- deps ----------
 # Manifests only, so `yarn install` re-runs solely when a dependency changes.
-FROM aurostack.org/wesnetech/nodejs:24 AS deps
+FROM aurostack.dev/wesnetech/nodejs:24 AS deps
 WORKDIR /repo
 
 COPY package.json yarn.lock .yarnrc.yml turbo.json ./
@@ -32,7 +32,7 @@ COPY packages/ui/package.json     packages/ui/
 RUN corepack enable && yarn install --immutable
 
 # ---------- build ----------
-FROM aurostack.org/wesnetech/nodejs:24 AS build
+FROM aurostack.dev/wesnetech/nodejs:24 AS build
 WORKDIR /repo
 ENV NODE_ENV=production
 # Each stage is a fresh image, so corepack has to be enabled again here —
