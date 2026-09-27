@@ -11,7 +11,7 @@
 		"build": "nest build",
 		"gen": "nest generate",
 		"lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" --no-error-on-unmatched-pattern",
 		"email:dev": "email dev -p 5003",
 		"secrets": "ts-node .bin/secrets",
 		"db:generate": "ts-node ./.bin/db.ts",

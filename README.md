@@ -63,6 +63,31 @@ claude --plugin-dir ./stacks    # try skill edits without reinstalling
 `package.json` holds the version; the plugin manifests repeat it, and
 `stack doctor` fails if they drift.
 
+### Releasing
+
+```sh
+npm version patch        # or minor / major: bumps package.json and the plugin
+                         # manifests in one commit, tagged vX.Y.Z
+git push --follow-tags
+```
+
+The tag runs the full CI (`.github/workflows/ci.yml`: every template's key
+variants generated with `--strict`, then typechecked, linted, built and tested,
+plus the Docker images), then `release.yml` stages the version on npm and
+creates the GitHub release. The Claude Code plugin updates from the same
+commit.
+
+A staged version goes live only once a maintainer approves it with 2FA:
+
+```sh
+npm stage list @aurostack/stacks
+npm stage approve <stage-id>     # or npmjs.com → the package → Staged Packages
+```
+
+CI authenticates as an npm **trusted publisher** (no token): repository
+`aurostack-org/stacks`, workflow `release.yml`, environment `npm`, allowed to
+stage only. The `npm` GitHub environment is restricted to `v*` tags.
+
 ## The templates
 
 | Template | What you get |

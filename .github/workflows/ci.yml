@@ -1,0 +1,211 @@
+name: CI
+
+# Every template is a runnable app, so CI generates the variants that matter
+# and builds, lints and tests what comes out — the same checks `stack doctor`
+# can't do on its own. Release reuses this workflow before publishing.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '24'
+  # `stack new` runs each template's post-generation hooks; the last one makes
+  # the scaffold's first commit, which needs an identity.
+  GIT_AUTHOR_NAME: CI
+  GIT_AUTHOR_EMAIL: ci@users.noreply.github.com
+  GIT_COMMITTER_NAME: CI
+  GIT_COMMITTER_EMAIL: ci@users.noreply.github.com
+  # Generated projects live outside the checkout so Yarn and the linters never
+  # mistake this repo's package.json for theirs.
+  APP: /tmp/stack-ci/app
+
+jobs:
+  cli:
+    name: CLI, manifests and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: stack doctor (versions + every template)
+        run: node cli/stack.mjs doctor
+
+      - name: npm package holds every template file and nothing private
+        run: node scripts/check-package.mjs
+
+  nest-api:
+    name: nest-api (${{ matrix.variant }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: default, args: '', tests: true }
+          - { variant: every feature, args: --all, tests: true }
+          - { variant: without media, args: --without media, tests: true }
+          - { variant: without observability, args: --without observability, tests: true }
+          - { variant: without users, args: --without users, tests: true }
+          - { variant: minimal, args: '--without users,media,observability', tests: true }
+          - { variant: without testing, args: --without testing, tests: false }
+    # Ports and credentials match the templates' .env.test.example.
+    services:
+      postgres:
+        image: postgres:15.3
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: main
+        ports: ['5499:5432']
+        options: >-
+          --health-cmd "pg_isready -U root -d main"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4.1
+        ports: ['6399:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: /tmp/stack-ci/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+        working-directory: ${{ github.workspace }}
+
+      - name: Generate
+        working-directory: ${{ github.workspace }}
+        run: node cli/stack.mjs new nest-api "$APP" --name ci-app ${{ matrix.args }} --strict
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Build
+        run: yarn build
+      - name: Lint
+        run: npx eslint "{src,test}/**/*.ts"
+
+      - name: Unit tests
+        if: matrix.tests
+        run: yarn test
+      - name: E2E tests
+        if: matrix.tests
+        run: |
+          npx dotenv -e .env.test -- npx prisma db push
+          yarn test:e2e
+
+  node-worker:
+    name: node-worker (${{ matrix.variant }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: default
+            args: ''
+          - variant: every feature
+            args: --all
+          - variant: without pm2
+            args: --without pm2
+    defaults:
+      run:
+        working-directory: /tmp/stack-ci/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+        working-directory: ${{ github.workspace }}
+      - name: Generate
+        working-directory: ${{ github.workspace }}
+        run: node cli/stack.mjs new node-worker "$APP" --name ci-worker ${{ matrix.args }} --strict
+      - run: yarn typecheck
+      - run: yarn lint
+      - run: yarn format:check
+      - run: yarn build
+
+  py-worker:
+    name: py-worker
+    needs: cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Generate (creates the virtualenv and installs requirements)
+        run: node cli/stack.mjs new py-worker "$APP" --name ci-py --strict
+      - name: Compile every module
+        working-directory: /tmp/stack-ci/app
+        run: .venv/bin/python -m compileall -q -x '/\.venv/' .
+
+  react:
+    name: ${{ matrix.template }} (${{ matrix.variant }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [react-app, react-monorepo]
+        variant: [default, every feature]
+        include:
+          - variant: default
+            args: ''
+          - variant: every feature
+            args: --all
+    defaults:
+      run:
+        working-directory: /tmp/stack-ci/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+        working-directory: ${{ github.workspace }}
+      - name: Generate
+        working-directory: ${{ github.workspace }}
+        run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-web ${{ matrix.args }} --strict
+      - run: yarn typecheck
+      - run: yarn lint
+      - run: yarn build
+
+  docker:
+    name: Docker image (${{ matrix.template }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [nest-api, node-worker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+      # The Dockerfiles install from the lockfile, which the yarn install hook writes.
+      - name: Generate
+        run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-image --strict
+      - name: Build
+        run: docker build -t ci-image "$APP"

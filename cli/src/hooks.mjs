@@ -5,14 +5,21 @@
  * expression, so `yarn prisma generate` only runs for stacks that kept Prisma.
  * A non-optional hook that fails aborts with a non-zero exit; an optional one
  * warns and continues, because a missing `yarn` on the machine should not throw
- * away an otherwise-correct scaffold.
+ * away an otherwise-correct scaffold. `strict` (`stack new --strict`, used in
+ * CI) makes every failure fatal.
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { evalExpr } from './strip.mjs';
 import { interpolate } from './tokens.mjs';
 
-export function runHooks(manifest, target, enabled, ctx, { skip = false, log }) {
+export function runHooks(
+	manifest,
+	target,
+	enabled,
+	ctx,
+	{ skip = false, strict = false, log }
+) {
 	const hooks = manifest.hooks || [];
 	const results = [];
 
@@ -41,7 +48,7 @@ export function runHooks(manifest, target, enabled, ctx, { skip = false, log }) 
 			continue;
 		}
 
-		if (hook.optional) {
+		if (hook.optional && !strict) {
 			log(`  warning  "${label}" failed (exit ${res.status}) — continuing`);
 			results.push({ command, status: 'failed-optional' });
 			continue;

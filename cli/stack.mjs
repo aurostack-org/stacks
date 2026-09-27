@@ -82,6 +82,7 @@ ${c.bold('new options')}
   --without a,b        Disable default features (repeatable)
   --all                Enable every optional feature
   --no-hooks           Skip install / prisma generate / git init
+  --strict             Fail on any hook failure (for CI)
   --force              Write into a non-empty directory
   --dry-run            Print what would happen, write nothing
 
@@ -207,6 +208,7 @@ function cmdNew(args, values) {
 		log(c.bold('  Post-generation'));
 		runHooks(manifest, target, enabled, ctx, {
 			skip: values['no-hooks'],
+			strict: Boolean(values.strict),
 			log
 		});
 		log('');
@@ -627,6 +629,7 @@ function main() {
 			prune: { type: 'boolean' },
 			'dry-run': { type: 'boolean' },
 			'no-hooks': { type: 'boolean' },
+			strict: { type: 'boolean' },
 			help: { type: 'boolean', short: 'h' },
 			version: { type: 'boolean', short: 'v' }
 		}
