@@ -1,7 +1,7 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter } from 'react-router';
-import { ProtectedRoute, signOut, useAuth } from '@inerds/auth';
-import { AppShell, AppShellSkeleton, ErrorBoundary, NotFound, RouteFallback } from '@inerds/layouts';
+import { ProtectedRoute, signOut, useAuth } from '@acme/auth';
+import { AppShell, AppShellSkeleton, ErrorBoundary, NotFound, RouteFallback } from '@acme/layouts';
 import { NAV_ITEMS } from './nav';
 import { HomeRoute } from '../routes/home';
 

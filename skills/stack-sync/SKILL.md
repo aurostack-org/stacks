@@ -8,10 +8,35 @@ description: Fold improvements from a live codebase back into the house template
 Templates live in `~/.claude/stacks/templates/<name>/` as a `template.json`
 manifest plus a `files/` tree. The CLI is `~/.claude/stacks/cli/stack.mjs`.
 
-`stack extract` is deliberately mechanical: it copies whatever the manifest's
-include/exclude globs say. Deciding what is generic infrastructure and what is
-domain code is judgement work, and that judgement lives in the manifest — **your
+`stack extract` is deliberately mechanical: it copies whatever the template's
+source config says. Deciding what is generic infrastructure and what is domain
+code is judgement work, and that judgement lives in the source config — **your
 job here, not the CLI's.**
+
+The source config is maintainer-local, never in the public manifests: a
+gitignored `stacks.local.json` at the repo root (or the file `STACKS_LOCAL`
+names), one entry per template:
+
+```json
+{
+  "sources": {
+    "nest-api": {
+      "path": "~/Projects/my-app/backend",
+      "include": ["src/**", "test/**", "package.json"],
+      "exclude": ["src/billing/**"],
+      "skipDirs": ["logs"],
+      "replacements": [
+        { "from": "My App", "to": "Acme Corp" },
+        { "from": "my-app", "to": "acme" }
+      ]
+    }
+  }
+}
+```
+
+`replacements` map the source app's own identifiers onto the template's working
+ones (`Acme Corp` / `AcmeCorp` / `acme-corp` / `acme`, longest first) as files
+come in, so a refresh never reintroduces the source's product name.
 
 ## Refreshing a template from its source repo
 
@@ -34,7 +59,7 @@ After any extract, run `stack doctor <template>` before considering it done.
 
 ## Derived templates
 
-`react-app` has no `source` block. It is derived from `react-monorepo` — same
+`react-app` has no source config. It is derived from `react-monorepo` — same
 stack, one deployment — by `templates/react-app/derive.sh`, which re-flattens
 `packages/*` into `src/shared/*`, rewrites `@scope/x` to `@/shared/x`, and then
 copies `overrides/` on top.
@@ -151,8 +176,8 @@ migration a generated project creates.
 
 ## Adding a whole new template
 
-Create `templates/<name>/template.json` with `source` globs pointing at the real
-repo, run `extract`, then work through the composition roots as above. Copy the
+Create `templates/<name>/template.json`, add a `stacks.local.json` entry whose
+globs point at the real repo, run `extract`, then work through the composition roots as above. Copy the
 shape of an existing manifest — `nest-api` is the most complete. Register
 nothing else; `list`, `info`, `new` and `doctor` discover templates from the
 directory.

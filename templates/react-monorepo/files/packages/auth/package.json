@@ -1,5 +1,5 @@
 {
-	"name": "@inerds/auth",
+	"name": "@acme/auth",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -21,7 +21,7 @@
 		"react-router": ">=7"
 	},
 	"devDependencies": {
-		"@inerds/config": "workspace:*",
+		"@acme/config": "workspace:*",
 		"@reduxjs/toolkit": "^2.12.0",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",

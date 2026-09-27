@@ -253,7 +253,7 @@ export default defineConfig(({ mode }) => {
 					name: BRAND.name,
 					// short_name is what shows under the home-screen icon.
 					short_name: BRAND.name,
-					description: 'Investment Nerds.',
+					description: 'Acme Corp.',
 					start_url: '/',
 					scope: '/',
 					display: 'standalone',
@@ -295,7 +295,7 @@ export default defineConfig(({ mode }) => {
 							urlPattern: ({ sameOrigin, url }) => sameOrigin && url.pathname.startsWith('/assets/'),
 							handler: 'CacheFirst',
 							options: {
-								cacheName: 'inerds-assets',
+								cacheName: 'acme-assets',
 								expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
 								cacheableResponse: { statuses: [0, 200] }
 							}
@@ -310,7 +310,7 @@ export default defineConfig(({ mode }) => {
 							urlPattern: ({ request, sameOrigin }) => !sameOrigin && request.destination === 'image',
 							handler: 'StaleWhileRevalidate',
 							options: {
-								cacheName: 'inerds-remote-images',
+								cacheName: 'acme-remote-images',
 								expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 },
 								cacheableResponse: { statuses: [0, 200] }
 							}

@@ -1,4 +1,4 @@
-import { Spinner } from '@inerds/ui';
+import { Spinner } from '@acme/ui';
 
 /** Full-page loading state (route suspense / session bootstrap). */
 export function Loading({ label = 'Loading…' }: { label?: string }) {

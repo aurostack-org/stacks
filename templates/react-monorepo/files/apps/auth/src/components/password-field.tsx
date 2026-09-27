@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react';
 import { useField } from 'formik';
-import { FormError, Input, Label, cn } from '@inerds/ui';
+import { FormError, Input, Label, cn } from '@acme/ui';
 import { scorePassword } from '../lib/password-strength';
 
 function StrengthMeter({ score }: { score: number }) {

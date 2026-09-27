@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
-import { configureApi } from '@inerds/api';
-import { AuthProvider, configureAuth, redirectToLogin } from '@inerds/auth';
-import { MetaProvider, ThemeProvider, Toaster, installZodErrorMap } from '@inerds/ui';
+import { configureApi } from '@acme/api';
+import { AuthProvider, configureAuth, redirectToLogin } from '@acme/auth';
+import { MetaProvider, ThemeProvider, Toaster, installZodErrorMap } from '@acme/ui';
 import { store } from './store';
 
 const env = import.meta.env;

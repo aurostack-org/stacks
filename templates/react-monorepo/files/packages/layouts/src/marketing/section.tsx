@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@inerds/ui';
+import { cn } from '@acme/ui';
 
 export type SectionTone = 'page' | 'band';
 

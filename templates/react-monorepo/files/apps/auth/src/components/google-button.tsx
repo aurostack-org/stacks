@@ -1,4 +1,4 @@
-import { Button } from '@inerds/ui';
+import { Button } from '@acme/ui';
 
 function GoogleIcon() {
 	return (

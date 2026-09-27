@@ -12,6 +12,6 @@ generator client {
 generator dbml {
   provider            = "prisma-dbml-generator"
   output              = "../"
-  projectName         = "InvestmentNerds"
+  projectName         = "AcmeCorp"
   projectDatabaseType = "PostgreSQL"
 }

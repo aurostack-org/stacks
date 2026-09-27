@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"display": "Inerds React (apps + UI libraries)",
+	"display": "Acme React (apps + UI libraries)",
 	"extends": "./base.json",
 	"compilerOptions": {
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],

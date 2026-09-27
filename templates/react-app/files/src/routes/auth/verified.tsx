@@ -17,7 +17,7 @@ export function VerifiedRoute() {
 				<div className="flex flex-col gap-2">
 					<h2 className="font-display text-2xl font-black text-foreground">You're verified</h2>
 					<p className="text-sm text-body">
-						Your email is confirmed. Continue to Investment Nerds — everything is ready for you.
+						Your email is confirmed. Continue to Acme Corp — everything is ready for you.
 					</p>
 				</div>
 				{/* No explicit fallback: `configureAuth({ defaultRedirect })` already

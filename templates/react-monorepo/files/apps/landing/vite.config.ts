@@ -1,6 +1,6 @@
-import { defineAppConfig } from '@inerds/config/vite';
-import { BRAND } from '@inerds/ui/brand';
-import { THEME_COLORS } from '@inerds/ui/theme-colors';
+import { defineAppConfig } from '@acme/config/vite';
+import { BRAND } from '@acme/ui/brand';
+import { THEME_COLORS } from '@acme/ui/theme-colors';
 import { loadEnv, type Plugin } from 'vite';
 import { PRODUCTION_ORIGIN, SEO_ROUTES, absoluteUrl, normalizeOrigin } from './src/features/seo/routes';
 
@@ -18,7 +18,7 @@ import { PRODUCTION_ORIGIN, SEO_ROUTES, absoluteUrl, normalizeOrigin } from './s
  */
 function seoFiles(origin: string, indexable: boolean): Plugin {
 	return {
-		name: 'inerds:seo-files',
+		name: 'acme:seo-files',
 		apply: 'build',
 		generateBundle() {
 			// Non-production keeps the same file, inverted: a dev server serving the
@@ -96,7 +96,7 @@ const SECURITY_TXT_EXPIRES = '2027-09-01T00:00:00.000Z';
  */
 function securityTxt(origin: string, indexable: boolean, securityEmail: string): Plugin {
 	return {
-		name: 'inerds:security-txt',
+		name: 'acme:security-txt',
 		apply: 'build',
 		generateBundle() {
 			if (!indexable || !origin || !securityEmail) return;
@@ -105,7 +105,7 @@ function securityTxt(origin: string, indexable: boolean, securityEmail: string):
 				type: 'asset',
 				fileName: '.well-known/security.txt',
 				source: [
-					'# Investment Nerds — Security & Responsible Disclosure',
+					'# Acme Corp — Security & Responsible Disclosure',
 					`# Full policy: ${absoluteUrl('/security', origin)}`,
 					'',
 					`Contact: mailto:${securityEmail}`,
@@ -132,7 +132,7 @@ function securityTxt(origin: string, indexable: boolean, securityEmail: string):
  */
 function noindexOffProduction(indexable: boolean): Plugin {
 	return {
-		name: 'inerds:noindex-off-production',
+		name: 'acme:noindex-off-production',
 		apply: 'build',
 		transformIndexHtml() {
 			if (indexable) return;

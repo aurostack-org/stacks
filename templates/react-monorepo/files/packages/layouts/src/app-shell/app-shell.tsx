@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { Menu, X } from 'lucide-react';
-import { Logo, cn } from '@inerds/ui';
+import { Logo, cn } from '@acme/ui';
 import { UserMenu, type ShellUser } from './user-menu';
 
 export type NavItem = {
@@ -29,7 +29,7 @@ type AppShellProps = {
 	nav: NavItem[];
 	user: ShellUser;
 	onSignOut: () => void;
-	/** Brand lockup at the top of the sidebar. Defaults to the Investment Nerds mark. */
+	/** Brand lockup at the top of the sidebar. Defaults to the Acme Corp mark. */
 	brand?: ReactNode;
 	/** Locked "Coming soon" nav entries shown below the main nav. */
 	comingSoon?: ComingSoonItem[];

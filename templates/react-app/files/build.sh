@@ -15,7 +15,7 @@ set -eu
 
 ENV_NAME="${1:-dev}"
 TAG="${2:-latest}"
-REGISTRY="${REGISTRY:-registry.example.com/inerds}"
+REGISTRY="${REGISTRY:-registry.example.com/acme}"
 IMAGE="${IMAGE:-web}"
 PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
 

@@ -1,4 +1,4 @@
-import { Skeleton } from '@inerds/ui';
+import { Skeleton } from '@acme/ui';
 
 /**
  * Route-agnostic placeholder for a page's content area: heading, a summary card,

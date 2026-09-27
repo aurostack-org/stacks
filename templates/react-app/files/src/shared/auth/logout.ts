@@ -1,6 +1,6 @@
 import { getAuthClient } from './client';
 
-export const AUTH_BROADCAST_CHANNEL = 'inerds-auth';
+export const AUTH_BROADCAST_CHANNEL = 'acme-auth';
 
 /** Notify other tabs/apps of an auth event (e.g. logout) so stale UI can react. */
 export function broadcastAuthEvent(type: 'login' | 'logout'): void {

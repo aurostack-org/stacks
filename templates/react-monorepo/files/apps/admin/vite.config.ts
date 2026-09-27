@@ -1,6 +1,6 @@
-import { defineAppConfig } from '@inerds/config/vite';
-import { BRAND } from '@inerds/ui/brand';
-import { THEME_COLORS } from '@inerds/ui/theme-colors';
+import { defineAppConfig } from '@acme/config/vite';
+import { BRAND } from '@acme/ui/brand';
+import { THEME_COLORS } from '@acme/ui/theme-colors';
 
 // `themeColors` substitutes %THEME_LIGHT%/%THEME_DARK% into index.html — the
 // pre-paint theme script and the `html` background both need them, and HTML

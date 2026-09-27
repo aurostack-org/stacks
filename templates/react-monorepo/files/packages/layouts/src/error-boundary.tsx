@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Button } from '@inerds/ui';
+import { Button } from '@acme/ui';
 import { StateScreen } from './states/state-screen';
 
 type ErrorBoundaryProps = {

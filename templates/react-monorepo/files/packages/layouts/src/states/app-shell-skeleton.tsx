@@ -1,4 +1,4 @@
-import { Logo, Skeleton } from '@inerds/ui';
+import { Logo, Skeleton } from '@acme/ui';
 import { PageSkeleton } from './page-skeleton';
 
 /**

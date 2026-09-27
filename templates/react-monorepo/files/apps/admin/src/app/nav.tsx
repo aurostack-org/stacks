@@ -1,5 +1,5 @@
 import { Home, Settings } from 'lucide-react';
-import type { NavItem } from '@inerds/layouts';
+import type { NavItem } from '@acme/layouts';
 
 /**
  * Drives the app shell's navigation. Keep it in step with `router.tsx` — the

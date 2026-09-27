@@ -1,4 +1,4 @@
-import { Button, PageMeta } from '@inerds/ui';
+import { Button, PageMeta } from '@acme/ui';
 import { StateScreen } from './state-screen';
 
 /** 404 — no matching route. */

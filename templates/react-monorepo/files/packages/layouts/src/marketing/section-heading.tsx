@@ -1,4 +1,4 @@
-import { cn } from '@inerds/ui';
+import { cn } from '@acme/ui';
 
 type SectionHeadingProps = {
 	eyebrow?: string;

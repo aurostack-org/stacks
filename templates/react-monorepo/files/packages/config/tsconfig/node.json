@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"display": "Inerds Node (build scripts, vite config)",
+	"display": "Acme Node (build scripts, vite config)",
 	"extends": "./base.json",
 	"compilerOptions": {
 		"lib": ["ES2023"],

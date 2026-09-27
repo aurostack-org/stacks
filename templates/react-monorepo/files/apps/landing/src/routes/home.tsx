@@ -1,5 +1,5 @@
-import { PageMeta } from '@inerds/ui';
-import { Section, SectionHeading } from '@inerds/layouts';
+import { PageMeta } from '@acme/ui';
+import { Section, SectionHeading } from '@acme/layouts';
 
 export function HomeRoute() {
 	return (
@@ -8,7 +8,7 @@ export function HomeRoute() {
 			<PageMeta title="Home" />
 			<Section>
 				<SectionHeading
-					eyebrow="Investment Nerds"
+					eyebrow="Acme Corp"
 					title="Replace this with your hero"
 					lede="One sentence on what this product does, written for someone who has never heard of it."
 				/>

@@ -6,7 +6,7 @@ import { DEFAULT_META, MetaContext, type MetaConfig } from './meta-context';
  * segment. Wrap the app root, above the router.
  *
  * ```tsx
- * <MetaProvider suffix="Investment Nerds Admin">
+ * <MetaProvider suffix="Acme Corp Admin">
  * ```
  */
 export function MetaProvider({

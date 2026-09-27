@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useField } from 'formik';
-import { Checkbox, FormError } from '@inerds/ui';
+import { Checkbox, FormError } from '@acme/ui';
 
 /**
  * Formik-bound checkbox with the design's inline label treatment.

@@ -1,5 +1,5 @@
 {
-	"name": "@inerds/types",
+	"name": "@acme/types",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -21,7 +21,7 @@
 	"devDependencies": {
 		"@hey-api/client-fetch": "^0.5.2",
 		"@hey-api/openapi-ts": "^0.59.1",
-		"@inerds/config": "workspace:*",
+		"@acme/config": "workspace:*",
 		"axios": "^1.7.9",
 		"dotenv": "^16.4.7",
 		"tiny-invariant": "^1.3.3"

@@ -1,9 +1,9 @@
 # Test stack. Separate containers and host ports from compose.yml, so running
 # the suite never touches the database you are developing against.
-name: inerds-test
+name: acme-test
 services:
   wait:
-    container_name: inerds-test-wait
+    container_name: acme-test-wait
     image: ufoscout/docker-compose-wait:latest
     command: sh -c '/wait && exit'
     environment:
@@ -14,7 +14,7 @@ services:
       - WAIT_HOSTS=database:5432,redis:6379 # @feature cache
       - WAIT_TIMEOUT=300
   database:
-    container_name: inerds-test-database
+    container_name: acme-test-database
     image: postgres:15.3
     restart: always
     ports:
@@ -25,7 +25,7 @@ services:
       POSTGRES_DB: main
   # @feature:start cache
   redis:
-    container_name: inerds-test-redis
+    container_name: acme-test-redis
     image: redis:7.4.1
     restart: always
     ports:

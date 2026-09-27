@@ -13,44 +13,9 @@
 		"prisma/generated/**",
 		"prisma/generated"
 	],
-	"source": {
-		"path": "~/Projects/inerds/web/collector",
-		"skipDirs": [
-			"migrations",
-			"logs",
-			"tmp",
-			".yarn",
-			"prisma"
-		],
-		"include": [
-			"src/**",
-			".bin/**",
-			"package.json",
-			"tsconfig.json",
-			"prisma.config.ts",
-			"ecosystem.config.cjs",
-			"eslint.config.js",
-			".prettierrc",
-			".prettierignore",
-			".nvmrc",
-			".gitignore",
-			"Dockerfile",
-			"Dockerfile.dev",
-			".dockerignore",
-			".forgejo/**"
-		],
-		"exclude": [
-			"src/lib/**",
-			"src/workers/stock-price-bars/**",
-			"CLAUDE.md",
-			"**/.env",
-			"**/.env.*",
-			".yarnrc.yml"
-		]
-	},
 	"replacements": [
 		{
-			"from": "Investment Nerds",
+			"from": "Acme Corp",
 			"to": "{{Name}}"
 		},
 		{
@@ -58,7 +23,7 @@
 			"to": "{{name}}"
 		},
 		{
-			"from": "inerds",
+			"from": "acme",
 			"to": "{{name}}"
 		}
 	],

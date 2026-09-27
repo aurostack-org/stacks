@@ -16,23 +16,23 @@
 	],
 	"replacements": [
 		{
-			"from": "inerds-app",
+			"from": "acme-app",
 			"to": "{{name}}"
 		},
 		{
-			"from": "Investment Nerds",
+			"from": "Acme Corp",
 			"to": "{{Name}}"
 		},
 		{
-			"from": "InvestmentNerds",
+			"from": "AcmeCorp",
 			"to": "{{pascal}}"
 		},
 		{
-			"from": "investment-nerds",
+			"from": "acme-corp",
 			"to": "{{name}}"
 		},
 		{
-			"from": "inerds",
+			"from": "acme",
 			"to": "{{name}}"
 		}
 	],

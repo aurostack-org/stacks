@@ -1,9 +1,9 @@
-import config from '@inerds/config/eslint';
+import config from '@acme/config/eslint';
 
 export default [
 	...config,
 	{
-		// @inerds/ui is a component library consumed as source, not a Vite HMR
+		// @acme/ui is a component library consumed as source, not a Vite HMR
 		// boundary — exporting cva variants (buttonVariants) alongside components
 		// is intentional, so the Fast Refresh rule doesn't apply here.
 		rules: {

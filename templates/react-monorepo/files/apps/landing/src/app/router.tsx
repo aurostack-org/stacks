@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router';
-import { ErrorBoundary, MarketingLayout, NotFound } from '@inerds/layouts';
+import { ErrorBoundary, MarketingLayout, NotFound } from '@acme/layouts';
 import { HomeRoute } from '../routes/home';
 
 /**

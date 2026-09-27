@@ -10,12 +10,18 @@ type ExampleJob = { id: string };
  * `src/index.ts`, so nothing begins consuming while the process is still wiring
  * itself up.
  */
-export const example = createWorker<ExampleJob>(EXAMPLE_QUEUE, async (job: Job<ExampleJob>) => {
-	logger.info({ jobId: job.id, data: job.data }, 'Processing job');
+export const example = createWorker<ExampleJob>(
+	EXAMPLE_QUEUE,
+	async (job: Job<ExampleJob>) => {
+		logger.info({ jobId: job.id, data: job.data }, 'Processing job');
 
-	// Do the work here. Throwing marks the job failed and lets BullMQ retry it
-	// according to the producer's attempts/backoff settings — so throw on a
-	// genuine failure rather than swallowing it and returning normally.
+		// Do the work here. Throwing marks the job failed and lets BullMQ retry it
+		// according to the producer's attempts/backoff settings — so throw on a
+		// genuine failure rather than swallowing it and returning normally.
 
-	return { ok: true };
-});
+		// Report progress as the work advances; the dashboard and producers see it.
+		await job.updateProgress(100);
+
+		return { ok: true };
+	}
+);

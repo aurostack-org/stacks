@@ -1,8 +1,9 @@
 {
-	"name": "stacks",
+	"name": "aurostack",
 	"description": "House project templates and the generator that stamps them out.",
 	"owner": {
-		"name": "wc"
+		"name": "Aurostack",
+		"url": "https://github.com/aurostack-org"
 	},
 	"plugins": [
 		{
@@ -11,8 +12,9 @@
 			"version": "0.1.0",
 			"source": "./",
 			"author": {
-				"name": "wc"
-			}
+				"name": "Aurostack"
+			},
+			"license": "MIT"
 		}
 	]
 }

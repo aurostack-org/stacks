@@ -1,5 +1,5 @@
 {
-	"extends": "@inerds/config/tsconfig/react.json",
+	"extends": "@acme/config/tsconfig/react.json",
 	"compilerOptions": {
 		"types": ["vite/client"],
 		"paths": {

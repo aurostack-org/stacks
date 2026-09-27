@@ -17,3 +17,6 @@ dev-dist/
 # OS / editor
 .DS_Store
 *.log
+
+# Maintainer-only extraction config (source paths, include/exclude, identifier map).
+stacks.local.json

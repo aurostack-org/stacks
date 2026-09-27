@@ -7,13 +7,9 @@
  *   "title": "NestJS API",
  *   "description": "...",
  *   "defaults": { "port": 5000 },
- *   "source": {                       // used by `stack extract` only
- *     "path": "~/Projects/inerds/web/backend",
- *     "include": ["src/common/**", ...],
- *     "exclude": ["src/portfolios/**", ...]
- *   },
+ *   // extraction config lives in stacks.local.json — see sourceConfig()
  *   "replacements": [ { "from": "...", "to": "{{name}}" } ],
- *   "pathReplacements": [ { "from": "inerds", "to": "{{name}}" } ],
+ *   "pathReplacements": [ { "from": "acme", "to": "{{name}}" } ],
  *   "features": {
  *     "realtime": {
  *       "title": "Socket.IO realtime layer",
@@ -40,6 +36,26 @@ import os from 'node:os';
 export function expandHome(p) {
 	if (!p) return p;
 	return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
+}
+
+/**
+ * Where each template is extracted from lives outside the public manifests, in
+ * a maintainer-local `stacks.local.json` (gitignored) or the file named by
+ * STACKS_LOCAL: `{ "sources": { "<template>": { path, include, exclude,
+ * skipDirs, replacements } } }`. A manifest's own `source` block is still
+ * honoured when the local file has no entry for that template.
+ */
+export function sourceConfig(root, manifest) {
+	const file = process.env.STACKS_LOCAL || path.join(root, 'stacks.local.json');
+	let local = {};
+	if (fs.existsSync(file)) {
+		try {
+			local = JSON.parse(fs.readFileSync(file, 'utf8'));
+		} catch (err) {
+			throw new Error(`Could not parse ${file}: ${err.message}`);
+		}
+	}
+	return local.sources?.[manifest.name] ?? manifest.source ?? {};
 }
 
 export function templatesDir(root) {

@@ -4,8 +4,11 @@
  * This is the *maintenance* direction. It is deliberately mechanical — it
  * copies whatever the manifest's include/exclude globs say and nothing more.
  * Deciding which files are generic infrastructure and which are domain code is
- * judgement work; that judgement is recorded in template.json's `source` block
- * (and refined by the /stack-sync skill), not re-derived on every run.
+ * judgement work; that judgement is recorded in the template's source config
+ * (stacks.local.json, see `sourceConfig`) and refined by the /stack-sync skill,
+ * not re-derived on every run. The config's `replacements` map the source's
+ * own identifiers onto the template's (e.g. its product name onto `Acme Corp`)
+ * as text files come in, so a refresh never reintroduces them.
  *
  * Extraction never deletes hand-written template files that the source does not
  * have — `@feature` annotations added to a composition root would be lost
@@ -26,8 +29,16 @@ import {
 } from './fsx.mjs';
 import { expandHome } from './manifest.mjs';
 
-export function extract(manifest, { source, overwrite = false, dryRun = false, prune = false }) {
-	const src = expandHome(source || manifest.source?.path);
+export function extract(
+	manifest,
+	{ source, config = {}, overwrite = false, dryRun = false, prune = false }
+) {
+	const src = expandHome(source || config.path);
+	const translate = (text) =>
+		(config.replacements || []).reduce(
+			(out, { from, to }) => out.split(from).join(to),
+			text
+		);
 	if (!src) {
 		// A template with `derivedFrom` is maintained from another template rather
 		// than from a live repo, so pointing extract at a source directory is not
@@ -41,19 +52,19 @@ export function extract(manifest, { source, overwrite = false, dryRun = false, p
 			);
 		}
 		throw new Error(
-			`Template "${manifest.name}" declares no source.path; pass --source <dir>.`
+			`No source path for "${manifest.name}": add it to stacks.local.json or pass --source <dir>.`
 		);
 	}
 	if (!exists(src)) {
 		throw new Error(`Source directory does not exist: ${src}`);
 	}
 
-	const include = matcher(manifest.source?.include || ['**']);
-	const exclude = matcher(manifest.source?.exclude || []);
+	const include = matcher(config.include || ['**']);
+	const exclude = matcher(config.exclude || []);
 	const filesDir = manifest.__filesDir;
 
 	const candidates = walk(src, {
-		skipDirs: [...DEFAULT_SKIP_DIRS, ...(manifest.source?.skipDirs || [])]
+		skipDirs: [...DEFAULT_SKIP_DIRS, ...(config.skipDirs || [])]
 	});
 
 	const report = { copied: [], conflicts: [], skipped: 0, orphans: [] };
@@ -76,7 +87,7 @@ export function extract(manifest, { source, overwrite = false, dryRun = false, p
 		if (exists(to) && !overwrite) {
 			// Only flag a genuine difference — an identical file is not a conflict.
 			const same = isTextFile(rel)
-				? readText(to) === readText(from)
+				? readText(to) === translate(readText(from))
 				: fs.readFileSync(to).equals(fs.readFileSync(from));
 			if (!same) report.conflicts.push(destRel);
 			else report.skipped++;
@@ -84,7 +95,7 @@ export function extract(manifest, { source, overwrite = false, dryRun = false, p
 		}
 
 		if (!dryRun) {
-			if (isTextFile(rel)) writeText(to, readText(from));
+			if (isTextFile(rel)) writeText(to, translate(readText(from)));
 			else copyBinary(from, to);
 		}
 		report.copied.push(destRel);

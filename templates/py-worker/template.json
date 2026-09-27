@@ -2,48 +2,18 @@
 	"name": "py-worker",
 	"version": "0.1.0",
 	"title": "Python background worker",
-	"description": "A Python BullMQ worker that consumes the same Redis queues your Node API produces to, with SQLAlchemy models over the same Postgres database, structured logging and graceful shutdown. For work that belongs in Python \u2014 data processing, ML, scientific libraries.",
+	"description": "A Python BullMQ worker that consumes the same Redis queues your Node API produces to, with SQLAlchemy models over the same Postgres database, structured logging and graceful shutdown. For work that belongs in Python — data processing, ML, scientific libraries.",
 	"aliasRoots": {},
 	"generatedPaths": [
 		"**/__pycache__/**"
 	],
-	"source": {
-		"path": "~/Projects/inerds/web/py",
-		"skipDirs": [
-			"input",
-			"output",
-			"logs",
-			".vscode"
-		],
-		"include": [
-			"worker.py",
-			"config.py",
-			"utils/**",
-			"workers/**",
-			"requirements.txt",
-			".env.example",
-			".gitignore",
-			"Dockerfile",
-			".dockerignore",
-			".forgejo/**",
-			"README.md",
-			"models/decorators.py",
-			"models/mixins.py",
-			"models/enums.py"
-		],
-		"exclude": [
-			"test.py",
-			"**/.env",
-			"**/__pycache__/**"
-		]
-	},
 	"replacements": [
 		{
-			"from": "Investment Nerds",
+			"from": "Acme Corp",
 			"to": "{{Name}}"
 		},
 		{
-			"from": "inerds",
+			"from": "acme",
 			"to": "{{name}}"
 		}
 	],
@@ -110,7 +80,7 @@
 		}
 	],
 	"nextSteps": [
-		"Edit .env \u2014 DB_* and REDIS_* must match the API's.",
+		"Edit .env — DB_* and REDIS_* must match the API's.",
 		"source .venv/bin/activate",
 		"python worker.py"
 	]

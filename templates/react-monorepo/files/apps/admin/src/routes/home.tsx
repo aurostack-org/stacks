@@ -1,4 +1,4 @@
-import { PageMeta } from '@inerds/ui';
+import { PageMeta } from '@acme/ui';
 
 export function HomeRoute() {
 	return (

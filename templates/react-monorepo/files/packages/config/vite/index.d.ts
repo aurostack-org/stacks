@@ -5,7 +5,7 @@ export interface DefineAppConfigOptions {
 	rootDir: string;
 	/**
 	 * Theme background colours, used to substitute `%THEME_LIGHT%` / `%THEME_DARK%`
-	 * in `index.html`. Pass `THEME_COLORS` from `@inerds/ui/theme-colors`; omitting
+	 * in `index.html`. Pass `THEME_COLORS` from `@acme/ui/theme-colors`; omitting
 	 * it leaves the placeholders in the markup.
 	 */
 	themeColors?: { light: string; dark: string };

@@ -12,11 +12,11 @@
 		"secrets": "node .bin/secrets.js"
 	},
 	"dependencies": {
-		"@inerds/api": "workspace:*",
-		"@inerds/auth": "workspace:*",
-		"@inerds/layouts": "workspace:*",
-		"@inerds/types": "workspace:*",
-		"@inerds/ui": "workspace:*",
+		"@acme/api": "workspace:*",
+		"@acme/auth": "workspace:*",
+		"@acme/layouts": "workspace:*",
+		"@acme/types": "workspace:*",
+		"@acme/ui": "workspace:*",
 		"@reduxjs/toolkit": "^2.12.0",
 		"lucide-react": "^1.17.0",
 		"react": "^19.2.6",
@@ -25,7 +25,7 @@
 		"react-router": "^8.2.0"
 	},
 	"devDependencies": {
-		"@inerds/config": "workspace:*",
+		"@acme/config": "workspace:*",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"vite": "^8.0.12"

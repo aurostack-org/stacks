@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@inerds/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui';
 
 type AuthCardProps = {
 	title: string;

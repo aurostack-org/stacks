@@ -1,4 +1,4 @@
-import { getAuthClient } from '@inerds/auth';
+import { getAuthClient } from '@acme/auth';
 
 type ActionResult = { error?: string };
 

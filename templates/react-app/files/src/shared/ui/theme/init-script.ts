@@ -13,7 +13,7 @@ import { THEME_COLORS } from './theme-colors';
  * keep in sync. `THEME_STORAGE_KEY` still is one — it has to be a literal here.
  */
 export const themeInitScript = `(function(){try{
-var m=localStorage.getItem('inerds-theme');
+var m=localStorage.getItem('acme-theme');
 var d=m==='dark'||((m===null||m==='system')&&matchMedia('(prefers-color-scheme: dark)').matches);
 var r=document.documentElement;
 r.classList.toggle('dark',d);

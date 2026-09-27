@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Mail } from 'lucide-react';
-import { getAuthClient } from '@inerds/auth';
-import { AuthLayout } from '@inerds/layouts';
-import { Alert, Button, Card } from '@inerds/ui';
+import { getAuthClient } from '@acme/auth';
+import { AuthLayout } from '@acme/layouts';
+import { Alert, Button, Card } from '@acme/ui';
 import { SubmitButton } from '../components/submit-button';
 import { resendVerification, verifyEmailToken } from '../lib/auth-actions';
 import { AUTH_URL } from '../lib/env';

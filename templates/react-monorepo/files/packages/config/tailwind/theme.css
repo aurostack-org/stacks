@@ -1,14 +1,14 @@
 /**
- * Investment Nerds — shared Tailwind v4 brand tokens (Wise-derived design system).
- * Source of truth: Claude Design "Investment Nerds Design System" (colors_and_type.css).
+ * Acme Corp — shared Tailwind v4 brand tokens (Wise-derived design system).
+ * Source of truth: Claude Design "Acme Corp Design System" (colors_and_type.css).
  *
- * Consume in an app's main CSS entry (via @inerds/ui/globals.css):
+ * Consume in an app's main CSS entry (via @acme/ui/globals.css):
  *   @import 'tailwindcss';
- *   @import '@inerds/config/tailwind.css';
+ *   @import '@acme/config/tailwind.css';
  *
  * These are the BRAND tokens (palette shades, ink, semantic, fonts). The shadcn
  * semantic layer (--background/--foreground/--primary/...) is layered on top by
- * @inerds/ui/globals.css, which owns light/dark theming.
+ * @acme/ui/globals.css, which owns light/dark theming.
  *
  * Brand rule: Wise Green (#9fe870) is the CTA accent ONLY — never a success color.
  */

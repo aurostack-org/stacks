@@ -23,8 +23,8 @@ const CORS_ORIGINS = !IS_DEV
 // @feature:start openapi
 const createDocumentBuilder = () => {
 	const builder = new DocumentBuilder()
-		.setTitle('Investment Nerds API')
-		.setDescription('API for the Investment Nerds application')
+		.setTitle('Acme Corp API')
+		.setDescription('API for the Acme Corp application')
 		.setVersion('1.0')
 		.addTag('App')
 		.addTag('Users', 'User management and authentication')

@@ -1,5 +1,5 @@
-import { makeStore } from '@inerds/api';
-import { authReducer } from '@inerds/auth';
+import { makeStore } from '@acme/api';
+import { authReducer } from '@acme/auth';
 import { useDispatch, useSelector } from 'react-redux';
 
 export const store = makeStore({

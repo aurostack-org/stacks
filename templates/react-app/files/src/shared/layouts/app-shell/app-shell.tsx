@@ -29,7 +29,7 @@ type AppShellProps = {
 	nav: NavItem[];
 	user: ShellUser;
 	onSignOut: () => void;
-	/** Brand lockup at the top of the sidebar. Defaults to the Investment Nerds mark. */
+	/** Brand lockup at the top of the sidebar. Defaults to the Acme Corp mark. */
 	brand?: ReactNode;
 	/** Locked "Coming soon" nav entries shown below the main nav. */
 	comingSoon?: ComingSoonItem[];

@@ -9,10 +9,10 @@
  *    visitor sees before React mounts.
  *
  * Keep this file free of React imports: `vite.config.ts` imports it directly
- * via the `@inerds/ui/brand` subpath, exactly as it does `./theme-colors`.
+ * via the `@acme/ui/brand` subpath, exactly as it does `./theme-colors`.
  */
 export const BRAND = {
-	name: 'Investment Nerds',
+	name: 'Acme Corp',
 	/** The console needs its own suffix so an admin can tell two tabs apart. */
-	adminName: 'Investment Nerds Admin'
+	adminName: 'Acme Corp Admin'
 } as const;

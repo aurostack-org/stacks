@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Logo, LogoMark, ThemeToggle } from '@inerds/ui';
+import { Logo, LogoMark, ThemeToggle } from '@acme/ui';
 
 /**
  * Brand-panel watermark, per the design system's Watermark guideline: one large

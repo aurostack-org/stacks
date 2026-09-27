@@ -1,5 +1,5 @@
 {
-	"name": "@inerds/layouts",
+	"name": "@acme/layouts",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -11,7 +11,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@inerds/ui": "workspace:*",
+		"@acme/ui": "workspace:*",
 		"lucide-react": "^1.17.0"
 	},
 	"peerDependencies": {
@@ -20,7 +20,7 @@
 		"react-router": ">=7"
 	},
 	"devDependencies": {
-		"@inerds/config": "workspace:*",
+		"@acme/config": "workspace:*",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"react": "^19.2.6",

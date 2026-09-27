@@ -16,7 +16,7 @@ set -eu
 APP="${1:-}"
 ENV_NAME="${2:-dev}"
 TAG="${3:-latest}"
-REGISTRY="aurostack.dev/investment-nerds"
+REGISTRY="aurostack.dev/acme-corp"
 PLATFORMS="linux/amd64,linux/arm64"
 
 case "$APP" in

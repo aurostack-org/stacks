@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router';
-import { NotFound } from '@inerds/layouts';
+import { NotFound } from '@acme/layouts';
 import { ForgotPasswordRoute } from '../routes/forgot-password';
 import { LoginRoute } from '../routes/login';
 import { ResetPasswordRoute } from '../routes/reset-password';

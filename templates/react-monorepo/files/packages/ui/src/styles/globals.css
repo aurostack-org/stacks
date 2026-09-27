@@ -1,13 +1,13 @@
 /**
- * @inerds/ui global stylesheet — the single CSS entry every app imports:
- *   import '@inerds/ui/globals.css';
+ * @acme/ui global stylesheet — the single CSS entry every app imports:
+ *   import '@acme/ui/globals.css';
  *
- * Layers: self-hosted font -> Tailwind v4 -> brand tokens (@inerds/config) ->
+ * Layers: self-hosted font -> Tailwind v4 -> brand tokens (@acme/config) ->
  * shadcn semantic tokens (light/dark) mapped for utilities. Design language =
  * Wise: flat surfaces, no shadows, 1px ink hairlines, 24px radii, green CTA only.
  */
 @import 'tailwindcss';
-@import '@inerds/config/tailwind.css';
+@import '@acme/config/tailwind.css';
 
 /**
  * Inter, self-hosted. This was a `@import url(fonts.googleapis.com/...)` on the
@@ -76,7 +76,7 @@
 
 	/*
 	 * Secondary text + link colours. These start life as fixed brand tokens in
-	 * @inerds/config, which means they never changed with the theme — #454745
+	 * @acme/config, which means they never changed with the theme — #454745
 	 * body text sits at ~2:1 on a dark card, and the #163300 link is effectively
 	 * invisible. Redeclared here (light values identical to the brand ones, so
 	 * light mode is unchanged) and overridden in .dark below.
@@ -232,7 +232,7 @@
 
 	/*
 	 * Re-point the secondary-text utilities (`text-body`, `text-mute`,
-	 * `text-ink-deep`) at the theme-aware vars above. @inerds/config defines these
+	 * `text-ink-deep`) at the theme-aware vars above. @acme/config defines these
 	 * as fixed brand hexes, and this layer wins — so `text-body` finally responds
 	 * to the theme instead of staying #454745 on a dark card.
 	 */

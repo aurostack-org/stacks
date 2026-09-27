@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { Button, Spinner, cn } from '@inerds/ui';
+import { Button, Spinner, cn } from '@acme/ui';
 
 type SubmitButtonProps = ComponentProps<typeof Button> & {
 	loading?: boolean;

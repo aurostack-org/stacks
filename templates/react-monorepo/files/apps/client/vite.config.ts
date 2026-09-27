@@ -1,6 +1,6 @@
-import { defineAppConfig } from '@inerds/config/vite';
-import { BRAND } from '@inerds/ui/brand';
-import { THEME_COLORS } from '@inerds/ui/theme-colors';
+import { defineAppConfig } from '@acme/config/vite';
+import { BRAND } from '@acme/ui/brand';
+import { THEME_COLORS } from '@acme/ui/theme-colors';
 import { VitePWA } from 'vite-plugin-pwa'; // @feature pwa
 
 // `themeColors` substitutes %THEME_LIGHT%/%THEME_DARK% into index.html — here the
@@ -37,7 +37,7 @@ export default defineAppConfig({
 				name: BRAND.name,
 				// short_name is what shows under the home-screen icon.
 				short_name: BRAND.name,
-				description: 'Investment Nerds.',
+				description: 'Acme Corp.',
 				start_url: '/',
 				scope: '/',
 				display: 'standalone',
@@ -82,7 +82,7 @@ export default defineAppConfig({
 						urlPattern: ({ sameOrigin, url }) => sameOrigin && url.pathname.startsWith('/assets/'),
 						handler: 'CacheFirst',
 						options: {
-							cacheName: 'inerds-assets',
+							cacheName: 'acme-assets',
 							expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
 							cacheableResponse: { statuses: [0, 200] }
 						}
@@ -98,7 +98,7 @@ export default defineAppConfig({
 						urlPattern: ({ request, sameOrigin }) => !sameOrigin && request.destination === 'image',
 						handler: 'StaleWhileRevalidate',
 						options: {
-							cacheName: 'inerds-remote-images',
+							cacheName: 'acme-remote-images',
 							expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 },
 							cacheableResponse: { statuses: [0, 200] }
 						}

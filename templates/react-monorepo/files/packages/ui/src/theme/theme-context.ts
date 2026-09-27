@@ -22,7 +22,7 @@ export type ThemeContextValue = {
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 /** localStorage key. Per-origin, so each app remembers its own choice. */
-export const THEME_STORAGE_KEY = 'inerds-theme';
+export const THEME_STORAGE_KEY = 'acme-theme';
 
 /**
  * Re-exported so consumers keep importing theme colours from one place. The

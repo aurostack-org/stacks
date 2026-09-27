@@ -10,7 +10,7 @@ import { MetricsInterceptor } from '../interceptors';
 @Module({
 	imports: [
 		PrometheusModule.register({
-			defaultLabels: { app: 'inerds-api' },
+			defaultLabels: { app: 'acme-api' },
 			defaultMetrics: { enabled: true },
 			controller: MetricsController
 		})

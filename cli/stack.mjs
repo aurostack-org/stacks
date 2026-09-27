@@ -21,7 +21,8 @@ import {
 	listTemplates,
 	resolveFeatures,
 	featureSummary,
-	expandHome
+	expandHome,
+	sourceConfig
 } from './src/manifest.mjs';
 import { generate } from './src/generate.mjs';
 import { extract } from './src/extract.mjs';
@@ -81,7 +82,7 @@ ${c.bold('new options')}
   --dry-run            Print what would happen, write nothing
 
 ${c.bold('extract options')}
-  --source <dir>       Override the manifest's source.path
+  --source <dir>       Override the source path in stacks.local.json
   --overwrite          Replace template files that already differ
   --prune              Delete template files the source no longer has
   --dry-run
@@ -89,7 +90,7 @@ ${c.bold('extract options')}
 ${c.bold('Examples')}
   stack new nest-api ~/Projects/acme/api --with realtime,media
   stack new react-monorepo ~/Projects/acme/web --without landing
-  stack extract nest-api --source ~/Projects/inerds/web/backend
+  stack extract nest-api --source ~/Projects/acme/web/backend
 `;
 
 function cmdList() {
@@ -222,15 +223,17 @@ function cmdExtract(args, values) {
 		process.exit(1);
 	}
 	const manifest = loadManifest(ROOT, templateName);
+	const config = sourceConfig(ROOT, manifest);
 	const report = extract(manifest, {
 		source: values.source,
+		config,
 		overwrite: Boolean(values.overwrite),
 		prune: Boolean(values.prune),
 		dryRun: Boolean(values['dry-run'])
 	});
 
 	log('');
-	log(`  ${c.bold(manifest.name)} ← ${c.cyan(expandHome(values.source || manifest.source?.path))}`);
+	log(`  ${c.bold(manifest.name)} ← ${c.cyan(expandHome(values.source || config.path))}`);
 	log(`  ${c.dim('copied')}     ${report.copied.length}`);
 	log(`  ${c.dim('unchanged')}  ${report.skipped}`);
 	if (report.conflicts.length) {

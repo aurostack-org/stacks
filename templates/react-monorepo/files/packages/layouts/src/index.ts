@@ -1,4 +1,4 @@
-// @inerds/layouts — shared layouts and state components.
+// @acme/layouts — shared layouts and state components.
 export { AuthLayout } from './auth-layout';
 export { Loading } from './states/loading';
 export { AppShellSkeleton } from './states/app-shell-skeleton';

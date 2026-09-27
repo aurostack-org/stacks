@@ -1,4 +1,4 @@
-// @inerds/auth — centralized authentication on Better Auth.
+// @acme/auth — centralized authentication on Better Auth.
 export { configureAuth } from './config';
 export { initAuthClient, getAuthClient } from './client';
 export type { AuthClient } from './client';

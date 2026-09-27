@@ -1,5 +1,5 @@
-import { makeStore } from '@inerds/api';
-import { authReducer } from '@inerds/auth';
+import { makeStore } from '@acme/api';
+import { authReducer } from '@acme/auth';
 import { useDispatch, useSelector } from 'react-redux';
 
 // `auth` holds the Better Auth session so the header can swap its CTAs for a

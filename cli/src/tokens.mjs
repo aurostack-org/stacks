@@ -1,7 +1,7 @@
 /**
  * Token substitution.
  *
- * Template files hold real, working identifiers (`@inerds/ui`, `Investment
+ * Template files hold real, working identifiers (`@acme/ui`, `Investment
  * Nerds`, `starter`) rather than `__PLACEHOLDER__` sludge — that is what keeps
  * a template compilable and testable in place. Renaming therefore happens by
  * declared search/replace pairs in template.json, whose replacement side may

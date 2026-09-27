@@ -6,119 +6,29 @@
 	"defaults": {
 		"port": 5000
 	},
-	"source": {
-		"path": "~/Projects/inerds/web/backend",
-		"skipDirs": [
-			"logs",
-			"migrations",
-			"public",
-			"seeders",
-			"docs",
-			"graphify-out"
-		],
-		"include": [
-			"src/**",
-			".bin/**",
-			"test/**",
-			"emails/**",
-			"__mocks__/**",
-			"prisma/schema/auth.prisma",
-			"prisma/schema/base.prisma",
-			"prisma/schema/enum.prisma",
-			"prisma/schema/notification.prisma",
-			"prisma.config.ts",
-			"package.json",
-			".gitignore",
-			"nest-cli.json",
-			"tsconfig.json",
-			"tsconfig.build.json",
-			"global.d.ts",
-			"vitest.config.ts",
-			"eslint.config.mjs",
-			".prettierrc",
-			".swcrc",
-			".nvmrc",
-			".watchmanconfig",
-			".npmrc.example",
-			"compose.yml",
-			"compose.test.yml",
-			"Dockerfile",
-			".dockerignore",
-			".forgejo/**",
-			".yarnrc.yml"
-		],
-		"exclude": [
-			".bin/import-price-bars.ts",
-			"src/portfolios/**",
-			"src/stocks/**",
-			"src/exchanges/**",
-			"src/brokers/**",
-			"src/currencies/**",
-			"src/waitlist/**",
-			"src/contact/**",
-			"src/forum/**",
-			"src/feature-requests/**",
-			"src/moderation/**",
-			"src/data-api/**",
-			"src/common/services/currency.service.ts",
-			"src/common/services/country.service.ts",
-			"src/common/services/logo.service.ts",
-			"src/common/services/beta-attributes.service.ts",
-			"src/common/controllers/currency.controller.ts",
-			"src/common/controllers/country.controller.ts",
-			"src/common/entity/currency.entity.ts",
-			"src/common/entity/country.entity.ts",
-			"emails/contact-message.tsx",
-			"emails/waitlist-confirm.tsx",
-			"emails/waitlist-welcome.tsx",
-			"__mocks__/contact-message.js",
-			"__mocks__/waitlist-confirm.js",
-			"__mocks__/waitlist-welcome.js",
-			"test/portfolio*.spec.ts",
-			"test/stock*.spec.ts",
-			"test/forum*.spec.ts",
-			"test/moderation*.spec.ts",
-			"test/feature-requests*.spec.ts",
-			"test/exchanges.spec.ts",
-			"test/brokers.spec.ts",
-			"test/waitlist.spec.ts",
-			"test/contact.spec.ts",
-			"test/corporate-actions.spec.ts",
-			"test/data-api.spec.ts",
-			"test/factory/exchange-rate.mock.ts",
-			"test/countries.spec.ts",
-			"test/currencies.spec.ts",
-			"test/fixtures/**",
-			"src/common/__tests__/country.controller.spec.ts",
-			"src/common/__tests__/country.service.spec.ts",
-			"src/common/__tests__/currency.service.spec.ts",
-			"**/.env",
-			"**/.env.*"
-		]
-	},
 	"replacements": [
 		{
 			"from": "@starter/backend",
 			"to": "@{{scope}}/api"
 		},
 		{
-			"from": "Investment Nerds",
+			"from": "Acme Corp",
 			"to": "{{Name}}"
 		},
 		{
-			"from": "InvestmentNerds",
+			"from": "AcmeCorp",
 			"to": "{{pascal}}"
 		},
 		{
-			"from": "investment-nerds",
+			"from": "acme-corp",
 			"to": "{{name}}"
 		},
 		{
-			"from": "investmentnerds",
+			"from": "acmecorp",
 			"to": "{{name}}"
 		},
 		{
-			"from": "inerds",
+			"from": "acme",
 			"to": "{{name}}"
 		},
 		{

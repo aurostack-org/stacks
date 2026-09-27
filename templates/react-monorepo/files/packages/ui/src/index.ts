@@ -1,4 +1,4 @@
-// @inerds/ui — shared shadcn/ui components (Wise design system), theme, and primitives.
+// @acme/ui — shared shadcn/ui components (Wise design system), theme, and primitives.
 export * from './lib/utils';
 export * from './lib/zod-setup';
 

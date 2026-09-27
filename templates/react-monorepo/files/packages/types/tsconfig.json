@@ -1,5 +1,5 @@
 {
-	"extends": "@inerds/config/tsconfig/base.json",
+	"extends": "@acme/config/tsconfig/base.json",
 	"compilerOptions": {
 		"lib": ["ES2023", "DOM"]
 	},

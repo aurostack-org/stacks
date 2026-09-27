@@ -1,14 +1,14 @@
-# @inerds/types
+# @acme/types
 
 Generated TypeScript types + Zod schemas from the backend OpenAPI document.
-Consumed by `@inerds/api` and the apps, so a stale copy here shows up as a type
+Consumed by `@acme/api` and the apps, so a stale copy here shows up as a type
 error in an app rather than at runtime.
 
 ## Usage
 
 ```ts
-import type { UserEntity, GetUsersResponse } from '@inerds/types';
-import { zUserEntity } from '@inerds/types/zod';
+import type { UserEntity, GetUsersResponse } from '@acme/types';
+import { zUserEntity } from '@acme/types/zod';
 ```
 
 ## Regenerating
@@ -16,7 +16,7 @@ import { zUserEntity } from '@inerds/types/zod';
 Requires the backend's docs credentials in `.env` (see `.env.example`).
 
 ```bash
-yarn workspace @inerds/types gen
+yarn workspace @acme/types gen
 ```
 
 That fetches `openapi.json` from the running backend and runs

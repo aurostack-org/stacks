@@ -11,14 +11,14 @@
 		<meta name="theme-color" content="%THEME_LIGHT%" />
 		<!--
 			Applies the saved (or system) theme before first paint, so the app never
-			flashes light then flips to dark. Mirrors `themeInitScript` in @inerds/ui —
+			flashes light then flips to dark. Mirrors `themeInitScript` in @acme/ui —
 			inlined because it must run before any module loads. Keep the two in sync.
 			%THEME_LIGHT/DARK% come from THEME_COLORS via the shared vite config.
 		-->
 		<script>
 			(function () {
 				try {
-					var m = localStorage.getItem('inerds-theme');
+					var m = localStorage.getItem('acme-theme');
 					var d =
 						m === 'dark' || ((m === null || m === 'system') && matchMedia('(prefers-color-scheme: dark)').matches);
 					var r = document.documentElement;
@@ -41,7 +41,7 @@
 				background: %THEME_DARK%;
 			}
 		</style>
-		<meta name="description" content="Sign in to Investment Nerds." />
+		<meta name="description" content="Sign in to Acme Corp." />
 		<!--
 			Private surface: never indexed. `robots.txt` only discourages crawling,
 			while `noindex` prevents listing, so both are present. This app's routes

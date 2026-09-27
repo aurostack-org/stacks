@@ -8,7 +8,7 @@ export function HomeRoute() {
 			<PageMeta title="Home" />
 			<Section>
 				<SectionHeading
-					eyebrow="Investment Nerds"
+					eyebrow="Acme Corp"
 					title="Replace this with your hero"
 					lede="One sentence on what this product does, written for someone who has never heard of it."
 				/>

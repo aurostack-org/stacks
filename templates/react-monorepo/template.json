@@ -10,88 +10,33 @@
 	"generatedPaths": [
 		"**/node_modules/**"
 	],
-	"source": {
-		"path": "~/Projects/inerds/web/frontend",
-		"skipDirs": [
-			"public",
-			"og",
-			"docker",
-			"logs"
-		],
-		"include": [
-			"package.json",
-			"turbo.json",
-			".gitignore",
-			".editorconfig",
-			".prettierrc",
-			".prettierignore",
-			".nvmrc",
-			".yarnrc.yml",
-			".husky/**",
-			".forgejo/**",
-			"Dockerfile",
-			".dockerignore",
-			"build.sh",
-			"packages/**",
-			"apps/*/package.json",
-			"apps/*/tsconfig.json",
-			"apps/*/vite.config.ts",
-			"apps/*/eslint.config.mjs",
-			"apps/*/.bin/**",
-			"apps/*/src/main.tsx",
-			"apps/*/src/App.tsx",
-			"apps/*/src/vite-env.d.ts",
-			"apps/*/src/app/store.ts",
-			"apps/*/src/lib/env.ts",
-			"apps/auth/src/**",
-			"apps/auth/index.html",
-			"apps/auth/src/app/**"
-		],
-		"exclude": [
-			".husky/_/**",
-			"packages/types/openapi.json",
-			"packages/types/src/types/api/**",
-			"**/.env",
-			"**/.env.*",
-			"**/*.tsbuildinfo",
-			"**/.turbo/**",
-			"apps/*/index.html",
-			"apps/admin/src/app/**",
-			"apps/client/src/app/**",
-			"apps/landing/src/app/**",
-			"apps/admin/src/routes/**",
-			"apps/client/src/routes/**",
-			"apps/landing/src/routes/**",
-			"apps/landing/src/main.tsx",
-			"apps/landing/src/App.tsx",
-			"apps/landing/src/features/**",
-			"packages/types/README.md",
-			"apps/landing/package.json"
-		]
-	},
 	"replacements": [
 		{
-			"from": "@inerds/",
+			"from": "@acme/",
 			"to": "@{{scope}}/"
 		},
 		{
-			"from": "inerds-frontend",
+			"from": "acme-frontend",
 			"to": "{{name}}"
 		},
 		{
-			"from": "Investment Nerds",
+			"from": "Acme Corp",
 			"to": "{{Name}}"
 		},
 		{
-			"from": "InvestmentNerds",
+			"from": "AcmeCorp",
 			"to": "{{pascal}}"
 		},
 		{
-			"from": "investment-nerds",
+			"from": "Acme",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "acme-corp",
 			"to": "{{name}}"
 		},
 		{
-			"from": "inerds",
+			"from": "acme",
 			"to": "{{name}}"
 		}
 	],

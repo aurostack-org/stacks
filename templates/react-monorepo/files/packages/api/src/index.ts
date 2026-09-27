@@ -1,4 +1,4 @@
-// @inerds/api — shared Redux store + RTK Query base + Socket.IO client.
+// @acme/api — shared Redux store + RTK Query base + Socket.IO client.
 export { baseApi } from './base-api';
 export { baseQueryWithReauth } from './base-query';
 export { uploadBaseQuery } from './upload-query';

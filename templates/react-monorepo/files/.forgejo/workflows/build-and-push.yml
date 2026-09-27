@@ -36,8 +36,8 @@ jobs:
           # Derived from `github.repository` (which web-backend's workflow already
           # relies on) rather than `github.repository_owner`, so this doesn't
           # depend on a context variable Forgejo may not populate. This repo is
-          # `investment-nerds/web-frontend`, so OWNER=investment-nerds and the
-          # images land as <registry>/investment-nerds/web-<app>, matching
+          # `acme-corp/web-frontend`, so OWNER=acme-corp and the
+          # images land as <registry>/acme-corp/web-<app>, matching
           # stack/frontend.compose.yml.
           echo "OWNER=$(echo '${{ github.repository }}' | cut -d/ -f1)" >> "$GITHUB_OUTPUT"
 

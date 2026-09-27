@@ -30,7 +30,7 @@ function apiPreconnect(apiUrl) {
 		/* malformed VITE_APP_API_URL — skip rather than emit a broken tag */
 	}
 	return {
-		name: 'inerds:api-preconnect',
+		name: 'acme:api-preconnect',
 		transformIndexHtml: {
 			order: 'pre',
 			handler: () =>
@@ -51,14 +51,14 @@ function apiPreconnect(apiUrl) {
  * hardcoded copies drifting apart; that drift is exactly how the client's PWA
  * manifest once ended up `#ffffff` in both themes.
  *
- * The colours are passed in rather than imported: `@inerds/config` is the lowest
- * layer and must not depend on `@inerds/ui`, which already depends on it.
+ * The colours are passed in rather than imported: `@acme/config` is the lowest
+ * layer and must not depend on `@acme/ui`, which already depends on it.
  *
  * Runs for `vite dev` as well as the build.
  */
 function injectThemeColors(colors) {
 	return {
-		name: 'inerds:inject-theme-colors',
+		name: 'acme:inject-theme-colors',
 		transformIndexHtml: (html) => html.replaceAll('%THEME_LIGHT%', colors.light).replaceAll('%THEME_DARK%', colors.dark)
 	};
 }
@@ -69,25 +69,25 @@ function injectThemeColors(colors) {
  * The static `<title>` is the fallback a visitor sees before React mounts, and
  * on any route that renders no `PageMeta`. It has to match the suffix that
  * `MetaProvider` appends at runtime, and the brand string is passed in from
- * `@inerds/ui/brand` so there is one source rather than a literal per app — four
- * copies of "Inerds" drifting from the real product name is precisely what
+ * `@acme/ui/brand` so there is one source rather than a literal per app — four
+ * copies of "Acme" drifting from the real product name is precisely what
  * MAI-101 was filed about.
  *
  * Passed in rather than imported for the same reason as the theme colours:
- * `@inerds/config` is the lowest layer and must not depend on `@inerds/ui`.
+ * `@acme/config` is the lowest layer and must not depend on `@acme/ui`.
  */
 function injectAppTitle(appTitle) {
 	return {
-		name: 'inerds:inject-app-title',
+		name: 'acme:inject-app-title',
 		transformIndexHtml: (html) => html.replaceAll('%APP_TITLE%', appTitle)
 	};
 }
 
 /**
- * Shared Vite config factory for Inerds apps.
+ * Shared Vite config factory for Acme apps.
  *
  * Usage in an app's `vite.config.ts`:
- *   import { defineAppConfig } from '@inerds/config/vite';
+ *   import { defineAppConfig } from '@acme/config/vite';
  *   export default defineAppConfig({ rootDir: import.meta.dirname });
  *
  * Reads `PORT` and comma-separated `VITE_APP_ALLOWED_HOSTS` from the app's env,

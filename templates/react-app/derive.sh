@@ -14,7 +14,7 @@
 #   apps/client/src/routes/**         ->  src/routes/**
 #   apps/landing/src/...              ->  src/routes/marketing/, src/features/seo/
 #
-# and rewrites `@inerds/x` -> `@/shared/x`.
+# and rewrites `@acme/x` -> `@/shared/x`.
 #
 # A handful of files genuinely differ in a monolith — one origin means the auth
 # guard navigates instead of redirecting across hosts, and the auth screens take
@@ -78,23 +78,23 @@ cp "$SRC/apps/landing/src/routes/home.tsx" "$DST/src/routes/marketing/home.tsx"
 cp "$SRC/apps/landing/src/features/seo/routes.ts" "$DST/src/features/seo/routes.ts"
 
 echo "==> rewriting import specifiers"
-# Longest first: `@inerds/ui/brand` must not be matched by the `@inerds/ui` rule.
+# Longest first: `@acme/ui/brand` must not be matched by the `@acme/ui` rule.
 # `@` resolves to `src` (vite alias + tsconfig paths), so these are valid from
 # any depth and survive a file being moved.
 find "$DST/src" -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) -print0 |
 	xargs -0 sed -i \
-		-e "s#@inerds/ui/theme-colors#@/shared/ui/theme/theme-colors#g" \
-		-e "s#@inerds/ui/globals.css#@/shared/ui/styles/globals.css#g" \
-		-e "s#@inerds/ui/brand#@/shared/ui/meta/brand#g" \
-		-e "s#@inerds/types/zod#@/shared/types/api/zod.gen#g" \
-		-e "s#@inerds/config/tailwind.css#./theme.css#g" \
-		-e "s#@inerds/config#theme.css#g" \
-		-e "s#@inerds/ui#@/shared/ui#g" \
-		-e "s#@inerds/api#@/shared/api#g" \
-		-e "s#@inerds/auth#@/shared/auth#g" \
-		-e "s#@inerds/layouts#@/shared/layouts#g" \
-		-e "s#@inerds/hooks#@/shared/hooks#g" \
-		-e "s#@inerds/types#@/shared/types#g"
+		-e "s#@acme/ui/theme-colors#@/shared/ui/theme/theme-colors#g" \
+		-e "s#@acme/ui/globals.css#@/shared/ui/styles/globals.css#g" \
+		-e "s#@acme/ui/brand#@/shared/ui/meta/brand#g" \
+		-e "s#@acme/types/zod#@/shared/types/api/zod.gen#g" \
+		-e "s#@acme/config/tailwind.css#./theme.css#g" \
+		-e "s#@acme/config#theme.css#g" \
+		-e "s#@acme/ui#@/shared/ui#g" \
+		-e "s#@acme/api#@/shared/api#g" \
+		-e "s#@acme/auth#@/shared/auth#g" \
+		-e "s#@acme/layouts#@/shared/layouts#g" \
+		-e "s#@acme/hooks#@/shared/hooks#g" \
+		-e "s#@acme/types#@/shared/types#g"
 
 # The auth screens moved one level deeper than their components and lib, so
 # their relative imports no longer reach. Anchor them instead.
@@ -108,7 +108,7 @@ sed -i -e "s#'\./types/api#'./api#g" -e "s#under \./types/api#under ./api#" "$DS
 
 # Package barrels name themselves in their header comment.
 find "$DST/src/shared" -type f -name 'index.ts' -print0 |
-	xargs -0 sed -i -e "s#^// @inerds/\([a-z]*\) —#// @/shared/\1 —#"
+	xargs -0 sed -i -e "s#^// @acme/\([a-z]*\) —#// @/shared/\1 —#"
 
 echo "==> applying monolith overrides"
 # One origin, one router: these files diverge from the monorepo on purpose.

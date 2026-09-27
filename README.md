@@ -57,7 +57,7 @@ Generation does four things:
 2. strips `@feature` regions from the files that survive;
 3. prunes `package.json` / `requirements.txt` entries the feature owned — JSON
    cannot carry comments, so those are declared in the manifest instead;
-4. applies the rename map, so `@inerds/ui` becomes `@yourscope/ui`.
+4. applies the rename map, so `@acme/ui` becomes `@yourscope/ui`.
 
 Then the post-generation hooks install dependencies and run the project's own
 `yarn format`. That last step is not cosmetic: deleting a feature leaves code
@@ -111,7 +111,12 @@ stack extract nest-api            # re-copy from the live repo
 stack extract nest-api --prune    # also drop files the source no longer has
 ```
 
-Extraction is deliberately mechanical — it copies what the manifest's globs say.
+Extraction is deliberately mechanical — it copies what the template's source
+config says. That config is maintainer-local: a gitignored `stacks.local.json`
+at the repo root (or the file `STACKS_LOCAL` names) holding, per template, the
+source repo's path, include/exclude globs, and the `replacements` that map the
+source's identifiers onto the template's working ones (`Acme Corp`, `acme`).
+The `/stack-sync` skill documents the format.
 Files it would overwrite are reported as **conflicts** and left alone, because
 those are usually the ones you hand-edited to add markers or strip domain code.
 Files outside the include globs (a hand-written `.env.example`, a template-only
@@ -146,18 +151,18 @@ than at the schema.
 │   ├── stack.mjs       entry point
 │   └── src/            manifest, generate, extract, strip, tokens, hooks
 └── templates/<name>/
-    ├── template.json   features, rename map, source globs, post-gen hooks
+    ├── template.json   features, rename map, post-gen hooks
     └── files/          the runnable superset app
 ```
 
 This directory is its own git repository, pushed to
-[wesscoby/stacks](https://github.com/wesscoby/stacks) — `~/.claude` around it is
+[aurostack-org/stacks](https://github.com/aurostack-org/stacks) — `~/.claude` around it is
 not. Nothing here depends on the path, so it can be cloned anywhere; the CLI
 resolves the templates relative to its own location.
 
 Clone it onto a new machine with:
 
 ```sh
-git clone git@github.com:wesscoby/stacks.git ~/.claude/stacks
+git clone git@github.com:aurostack-org/stacks.git ~/.claude/stacks
 bash ~/.claude/stacks/install.sh
 ```

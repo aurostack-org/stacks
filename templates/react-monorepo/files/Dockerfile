@@ -1,9 +1,9 @@
 # One Dockerfile for all four apps — pick which with `--build-arg APP=<name>`.
 #
 #   docker build --build-arg APP=client \
-#     --build-arg VITE_APP_API_URL=https://api.inerds.site ... -t …/web-client .
+#     --build-arg VITE_APP_API_URL=https://api.acme.site ... -t …/web-client .
 #
-# `landing` additionally requires --build-arg VITE_APP_SITE_URL=https://inerds.site
+# `landing` additionally requires --build-arg VITE_APP_SITE_URL=https://acme.site
 # for canonical tags and sitemap.xml.
 #
 # IMPORTANT: Vite inlines `VITE_*` values into the JS bundle at BUILD time, so a
@@ -73,7 +73,7 @@ RUN if [ "$APP" != "landing" ] && [ -z "$VITE_APP_API_URL" ]; then \
 # Landing fails silently without this: no canonical tags and no sitemap.xml, with
 # only a build warning nobody reads. Same reasoning as the check above.
 RUN if [ "$APP" = "landing" ] && [ -z "$VITE_APP_SITE_URL" ]; then \
-	echo "ERROR: landing needs --build-arg VITE_APP_SITE_URL (e.g. https://inerds.site)"; exit 1; \
+	echo "ERROR: landing needs --build-arg VITE_APP_SITE_URL (e.g. https://acme.site)"; exit 1; \
 	fi
 
 # `--filter` builds the app plus only the workspace packages it depends on.

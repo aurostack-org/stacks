@@ -5,14 +5,14 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 /**
- * Shared flat ESLint config for Inerds React 19 + TypeScript apps and packages.
+ * Shared flat ESLint config for Acme React 19 + TypeScript apps and packages.
  *
  * Usage in a consumer's `eslint.config.mjs`:
- *   import config from '@inerds/config/eslint';
+ *   import config from '@acme/config/eslint';
  *   export default config;
  *
  * To extend:
- *   import config from '@inerds/config/eslint';
+ *   import config from '@acme/config/eslint';
  *   export default [...config, { rules: { ... } }];
  */
 export default tseslint.config(
@@ -51,7 +51,7 @@ export default tseslint.config(
 			//
 			// Only catches literal className strings on raw `<input>`/`<textarea>`/
 			// `<select>` — that is exactly how this regressed before. Prefer
-			// `SearchInput`/`ComboboxFilter`/`Input` from `@inerds/ui`, which already
+			// `SearchInput`/`ComboboxFilter`/`Input` from `@acme/ui`, which already
 			// handle it.
 			'no-restricted-syntax': [
 				'error',
@@ -59,7 +59,7 @@ export default tseslint.config(
 					selector:
 						"JSXOpeningElement[name.name=/^(input|textarea|select)$/] JSXAttribute[name.name='className'] Literal[value=/(?<![:-])(text-xs|text-sm)(?![a-zA-Z0-9-])/]",
 					message:
-						'A text input under 16px makes iOS zoom in on focus and never zoom back out. Use `text-base sm:text-sm`, or the SearchInput / ComboboxFilter / Input components from @inerds/ui.'
+						'A text input under 16px makes iOS zoom in on focus and never zoom back out. Use `text-base sm:text-sm`, or the SearchInput / ComboboxFilter / Input components from @acme/ui.'
 				}
 			]
 		}

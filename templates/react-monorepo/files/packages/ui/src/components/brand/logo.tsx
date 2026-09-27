@@ -1,6 +1,6 @@
 import { cn } from '../../lib/utils';
 
-/** Investment Nerds "in" monogram mark (fills with currentColor). */
+/** Acme Corp "in" monogram mark (fills with currentColor). */
 export function LogoMark({ width = 18, className }: { width?: number; className?: string }) {
 	return (
 		<svg width={width} height={(width * 319) / 368} viewBox="0 0 368 319" aria-hidden="true" className={className}>
@@ -33,7 +33,7 @@ export function LogoDisc({ size = 'md', className }: { size?: 'sm' | 'md'; class
 	);
 }
 
-/** Full brand lockup: the mark on its disc plus the "Investment Nerds" wordmark. */
+/** Full brand lockup: the mark on its disc plus the "Acme Corp" wordmark. */
 export function Logo({ size = 'md', className }: { size?: 'sm' | 'md'; className?: string }) {
 	return (
 		<span className={cn('inline-flex items-center gap-2.5', className)}>
@@ -44,7 +44,7 @@ export function Logo({ size = 'md', className }: { size?: 'sm' | 'md'; className
 					size === 'md' ? 'text-[15px]' : 'text-sm'
 				)}
 			>
-				Investment Nerds
+				Acme Corp
 			</span>
 		</span>
 	);

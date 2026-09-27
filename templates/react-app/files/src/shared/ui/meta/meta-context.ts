@@ -7,7 +7,7 @@ import { BRAND } from './brand';
  * this is context and not a constant.
  */
 export type MetaConfig = {
-	/** Appended after a separator, e.g. `Investment Nerds`. */
+	/** Appended after a separator, e.g. `Acme Corp`. */
 	suffix: string;
 	/** Separator between the page segment and the suffix. */
 	separator: string;
@@ -20,7 +20,7 @@ export const DEFAULT_META: MetaConfig = {
 
 export const MetaContext = createContext<MetaConfig>(DEFAULT_META);
 
-/** `About` + `Investment Nerds` -> `About · Investment Nerds`. */
+/** `About` + `Acme Corp` -> `About · Acme Corp`. */
 export function formatTitle(segment: string, config: MetaConfig): string {
 	const trimmed = segment.trim();
 	if (!trimmed) return config.suffix;

@@ -1,8 +1,8 @@
 import { useSearchParams } from 'react-router';
 import { Check } from 'lucide-react';
-import { getSafeRedirect } from '@inerds/auth';
-import { AuthLayout } from '@inerds/layouts';
-import { Button, Card } from '@inerds/ui';
+import { getSafeRedirect } from '@acme/auth';
+import { AuthLayout } from '@acme/layouts';
+import { Button, Card } from '@acme/ui';
 import { APP_URL } from '../lib/env';
 
 export function VerifiedRoute() {
@@ -18,7 +18,7 @@ export function VerifiedRoute() {
 				<div className="flex flex-col gap-2">
 					<h2 className="font-display text-2xl font-black text-foreground">You're verified</h2>
 					<p className="text-sm text-body">
-						Your email is confirmed. Continue to Investment Nerds — everything is ready for you.
+						Your email is confirmed. Continue to Acme Corp — everything is ready for you.
 					</p>
 				</div>
 				<Button className="w-full" onClick={() => window.location.assign(getSafeRedirect(redirect, APP_URL))}>
