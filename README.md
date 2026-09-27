@@ -2,7 +2,7 @@
 
 House project templates, and the generator that stamps them out.
 
-**Documentation: [aurostack-org.github.io/stacks](https://aurostack-org.github.io/stacks/)**:
+**Documentation: [stacks.aurostack.co](https://stacks.aurostack.co)**:
 every template, feature and environment variable, how to set up and connect a
 generated project, and architecture diagrams. Sources in [`docs/`](docs/).
 
