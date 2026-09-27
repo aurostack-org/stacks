@@ -7,7 +7,10 @@ import { CurrentUserEntity } from '../entity';
 
 @Injectable()
 export class CurrentUserService {
-	constructor(private media: MediaService, private db: PrismaService) {}
+	constructor(
+		private media: MediaService,
+		private db: PrismaService
+	) {}
 
 	async updateAvatar(user: UserSession['user'], file: Express.Multer.File) {
 		const image = await this.media.uploadAvatar(file);

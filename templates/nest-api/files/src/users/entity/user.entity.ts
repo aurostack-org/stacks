@@ -42,7 +42,6 @@ export class UserEntity implements User {
 	@DateTimeString(true)
 	onboardingCompletedAt!: Date | null;
 
-
 	constructor(data: User) {
 		Object.assign(this, data);
 	}
@@ -68,9 +67,10 @@ export class PaginatedUserEntity extends PaginationMetaEntity {
 	}
 }
 
-export class CurrentUserEntity
-	implements Omit<User, 'banned' | 'banReason' | 'banExpires' | 'role'>
-{
+export class CurrentUserEntity implements Omit<
+	User,
+	'banned' | 'banReason' | 'banExpires' | 'role'
+> {
 	@ApiProperty()
 	id!: string;
 
@@ -97,7 +97,6 @@ export class CurrentUserEntity
 
 	@DateTimeString(true)
 	onboardingCompletedAt!: Date | null;
-
 
 	constructor(data: UserSession['user']) {
 		this.id = data.id;

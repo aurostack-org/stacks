@@ -16,7 +16,12 @@ import { PresenceService } from '../services/presence.service';
 import { RealtimeService } from '../services/realtime.service';
 import { WsAuthGuard, WsPermissionsGuard } from '../guards';
 import { getSessionUserFromSocket } from '../misc/session-from-socket';
-import { ClientEvent, ServerEvent, isJoinableRoom, userRoom } from '../constants';
+import {
+	ClientEvent,
+	ServerEvent,
+	isJoinableRoom,
+	userRoom
+} from '../constants';
 
 /**
  * Central Socket.io gateway.

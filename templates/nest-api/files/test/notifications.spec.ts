@@ -11,7 +11,9 @@ describe('Notifications', () => {
 	// Seed through the service's write side — the same call other modules make —
 	// so these specs exercise the endpoints without depending on any producer.
 	const dispatch = (recipientId = userId, data: object = { message: 'Hi' }) =>
-		app.instance.get(NotificationsService).dispatch(recipientId, 'system', data);
+		app.instance
+			.get(NotificationsService)
+			.dispatch(recipientId, 'system', data);
 
 	const listNotifications = (cookie: string, query = '') =>
 		app.request.get(`/v1/notifications${query}`).set('Cookie', cookie);

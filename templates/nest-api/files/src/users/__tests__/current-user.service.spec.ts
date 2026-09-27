@@ -11,9 +11,8 @@ describe('CurrentUserService', () => {
 	let db: Mocked<PrismaService>;
 
 	beforeAll(async () => {
-		const { unit, unitRef } = await TestBed.solitary(
-			CurrentUserService
-		).compile();
+		const { unit, unitRef } =
+			await TestBed.solitary(CurrentUserService).compile();
 		service = unit;
 		media = unitRef.get(MediaService);
 		db = unitRef.get(PrismaService);

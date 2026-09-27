@@ -19,9 +19,8 @@ describe('HealthController', () => {
 	let config: Mocked<CustomConfigService>;
 
 	beforeAll(async () => {
-		const { unit, unitRef } = await TestBed.solitary(
-			HealthController
-		).compile();
+		const { unit, unitRef } =
+			await TestBed.solitary(HealthController).compile();
 		controller = unit;
 		health = unitRef.get(HealthCheckService);
 		http = unitRef.get(HttpHealthIndicator);

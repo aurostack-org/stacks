@@ -1,9 +1,4 @@
-import {
-	Controller,
-	Get,
-	Version,
-	VERSION_NEUTRAL
-} from '@nestjs/common';
+import { Controller, Get, Version, VERSION_NEUTRAL } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler'; // @feature rate-limit
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';

@@ -8,9 +8,8 @@ describe('CustomAuthService', () => {
 	let auth: Mocked<AuthService<BetterAuth>>;
 
 	beforeAll(async () => {
-		const { unit, unitRef } = await TestBed.solitary(
-			CustomAuthService
-		).compile();
+		const { unit, unitRef } =
+			await TestBed.solitary(CustomAuthService).compile();
 		service = unit;
 		auth = unitRef.get(AuthService<BetterAuth> as any);
 	});

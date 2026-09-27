@@ -80,7 +80,9 @@ const MainLayout = ({
 					<Container className="px-0 pt-5 pb-12 mx-auto my-0 bg-white border border-gray-100 border-solid rounded-md shadow-md">
 						<Section className="px-12 py-0">
 							{/* Text wordmark: swap in an <Img> once the project has a hosted logo. */}
-							<Text className="text-xl font-semibold text-[#333]">{appName}</Text>
+							<Text className="text-xl font-semibold text-[#333]">
+								{appName}
+							</Text>
 							<Hr className={CN.hr} />
 							{children}
 							<Text className={CN.text}>— {appName} Team</Text>
