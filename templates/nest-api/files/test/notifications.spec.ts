@@ -57,6 +57,16 @@ describe('Notifications', () => {
 		});
 	});
 
+	describe('OpenAPI components', () => {
+		it('documents the notification type from the Prisma enum', async () => {
+			const doc = (await app.request.get('/openapi-json')).body;
+			const { type } = doc.components.schemas.NotificationEntity.properties;
+			expect([...type.enum].sort()).toEqual(
+				['comment', 'mention', 'reply', 'system'].sort()
+			);
+		});
+	});
+
 	describe('GET /v1/notifications', () => {
 		it('rejects unauthenticated requests with 401', async () => {
 			const response = await listNotifications('');

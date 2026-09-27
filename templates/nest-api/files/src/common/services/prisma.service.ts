@@ -3,7 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PaginationOptions } from 'common/types';
 import { Prisma, PrismaClient } from '@db/client';
 import { getPaginationInfo } from '../utils';
-import { PaginationMetaEntity } from '../entity';
+import type { PaginationMeta } from '../entity';
 import { CustomConfigService } from './config.service';
 
 type TableNames = Array<{ tablename: string }>;
@@ -43,13 +43,13 @@ const setupExtensions = (db: PrismaClient) =>
 						ctx.findMany({ ...rest, skip, take, where }),
 						ctx.count({ where })
 					]);
-					const meta = new PaginationMetaEntity({
+					const meta: PaginationMeta = {
 						total,
 						currentPage,
 						pageSize: list.length,
 						lastPage: Math.ceil(total / take) || 1
-					});
-					const result: [Result, PaginationMetaEntity] = [list, meta];
+					};
+					const result: [Result, PaginationMeta] = [list, meta];
 					return result;
 				}
 			}

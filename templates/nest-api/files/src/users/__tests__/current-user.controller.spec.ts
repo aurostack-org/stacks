@@ -25,7 +25,7 @@ describe('CurrentUserController', () => {
 			const session = Entity.userSession.build();
 			const result = controller.getCurrentUser(session);
 
-			expect(result).toBeInstanceOf(CurrentUserEntity);
+			expect(CurrentUserEntity.safeParse(result).success).toBe(true);
 			expect(result.id).toBe(session.user.id);
 			expect(result.name).toBe(session.user.name);
 			expect(result.email).toBe(session.user.email);

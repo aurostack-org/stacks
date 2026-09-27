@@ -17,11 +17,6 @@ import { RedisThrottlerStorage } from './services'; // @feature rate-limit
 import { FeatureFlagService } from './services'; // @feature feature-flags
 import { HealthController } from './controllers'; // @feature observability
 import { MailProcessor } from './processors'; // @feature mail
-import {
-	UniqueValidator,
-	ExistsValidator,
-	ExistsArrayValidator
-} from './validators';
 import { FeatureFlagGuard } from './guards'; // @feature feature-flags
 import { PrismaHealthIndicator } from './misc'; // @feature observability
 import Config from './services/config.service';
@@ -36,12 +31,7 @@ import Config from './services/config.service';
 	imports: [
 		ConfigModule.forRoot({
 			load: [Config.getVariables],
-			validationSchema: Config.schema,
-			validationOptions: {
-				libraryOptions: {
-					abortEarly: true
-				}
-			}
+			validationSchema: Config.schema
 		}),
 		// @feature:start observability
 		TerminusModule,
@@ -59,9 +49,6 @@ import Config from './services/config.service';
 		GeneratorService,
 		PrismaService,
 		CustomAuthService,
-		UniqueValidator,
-		ExistsValidator,
-		ExistsArrayValidator,
 		CacheService, // @feature cache
 		MailService, // @feature mail
 		MailProcessor, // @feature mail
@@ -75,9 +62,6 @@ import Config from './services/config.service';
 		GeneratorService,
 		PrismaService,
 		CustomAuthService,
-		UniqueValidator,
-		ExistsValidator,
-		ExistsArrayValidator,
 		CacheService, // @feature cache
 		MailService, // @feature mail
 		RedisThrottlerStorage, // @feature rate-limit

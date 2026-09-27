@@ -18,7 +18,6 @@ import * as setup from './app.setup';
 	setup.useGlobalPipes(app);
 	setup.useGlobalInterceptors(app);
 	setup.useGlobalFilters(app);
-	setup.useClassValidatorContainer(app);
 	await setup.enableOpenAPI(app); // @feature openapi
 	setup.enableCors(app);
 	setup.enableHelmet(app);

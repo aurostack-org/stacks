@@ -49,6 +49,49 @@ describe('Users', () => {
 		await app.close();
 	});
 
+	// The frontends generate their types from this document, so the component
+	// names and shapes are part of the contract.
+	describe('OpenAPI', () => {
+		let doc: any;
+
+		beforeAll(async () => {
+			doc = (await app.request.get('/openapi-json')).body;
+		});
+
+		it('publishes the user components under their established names', () => {
+			expect(Object.keys(doc.components.schemas)).toEqual(
+				expect.arrayContaining([
+					'UserEntity',
+					'PaginatedUserEntity',
+					'CurrentUserEntity'
+				])
+			);
+		});
+
+		it('documents dates as date-time strings', () => {
+			const { properties } = doc.components.schemas.UserEntity;
+			expect(properties.createdAt).toMatchObject({
+				type: 'string',
+				format: 'date-time'
+			});
+		});
+
+		it('documents the list filters as query parameters', () => {
+			const names = doc.paths['/v1/users'].get.parameters.map(
+				(p: { name: string }) => p.name
+			);
+			expect(names).toEqual(
+				expect.arrayContaining(['search', 'limit', 'page', 'role'])
+			);
+		});
+
+		it('points the list response at PaginatedUserEntity', () => {
+			const { schema } =
+				doc.paths['/v1/users'].get.responses['200'].content['application/json'];
+			expect(schema.$ref).toBe('#/components/schemas/PaginatedUserEntity');
+		});
+	});
+
 	describe('v1', () => {
 		describe('GET: /v1/users', () => {
 			describe('as superuser', () => {
@@ -197,6 +240,49 @@ describe('Users', () => {
 					for (const user of response.body.list) {
 						expect(user.role).toBe('user');
 					}
+				});
+			});
+
+			// The error contract the Zod pipe keeps: one 400, one message, prefixed
+			// with `Validation:` and the offending field.
+			describe('with invalid query parameters', () => {
+				it('rejects a search shorter than three characters', async () => {
+					const response = await app.request
+						.get('/v1/users')
+						.query({ search: 'ab' })
+						.set('Cookie', adminCookie);
+					expect(response.status).toBe(400);
+					expect(response.body.message).toBe(
+						'Validation: search: Too small: expected string to have >=3 characters'
+					);
+				});
+
+				it('rejects a non-numeric page', async () => {
+					const response = await app.request
+						.get('/v1/users')
+						.query({ page: 'two' })
+						.set('Cookie', adminCookie);
+					expect(response.status).toBe(400);
+					expect(response.body.message).toMatch(/^Validation: page: /);
+				});
+
+				it('rejects a role no user holds', async () => {
+					const response = await app.request
+						.get('/v1/users')
+						.query({ role: 'ghost' })
+						.set('Cookie', adminCookie);
+					expect(response.status).toBe(400);
+					expect(response.body.message).toBe(
+						"Validation: role 'ghost' does not exist"
+					);
+				});
+
+				it('treats a blank search as no search', async () => {
+					const response = await app.request
+						.get('/v1/users')
+						.query({ search: '' })
+						.set('Cookie', adminCookie);
+					expect(response.status).toBe(200);
 				});
 			});
 

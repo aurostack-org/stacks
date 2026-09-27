@@ -1,5 +1,5 @@
 import { TestBed, type Mocked } from '@suites/unit';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Gen } from '@test/factory/gen';
 import { Entity } from '@test/factory/entity';
 import { Dto } from '@test/factory/dto';
@@ -25,6 +25,8 @@ describe('UsersService', () => {
 	describe('paginate', () => {
 		beforeEach(() => {
 			vi.clearAllMocks();
+			// Every role the specs filter by is one some user holds.
+			db.x.user.exists.mockResolvedValue(true);
 		});
 
 		const currentUser = Entity.requestUser.build({ role: 'admin' });
@@ -38,9 +40,33 @@ describe('UsersService', () => {
 			]);
 
 			const result = await service.paginate(currentUser, {});
-			expect(result).toBeInstanceOf(PaginatedUserEntity);
+			expect(PaginatedUserEntity.safeParse(result).success).toBe(true);
 			expect(result.list).toHaveLength(3);
 			expect(result.total).toBe(3);
+		});
+
+		it('rejects a role no user holds, with a validation error', async () => {
+			db.x.user.exists.mockResolvedValue(false);
+
+			await expect(
+				service.paginate(currentUser, Dto.userFilters.build({ role: 'ghost' }))
+			).rejects.toThrow(
+				new BadRequestException("Validation: role 'ghost' does not exist")
+			);
+			expect(db.x.user.exists).toHaveBeenCalledWith({
+				role: { equals: 'ghost', mode: 'insensitive' }
+			});
+			expect(db.x.user.paginate).not.toHaveBeenCalled();
+		});
+
+		it('skips the role lookup when no role is given', async () => {
+			db.x.user.paginate.mockResolvedValue([
+				[],
+				{ total: 0, currentPage: 1, pageSize: 0, lastPage: 1 }
+			]);
+
+			await service.paginate(currentUser, {});
+			expect(db.x.user.exists).not.toHaveBeenCalled();
 		});
 
 		it('should exclude the current user from results', async () => {
@@ -294,7 +320,7 @@ describe('UsersService', () => {
 			);
 
 			const result = await service.getUserById(superuser, targetId);
-			expect(result).toBeInstanceOf(UserEntity);
+			expect(UserEntity.safeParse(result).success).toBe(true);
 			expect(result.role).toBe('superuser');
 		});
 
@@ -308,7 +334,7 @@ describe('UsersService', () => {
 				Entity.requestUser.build({ role: 'admin,superuser' }),
 				targetId
 			);
-			expect(result).toBeInstanceOf(UserEntity);
+			expect(UserEntity.safeParse(result).success).toBe(true);
 		});
 
 		it('should return UserEntity for a valid user', async () => {
@@ -318,7 +344,7 @@ describe('UsersService', () => {
 			);
 
 			const result = await service.getUserById(admin, targetId);
-			expect(result).toBeInstanceOf(UserEntity);
+			expect(UserEntity.safeParse(result).success).toBe(true);
 			expect(result.id).toBe(targetId);
 		});
 
@@ -329,7 +355,7 @@ describe('UsersService', () => {
 			);
 
 			const result = await service.getUserById(admin, targetId);
-			expect(result).toBeInstanceOf(UserEntity);
+			expect(UserEntity.safeParse(result).success).toBe(true);
 			expect(result.role).toBe('admin');
 		});
 
@@ -364,7 +390,7 @@ describe('UsersService', () => {
 			db.user.delete.mockResolvedValue(Entity.user.build({ id: userId }));
 
 			const result = await service.remove(userId);
-			expect(result).toBeInstanceOf(OKEntity);
+			expect(OKEntity.safeParse(result).success).toBe(true);
 			expect(result.status).toBe(200);
 			expect(result.message).toBe('ok');
 		});

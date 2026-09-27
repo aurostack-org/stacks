@@ -1,14 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
 
-export class OKEntity {
-	@ApiProperty({ example: 200 })
-	status: number;
+export const OKEntity = z
+	.object({
+		status: z.number().meta({ example: 200 }),
+		message: z.string().meta({ example: 'ok' })
+	})
+	.meta({ id: 'OKEntity' });
+export type OKEntity = z.input<typeof OKEntity>;
 
-	@ApiProperty({ example: 'ok' })
-	message: string;
-
-	constructor() {
-		this.status = 200;
-		this.message = 'ok';
-	}
-}
+export const ok = (): OKEntity => ({ status: 200, message: 'ok' });

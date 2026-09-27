@@ -122,8 +122,8 @@
 			"to": "{{name}}"
 		},
 		{
-			"from": "Joi\\.number\\(\\)\\.default\\(5000\\)",
-			"to": "Joi.number().default({{port}})",
+			"from": "\\bnum\\(\\)\\.default\\(5000\\)",
+			"to": "num().default({{port}})",
 			"regex": true
 		},
 		{
@@ -151,7 +151,7 @@
 			"core": true
 		},
 		"config": {
-			"title": "Joi-validated config service",
+			"title": "Zod-validated config service",
 			"description": "CustomConfigService wrapping @nestjs/config; app code never reads process.env directly.",
 			"core": true
 		},

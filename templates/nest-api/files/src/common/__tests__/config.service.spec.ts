@@ -26,12 +26,7 @@ describe('ConfigService', () => {
 			imports: [
 				ConfigModule.forRoot({
 					load: [Config.getVariables],
-					validationSchema: Config.schema,
-					validationOptions: {
-						libraryOptions: {
-							abortEarly: true
-						}
-					}
+					validationSchema: Config.schema
 				})
 			],
 			providers: [CustomConfigService, ConfigService]

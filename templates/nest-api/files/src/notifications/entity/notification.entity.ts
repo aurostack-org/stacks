@@ -1,64 +1,37 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Notification, NotificationType, Prisma } from '@db/client';
-import { DateTimeString } from 'common/decorators';
-import { PaginationMetaEntity } from 'common/entity';
+import { z } from 'zod';
+import { NotificationType } from '@db/client';
+import { dateTime } from 'common/schemas';
+import { paginated } from 'common/entity';
 
-export class NotificationEntity {
-	@ApiProperty() id!: string;
-
-	@ApiProperty() userId!: string;
-
-	@ApiProperty({
-		enum: ['comment', 'reply', 'upvote'],
-		example: 'reply'
+export const NotificationEntity = z
+	.object({
+		id: z.string(),
+		userId: z.string(),
+		type: z.enum(NotificationType).meta({ example: 'reply' }),
+		// Free-form JSON, as stored; typed to accept Prisma's JsonValue.
+		data: z.unknown().meta({
+			type: 'object',
+			description:
+				'Type-specific payload for deep-linking, e.g. { postId, commentId, target }',
+			example: { postId: 'ckp...', commentId: 'ckq...' }
+		}),
+		readAt: dateTime().nullable(),
+		createdAt: dateTime()
 	})
-	type!: NotificationType;
+	.meta({ id: 'NotificationEntity' });
+/** What a service hands back; the schema turns it into the response. */
+export type NotificationEntity = z.input<typeof NotificationEntity>;
 
-	@ApiProperty({
-		type: Object,
-		description:
-			'Type-specific payload for deep-linking, e.g. { postId, commentId, target }',
-		example: { postId: 'ckp...', commentId: 'ckq...' }
-	})
-	data!: Prisma.JsonValue;
-
-	@DateTimeString(true)
-	readAt!: Date | null;
-
-	@DateTimeString()
-	createdAt!: Date;
-
-	constructor(notification: Notification) {
-		Object.assign(this, notification);
-	}
-
-	static list(notifications: Notification[]) {
-		return notifications.map((n) => new NotificationEntity(n));
-	}
-}
-
-export class PaginatedNotificationEntity extends PaginationMetaEntity {
-	@ApiProperty({ type: NotificationEntity, isArray: true })
-	list: NotificationEntity[];
-
-	constructor({
-		currentPage,
-		lastPage,
-		list,
-		pageSize,
-		total
-	}: Omit<PaginatedNotificationEntity, 'list'> & { list: Notification[] }) {
-		super({ currentPage, total, lastPage, pageSize });
-		this.list = NotificationEntity.list(list);
-	}
-}
+export const PaginatedNotificationEntity = paginated(
+	NotificationEntity,
+	'PaginatedNotificationEntity'
+);
+export type PaginatedNotificationEntity = z.input<
+	typeof PaginatedNotificationEntity
+>;
 
 /** Lightweight badge payload for the unread counter. */
-export class UnreadCountEntity {
-	@ApiProperty({ example: 3 })
-	count!: number;
-
-	constructor(count: number) {
-		this.count = count;
-	}
-}
+export const UnreadCountEntity = z
+	.object({ count: z.number().meta({ example: 3 }) })
+	.meta({ id: 'UnreadCountEntity' });
+export type UnreadCountEntity = z.input<typeof UnreadCountEntity>;

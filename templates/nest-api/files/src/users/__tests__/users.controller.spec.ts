@@ -3,7 +3,7 @@ import { Entity } from '@test/factory/entity';
 import { Gen } from '@test/factory/gen';
 import { UsersController } from '../controllers';
 import { UsersService } from '../services';
-import { PaginatedUserEntity, UserEntity } from '../entity';
+import type { PaginatedUserEntity } from '../entity';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -23,13 +23,13 @@ describe('UsersController', () => {
 		it('should delegate to UsersService.paginate with user and filters', async () => {
 			const user = Entity.user.build({ role: 'admin' });
 			const filters = { page: 1, limit: 10 };
-			const paginated = new PaginatedUserEntity({
+			const paginated: PaginatedUserEntity = {
 				list: Entity.user.buildList(2),
 				total: 2,
 				currentPage: 1,
 				lastPage: 1,
 				pageSize: 2
-			});
+			};
 			service.paginate.mockResolvedValue(paginated);
 
 			const result = await controller.findAll(filters, { user } as any);
@@ -41,13 +41,13 @@ describe('UsersController', () => {
 		it('should pass search and role filters through', async () => {
 			const user = Entity.user.build({ role: 'admin' });
 			const filters = { search: 'john', role: 'user', page: 2, limit: 5 };
-			const paginated = new PaginatedUserEntity({
+			const paginated: PaginatedUserEntity = {
 				list: [],
 				total: 0,
 				currentPage: 2,
 				lastPage: 0,
 				pageSize: 0
-			});
+			};
 			service.paginate.mockResolvedValue(paginated);
 
 			await controller.findAll(filters, { user } as any);
@@ -63,9 +63,7 @@ describe('UsersController', () => {
 			const currentUserId = Gen.uuid();
 			const targetId = Gen.uuid();
 			const user = Entity.user.build({ id: currentUserId, role: 'admin' });
-			const target = new UserEntity(
-				Entity.user.build({ id: targetId, role: 'user' })
-			);
+			const target = Entity.user.build({ id: targetId, role: 'user' });
 			service.getUserById.mockResolvedValue(target);
 
 			const result = await controller.findOne(targetId, {

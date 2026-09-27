@@ -1,254 +1,175 @@
 import { Entity } from '@test/factory/entity';
-import { Gen } from '@test/factory/gen';
-import { UserEntity, PaginatedUserEntity, CurrentUserEntity } from '../entity';
+import {
+	UserEntity,
+	PaginatedUserEntity,
+	CurrentUserEntity,
+	toCurrentUser
+} from '../entity';
+
+// `.parse()` runs a schema in the direction the serializer does: what a service
+// returns (Dates and all) in, the JSON response body out.
 
 describe('UserEntity', () => {
-	describe('constructor', () => {
-		it('should assign all User fields to the instance', () => {
-			const data = Entity.user.build();
-			const entity = new UserEntity(data);
+	it('serializes every User field, dates as ISO strings', () => {
+		const data = Entity.user.build();
+		const body = UserEntity.parse(data);
 
-			expect(entity.id).toBe(data.id);
-			expect(entity.name).toBe(data.name);
-			expect(entity.email).toBe(data.email);
-			expect(entity.emailVerified).toBe(data.emailVerified);
-			expect(entity.image).toBe(data.image);
-			expect(entity.role).toBe(data.role);
-			expect(entity.banned).toBe(data.banned);
-			expect(entity.banReason).toBe(data.banReason);
-			expect(entity.banExpires).toBe(data.banExpires);
-			expect(entity.createdAt).toBe(data.createdAt);
-			expect(entity.updatedAt).toBe(data.updatedAt);
-		});
-
-		it('should handle null image', () => {
-			const data = Entity.user.build({ image: null });
-			const entity = new UserEntity(data);
-
-			expect(entity.image).toBeNull();
-		});
-
-		it('should handle null banned fields', () => {
-			const data = Entity.user.build({
-				banned: null,
-				banReason: null,
-				banExpires: null
-			});
-			const entity = new UserEntity(data);
-
-			expect(entity.banned).toBeNull();
-			expect(entity.banReason).toBeNull();
-			expect(entity.banExpires).toBeNull();
+		expect(body).toEqual({
+			...data,
+			// Emails go out lower-cased, as EmailProperty did.
+			email: data.email.toLowerCase(),
+			createdAt: data.createdAt.toISOString(),
+			updatedAt: data.updatedAt.toISOString(),
+			banExpires: null,
+			onboardingCompletedAt: null
 		});
 	});
 
-	describe('list', () => {
-		it('should map an array of User objects to UserEntity[]', () => {
-			const users = Entity.user.buildList(5);
-			const entities = UserEntity.list(users);
+	it('serializes a set ban expiry as an ISO string', () => {
+		const banExpires = new Date('2026-05-01T12:00:00.000Z');
+		const body = UserEntity.parse(Entity.user.build({ banExpires }));
 
-			expect(entities).toHaveLength(5);
-			entities.forEach((entity, i) => {
-				expect(entity).toBeInstanceOf(UserEntity);
-				expect(entity.id).toBe(users[i].id);
-			});
+		expect(body.banExpires).toBe('2026-05-01T12:00:00.000Z');
+	});
+
+	it('keeps null image and ban fields', () => {
+		const body = UserEntity.parse(
+			Entity.user.build({
+				image: null,
+				banned: null,
+				banReason: null,
+				banExpires: null
+			})
+		);
+
+		expect(body.image).toBeNull();
+		expect(body.banned).toBeNull();
+		expect(body.banReason).toBeNull();
+		expect(body.banExpires).toBeNull();
+	});
+
+	it('drops fields the schema does not declare', () => {
+		const body = UserEntity.parse({
+			...Entity.user.build(),
+			passwordHash: 'secret'
 		});
 
-		it('should return empty array for empty input', () => {
-			const entities = UserEntity.list([]);
-			expect(entities).toHaveLength(0);
+		expect(body).not.toHaveProperty('passwordHash');
+	});
+
+	it('rejects a row that does not match, rather than sending it', () => {
+		const result = UserEntity.safeParse({
+			...Entity.user.build(),
+			createdAt: 'not a date'
 		});
 
-		it('should return single-element array', () => {
-			const users = Entity.user.buildList(1);
-			const entities = UserEntity.list(users);
-
-			expect(entities).toHaveLength(1);
-			expect(entities[0]).toBeInstanceOf(UserEntity);
-		});
+		expect(result.success).toBe(false);
 	});
 });
 
 describe('PaginatedUserEntity', () => {
-	describe('constructor', () => {
-		it('should set pagination meta from constructor args', () => {
-			const users = Entity.user.buildList(3);
-			const entity = new PaginatedUserEntity({
-				list: users,
-				total: 10,
-				currentPage: 2,
-				lastPage: 4,
-				pageSize: 3
-			});
-
-			expect(entity.total).toBe(10);
-			expect(entity.currentPage).toBe(2);
-			expect(entity.lastPage).toBe(4);
-			expect(entity.pageSize).toBe(3);
+	it('carries the pagination meta and serializes each item', () => {
+		const users = Entity.user.buildList(3);
+		const body = PaginatedUserEntity.parse({
+			list: users,
+			total: 10,
+			currentPage: 2,
+			lastPage: 4,
+			pageSize: 3
 		});
 
-		it('should transform list into UserEntity instances', () => {
-			const users = Entity.user.buildList(3);
-			const entity = new PaginatedUserEntity({
-				list: users,
-				total: 3,
-				currentPage: 1,
-				lastPage: 1,
-				pageSize: 3
-			});
+		expect(body).toMatchObject({
+			total: 10,
+			currentPage: 2,
+			lastPage: 4,
+			pageSize: 3
+		});
+		expect(body.list).toHaveLength(3);
+		body.list.forEach((item, i) => {
+			expect(item.id).toBe(users[i].id);
+			expect(item.createdAt).toBe(users[i].createdAt.toISOString());
+		});
+	});
 
-			expect(entity.list).toHaveLength(3);
-			entity.list.forEach((item) => {
-				expect(item).toBeInstanceOf(UserEntity);
-			});
+	it('handles an empty page', () => {
+		const body = PaginatedUserEntity.parse({
+			list: [],
+			total: 0,
+			currentPage: 1,
+			lastPage: 1,
+			pageSize: 0
 		});
 
-		it('should handle empty list', () => {
-			const entity = new PaginatedUserEntity({
-				list: [],
-				total: 0,
-				currentPage: 1,
-				lastPage: 1,
-				pageSize: 0
-			});
-
-			expect(entity.list).toHaveLength(0);
-			expect(entity.total).toBe(0);
-		});
+		expect(body.list).toHaveLength(0);
+		expect(body.total).toBe(0);
 	});
 });
 
-describe('CurrentUserEntity', () => {
-	describe('constructor', () => {
-		it('should map session user fields to entity', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: 'http://example.com/avatar.png',
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: 'admin'
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-
-			expect(entity.id).toBe(sessionUser.id);
-			expect(entity.name).toBe(sessionUser.name);
-			expect(entity.email).toBe(sessionUser.email);
-			expect(entity.emailVerified).toBe(true);
-			expect(entity.image).toBe(sessionUser.image);
-			expect(entity.createdAt).toBe(sessionUser.createdAt);
-			expect(entity.updatedAt).toBe(sessionUser.updatedAt);
+describe('toCurrentUser', () => {
+	it('maps the session user fields', () => {
+		const sessionUser = Entity.requestUser.build({
+			emailVerified: true,
+			role: 'admin'
 		});
+		const user = toCurrentUser(sessionUser);
 
-		it('should set image to null when session user image is falsy', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: false,
-				image: '',
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: 'user'
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.image).toBeNull();
-		});
-
-		it('should set image to null when session user image is undefined', () => {
-			const sessionUser = {
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: false,
-				image: undefined,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: 'user'
-			};
-
-			const entity = new CurrentUserEntity(sessionUser as any);
-			expect(entity.image).toBeNull();
-		});
-
-		it('should preserve image when session user has a valid image', () => {
-			const imageUrl = 'http://example.com/avatar.png';
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: imageUrl,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: 'admin'
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.image).toBe(imageUrl);
+		expect(user).toMatchObject({
+			id: sessionUser.id,
+			name: sessionUser.name,
+			email: sessionUser.email,
+			emailVerified: true,
+			image: sessionUser.image,
+			createdAt: sessionUser.createdAt,
+			updatedAt: sessionUser.updatedAt,
+			onboardingCompletedAt: null
 		});
 	});
 
-	describe('getRoleFromSession (via constructor)', () => {
-		it('should extract string role', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: null,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: 'admin'
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.role).toBe('admin');
-		});
+	it('sets image to null when the session user has none', () => {
+		expect(
+			toCurrentUser(Entity.requestUser.build({ image: '' })).image
+		).toBeNull();
+		expect(
+			toCurrentUser(Entity.requestUser.build({ image: undefined })).image
+		).toBeNull();
+	});
 
-		it('should extract first element when role is an array', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: null,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: ['superuser', 'admin']
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.role).toBe('superuser');
-		});
+	it('uses a string role as is', () => {
+		expect(
+			toCurrentUser(Entity.requestUser.build({ role: 'admin' })).role
+		).toBe('admin');
+	});
 
-		it('should return null when role is undefined', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: null,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: undefined
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.role).toBeNull();
+	it('takes the first role when better-auth returns several', () => {
+		const sessionUser = Entity.requestUser.build({
+			role: ['superuser', 'admin'] as unknown as string
 		});
+		expect(toCurrentUser(sessionUser).role).toBe('superuser');
+	});
 
-		it('should handle single-element array role', () => {
-			const sessionUser = Entity.requestUser.build({
-				id: Gen.uuid(),
-				name: Gen.fullName(),
-				email: Gen.email(),
-				emailVerified: true,
-				image: null,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				role: ['user']
-			});
-			const entity = new CurrentUserEntity(sessionUser);
-			expect(entity.role).toBe('user');
-		});
+	it('sets role to null when there is none', () => {
+		expect(
+			toCurrentUser(Entity.requestUser.build({ role: undefined })).role
+		).toBeNull();
+	});
+
+	it('carries onboardingCompletedAt when the session has it', () => {
+		const at = new Date('2026-02-03T04:05:06.000Z');
+		const sessionUser = {
+			...Entity.requestUser.build(),
+			onboardingCompletedAt: at
+		};
+		expect(toCurrentUser(sessionUser).onboardingCompletedAt).toBe(at);
+	});
+
+	it('serializes through CurrentUserEntity without the ban fields', () => {
+		const body = CurrentUserEntity.parse(
+			toCurrentUser(Entity.requestUser.build())
+		);
+
+		expect(body).not.toHaveProperty('banned');
+		expect(body).not.toHaveProperty('banReason');
+		expect(body).not.toHaveProperty('banExpires');
+		expect(typeof body.createdAt).toBe('string');
 	});
 });

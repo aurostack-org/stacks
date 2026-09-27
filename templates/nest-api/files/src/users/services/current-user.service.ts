@@ -3,7 +3,7 @@ import { UserSession } from '@thallesp/nestjs-better-auth';
 import { PrismaService } from 'common/services';
 import { MediaService } from 'media/services';
 import { FileEntity } from 'media/entity';
-import { CurrentUserEntity } from '../entity';
+import { CurrentUserEntity, toCurrentUser } from '../entity';
 
 @Injectable()
 export class CurrentUserService {
@@ -12,7 +12,10 @@ export class CurrentUserService {
 		private db: PrismaService
 	) {}
 
-	async updateAvatar(user: UserSession['user'], file: Express.Multer.File) {
+	async updateAvatar(
+		user: UserSession['user'],
+		file: Express.Multer.File
+	): Promise<FileEntity> {
 		const image = await this.media.uploadAvatar(file);
 		if (user.image) {
 			this.media.deleteFile(user.image);
@@ -21,7 +24,7 @@ export class CurrentUserService {
 			where: { id: user.id },
 			data: { image }
 		});
-		return new FileEntity(image);
+		return { path: image };
 	}
 
 	/**
@@ -29,11 +32,13 @@ export class CurrentUserService {
 	 * Called when the wizard finishes or is skipped so the first-run gate stops
 	 * redirecting them.
 	 */
-	async completeOnboarding(user: UserSession['user']) {
+	async completeOnboarding(
+		user: UserSession['user']
+	): Promise<CurrentUserEntity> {
 		const updated = await this.db.user.update({
 			where: { id: user.id },
 			data: { onboardingCompletedAt: new Date() }
 		});
-		return new CurrentUserEntity(updated as unknown as UserSession['user']);
+		return toCurrentUser(updated as unknown as UserSession['user']);
 	}
 }

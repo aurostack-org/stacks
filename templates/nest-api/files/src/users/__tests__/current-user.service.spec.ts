@@ -74,7 +74,7 @@ describe('CurrentUserService', () => {
 				file
 			);
 
-			expect(result).toBeInstanceOf(FileEntity);
+			expect(FileEntity.safeParse(result).success).toBe(true);
 			expect(result.path).toBe(newImageUrl);
 		});
 

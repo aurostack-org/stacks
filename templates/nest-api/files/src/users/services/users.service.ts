@@ -2,10 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserSession } from '@thallesp/nestjs-better-auth';
 import { Prisma } from '@db/client';
 import { PrismaService } from 'common/services';
+import { ensureExists } from 'common/utils';
 import { hasRole, type RoleInput } from 'lib/access';
 import { PaginatedUserEntity, UserEntity } from '../entity';
-import { UserFiltersDto } from '../dto';
-import { OKEntity } from 'common/entity';
+import { UserFilters } from '../dto';
+import { ok } from 'common/entity';
 
 const SU = 'superuser';
 
@@ -22,7 +23,12 @@ const visibleRolesFor = (role: RoleInput): string[] =>
 export class UsersService {
 	constructor(private db: PrismaService) {}
 
-	async paginate(user: UserSession['user'], filters: UserFiltersDto) {
+	async paginate(
+		user: UserSession['user'],
+		filters: UserFilters
+	): Promise<PaginatedUserEntity> {
+		await ensureExists(this.db, 'user', 'role', filters.role);
+
 		const where: Prisma.UserWhereInput = {
 			id: { not: user.id }
 		};
@@ -52,7 +58,7 @@ export class UsersService {
 			limit: filters.limit
 		});
 
-		return new PaginatedUserEntity({ list, ...meta });
+		return { list, ...meta };
 	}
 
 	/**
@@ -61,7 +67,10 @@ export class UsersService {
 	 * superuser could see other superusers in the listing and then 404 opening
 	 * one, which is what the admin drawer does on row click.
 	 */
-	async getUserById(viewer: UserSession['user'], id: string) {
+	async getUserById(
+		viewer: UserSession['user'],
+		id: string
+	): Promise<UserEntity> {
 		if (viewer.id === id) throw new NotFoundException();
 		const user = await this.db.user.findFirst({ where: { id } });
 		if (!user) throw new NotFoundException();
@@ -69,11 +78,11 @@ export class UsersService {
 		if (!visibleRolesFor(viewer.role).includes(user.role ?? 'user')) {
 			throw new NotFoundException();
 		}
-		return new UserEntity(user);
+		return user;
 	}
 
 	async remove(id: string) {
 		await this.db.user.delete({ where: { id } });
-		return new OKEntity();
+		return ok();
 	}
 }
