@@ -172,7 +172,7 @@ namespace Config {
 		DATABASE_URL: str(),
 		BETTER_AUTH_SECRET: str(),
 		BETTER_AUTH_URL: str(),
-		BETTER_AUTH_COOKIE_DOMAIN: str(),
+		BETTER_AUTH_COOKIE_DOMAIN: z.string().default(''),
 		BETTER_AUTH_COOKIE_PREFIX: str(),
 		SUPERUSER_EMAIL: str(),
 		SUPERUSER_PASSWORD: str(),

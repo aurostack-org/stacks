@@ -1,7 +1,9 @@
 /**
- * Builds a list of origins for CORS configuration, given a list of hostnames.
- * Each hostname will generate the main domain and subdomains
- * for app, auth, and admin.
+ * Builds a list of origins for CORS configuration from a list of entries.
+ * A bare hostname (`shop.example.com`) generates https origins for it and its
+ * app, auth and admin subdomains. An entry with a scheme
+ * (`http://localhost:3001`) is taken as one origin, as written: that is how
+ * frontends on other local ports are allowed.
  *
  * @remarks This is mainly for development purposes
  * For frontend developers on the team who cannot run a standalone
@@ -28,6 +30,7 @@ export class OriginBuilder {
 	 * Origins for a single hostname: the main domain plus each subdomain.
 	 */
 	fromHost(hostname: string): string[] {
+		if (hostname.includes('://')) return [hostname.replace(/\/+$/, '')];
 		return [
 			`${this.protocol}${hostname}`,
 			...this.subdomains.map((sub) => `${this.protocol}${sub}.${hostname}`)
