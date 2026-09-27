@@ -81,13 +81,15 @@ import { OriginBuilder } from 'common/misc';
 							ipAddressHeaders: config.rateLimit.ipHeaders
 						},
 						// @feature:end
-						// Share the session cookie across subdomains so one login covers
-						// every frontend. Domain comes from BETTER_AUTH_COOKIE_DOMAIN
-						// (`.lvh.me` in dev, your apex in production).
+						// With BETTER_AUTH_COOKIE_DOMAIN set (`.example.com`), the session
+						// cookie is shared across subdomains so one login covers every
+						// frontend. Empty, it belongs to the API's own host: right for
+						// localhost and for a single-origin frontend. A browser drops a
+						// cookie whose domain doesn't cover the host that set it.
 						cookiePrefix: config.betterAuth.cookiePrefix,
 						crossSubDomainCookies: {
-							enabled: true,
-							domain: config.betterAuth.cookieDomain
+							enabled: Boolean(config.betterAuth.cookieDomain),
+							domain: config.betterAuth.cookieDomain || undefined
 						},
 						database: {
 							joins: true

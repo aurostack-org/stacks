@@ -33,8 +33,8 @@ export const auth = betterAuth({
 		// sessions through this one, so a different cookie name would reject them.
 		cookiePrefix: env.BETTER_AUTH_COOKIE_PREFIX,
 		crossSubDomainCookies: {
-			enabled: true,
-			domain: env.BETTER_AUTH_COOKIE_DOMAIN
+			enabled: Boolean(env.BETTER_AUTH_COOKIE_DOMAIN),
+			domain: env.BETTER_AUTH_COOKIE_DOMAIN || undefined
 		},
 		database: {
 			joins: true
