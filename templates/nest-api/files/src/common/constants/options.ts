@@ -14,11 +14,11 @@ const frontendHost = E.FRONTEND_HOST!;
 const env = E.APP_ENV!;
 const IS_DEV = env === 'development';
 
-// Extra origins are a development convenience only — production is pinned to
-// the configured frontend host.
-const CORS_ORIGINS = !IS_DEV
-	? [frontendHost]
-	: [frontendHost, ...OriginBuilder.build(E.MISC_CORS_ORIGINS)];
+// The same origins better-auth trusts, in every environment: an origin trusted
+// for sign-in but refused by CORS can't reach the API at all (every
+// react-monorepo app beyond FRONTEND_HOST). MISC_CORS_ORIGINS is empty unless
+// you list something.
+const CORS_ORIGINS = [frontendHost, ...OriginBuilder.build(E.MISC_CORS_ORIGINS)];
 
 // @feature:start openapi
 const createDocumentBuilder = () => {
