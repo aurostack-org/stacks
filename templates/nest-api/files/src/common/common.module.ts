@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus'; // @feature observability
 import { LoggerModule } from './modules';
-import { MetricsModule } from './modules'; // @feature observability
 // The queue module itself is generic; here it is only needed to register the
 // `mail` queue, so it rides on the mail feature.
 import { QueueModule } from './modules'; // @feature mail
@@ -37,7 +36,6 @@ import Config from './services/config.service';
 		LoggerModule,
 		// @feature:start observability
 		TerminusModule,
-		MetricsModule,
 		// @feature:end
 		QueueModule.register('mail') // @feature mail
 	],

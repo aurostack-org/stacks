@@ -4,6 +4,7 @@ import { HttpModule } from '@nestjs/axios'; // @feature http-client
 import { ScheduleModule } from '@nestjs/schedule'; // @feature scheduler
 import { MailerModule } from '@nestjs-modules/mailer'; // @feature mail
 import { BullModule } from '@nestjs/bullmq'; // @feature queue
+import { BullMQOtel } from 'bullmq-otel'; // @feature queue
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'; // @feature rate-limit
 import { AuthModule, AuthGuard } from '@thallesp/nestjs-better-auth';
 import { betterAuth } from 'better-auth';
@@ -204,7 +205,14 @@ import { OriginBuilder } from 'common/misc';
 				},
 				defaultJobOptions: {
 					removeOnComplete: true
-				}
+				},
+				// Job spans for producers and workers; a no-op unless the
+				// OpenTelemetry SDK is running (see src/instrumentation.ts).
+				telemetry: new BullMQOtel({
+					tracerName: 'acme-api',
+					meterName: 'acme-api',
+					enableMetrics: true
+				})
 			})
 		}),
 		BullBoardModule.forRoot({

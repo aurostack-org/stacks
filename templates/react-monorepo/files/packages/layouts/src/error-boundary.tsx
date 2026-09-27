@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from '@acme/ui';
 import { StateScreen } from './states/state-screen';
+import { reportError } from '@acme/telemetry'; // @feature telemetry
 
 type ErrorBoundaryProps = {
 	children: ReactNode;
@@ -21,6 +22,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
 	componentDidCatch(error: Error, info: ErrorInfo): void {
 		console.error('ErrorBoundary caught an error', error, info);
+		reportError(error, { componentStack: info.componentStack }); // @feature telemetry
 	}
 
 	render(): ReactNode {

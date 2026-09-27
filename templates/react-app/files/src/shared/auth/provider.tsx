@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { getAuthClient } from './client';
 import { sessionCleared, sessionLoaded, sessionLoading, type AuthUser } from './slice';
 import { AUTH_BROADCAST_CHANNEL } from './logout';
+import { setTelemetryUser } from '@/shared/telemetry'; // @feature telemetry
 
 function toAuthUser(user: Record<string, unknown> | null | undefined): AuthUser | null {
 	if (!user) return null;
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 		const user = (session.data?.user as Record<string, unknown> | undefined) ?? null;
 		dispatch(sessionLoaded(toAuthUser(user)));
+		setTelemetryUser(user ? { id: String(user.id) } : null); // @feature telemetry
 	}, [session.isPending, session.data, dispatch]);
 
 	useEffect(() => {

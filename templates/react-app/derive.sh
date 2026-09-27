@@ -52,7 +52,7 @@ done
 
 echo "==> flattening packages -> src/shared"
 mkdir -p "$DST/src/shared"
-for pkg in ui api auth layouts hooks types; do
+for pkg in ui api auth layouts hooks types telemetry; do
 	cp -r "$SRC/packages/$pkg/src" "$DST/src/shared/$pkg"
 done
 # The brand tokens live in the config package in the monorepo because three
@@ -94,6 +94,7 @@ find "$DST/src" -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) -pr
 		-e "s#@acme/auth#@/shared/auth#g" \
 		-e "s#@acme/layouts#@/shared/layouts#g" \
 		-e "s#@acme/hooks#@/shared/hooks#g" \
+		-e "s#@acme/telemetry#@/shared/telemetry#g" \
 		-e "s#@acme/types#@/shared/types#g"
 
 # The auth screens moved one level deeper than their components and lib, so

@@ -197,7 +197,19 @@ export function generate(manifest, target, options) {
 
 		const prune = prunes.get(destRel);
 		if (prune && path.basename(destRel) === 'package.json') {
-			const result = prunePackageJson(content, prune);
+			// Keys name packages as the template spells them (`@acme/telemetry`),
+			// but the content has already been through the rename map.
+			const renamed = (keys) =>
+				new Set(
+					[...keys].map((key) =>
+						applyReplacements(key, replacements, enabled, evalExpr)
+					)
+				);
+			const result = prunePackageJson(content, {
+				dependencies: renamed(prune.dependencies),
+				devDependencies: renamed(prune.devDependencies),
+				scripts: prune.scripts
+			});
 			content = result.raw;
 			report.pruned += result.removed;
 		}

@@ -1,3 +1,5 @@
+// Must stay first: instrumentation patches modules before anything loads them.
+import './instrumentation'; // @feature observability
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from 'app.module';
 import * as setup from './app.setup';
@@ -11,7 +13,7 @@ import * as setup from './app.setup';
 		bufferLogs: true
 	});
 	setup.usePinoLogger(app);
-	setup.enableBasicAuth(app); // @feature openapi, queue, observability
+	setup.enableBasicAuth(app); // @feature openapi, queue
 	setup.enableVersioning(app);
 	setup.setStatic(app);
 	setup.enableJsonBodyParser(app);

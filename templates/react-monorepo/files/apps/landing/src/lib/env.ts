@@ -8,3 +8,13 @@ export const CLIENT_HOST = env.VITE_APP_CLIENT_HOST;
  *  actually posts. Falsy when the build arg is missing; the UI hides the block
  *  rather than rendering `mailto:undefined`. */
 export const SUPPORT_EMAIL = env.VITE_APP_SUPPORT_EMAIL;
+
+// @feature:start telemetry
+/** OpenObserve browser monitoring (see @acme/telemetry); unset keeps it off. */
+export const TELEMETRY = {
+	url: env.VITE_OPENOBSERVE_URL as string | undefined,
+	org: env.VITE_OPENOBSERVE_ORG as string | undefined,
+	clientToken: env.VITE_OPENOBSERVE_CLIENT_TOKEN as string | undefined,
+	environment: env.MODE
+};
+// @feature:end

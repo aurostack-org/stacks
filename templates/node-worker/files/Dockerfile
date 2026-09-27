@@ -59,5 +59,5 @@ COPY --from=build /app/dist ./dist
 # pm2-runtime ships in the base image.
 CMD [ "pm2-runtime", "start", "ecosystem.config.cjs" ]
 # @feature:else
-CMD [ "node", "dist/src/index.js" ]
+CMD [ "node", "--import", "./dist/src/instrumentation.js", "dist/src/index.js" ]
 # @feature:end

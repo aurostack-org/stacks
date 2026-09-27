@@ -10,3 +10,13 @@ export const ADMIN_URL = env.VITE_APP_ADMIN_HOST as string;
 export const CLIENT_URL = env.VITE_APP_CLIENT_HOST as string;
 /** The public marketing site (logout destination). */
 export const LANDING_URL = env.VITE_APP_LANDING as string;
+
+// @feature:start telemetry
+/** OpenObserve browser monitoring (see @acme/telemetry); unset keeps it off. */
+export const TELEMETRY = {
+	url: env.VITE_OPENOBSERVE_URL as string | undefined,
+	org: env.VITE_OPENOBSERVE_ORG as string | undefined,
+	clientToken: env.VITE_OPENOBSERVE_CLIENT_TOKEN as string | undefined,
+	environment: env.MODE
+};
+// @feature:end

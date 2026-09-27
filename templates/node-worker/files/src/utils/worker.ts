@@ -1,4 +1,5 @@
 import { Worker, type WorkerOptions, type Processor } from 'bullmq';
+import { BullMQOtel } from 'bullmq-otel';
 import config from '#app/config.js';
 
 export const createWorker = <
@@ -19,7 +20,14 @@ export const createWorker = <
 
 	const defaultOptions = {
 		concurrency: 1,
-		autorun: false
+		autorun: false,
+		// Job spans and metrics; a no-op unless the OpenTelemetry SDK is running
+		// (see src/instrumentation.ts).
+		telemetry: new BullMQOtel({
+			tracerName: 'collector',
+			meterName: 'collector',
+			enableMetrics: true
+		})
 	};
 
 	const options = !opts

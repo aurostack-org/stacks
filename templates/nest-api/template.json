@@ -104,7 +104,8 @@
 					"bullmq",
 					"@bull-board/api",
 					"@bull-board/express",
-					"@bull-board/nestjs"
+					"@bull-board/nestjs",
+					"bullmq-otel"
 				]
 			}
 		},
@@ -168,23 +169,35 @@
 			"core": true
 		},
 		"observability": {
-			"title": "Metrics and health checks",
-			"description": "A Prometheus /metrics endpoint and Terminus health checks, including a Prisma indicator. Structured pino logging is always included.",
+			"title": "Observability: OpenTelemetry and health checks",
+			"description": "OpenTelemetry traces, logs and metrics pushed over OTLP (built for OpenObserve; set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend), plus Terminus health checks with a Prisma indicator. Off at runtime until connected.",
 			"default": true,
 			"files": [
-				"src/common/modules/metrics.module.ts",
-				"src/common/controllers/metrics.controller.ts",
 				"src/common/controllers/health.controller.ts",
-				"src/common/interceptors/metrics.interceptor.ts",
 				"src/common/misc/prisma.indicator.ts",
 				"src/common/__tests__/health.controller.spec.ts",
-				"src/common/__tests__/prisma.indicator.spec.ts"
+				"src/common/__tests__/prisma.indicator.spec.ts",
+				"src/instrumentation.ts",
+				"src/telemetry/**"
 			],
 			"packageJson": {
 				"dependencies": [
-					"prom-client",
-					"@willsoto/nestjs-prometheus",
-					"@nestjs/terminus"
+					"@nestjs/terminus",
+					"@opentelemetry/api",
+					"@opentelemetry/core",
+					"@opentelemetry/sdk-node",
+					"@opentelemetry/auto-instrumentations-node",
+					"@opentelemetry/exporter-trace-otlp-proto",
+					"@opentelemetry/exporter-logs-otlp-proto",
+					"@opentelemetry/exporter-metrics-otlp-proto",
+					"@opentelemetry/sdk-logs",
+					"@opentelemetry/sdk-metrics",
+					"@opentelemetry/resources",
+					"@opentelemetry/semantic-conventions",
+					"@opentelemetry/instrumentation",
+					"@opentelemetry/instrumentation-express",
+					"import-in-the-middle",
+					"@prisma/instrumentation"
 				]
 			}
 		},

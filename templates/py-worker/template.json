@@ -55,6 +55,29 @@
 			"files": [
 				".forgejo/**"
 			]
+		},
+		"telemetry": {
+			"title": "OpenTelemetry → OpenObserve",
+			"description": "Traces, logs and metrics over OTLP (set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend), with a span per job and Redis instrumentation. Off at runtime until connected.",
+			"default": true,
+			"files": [
+				"utils/telemetry.py"
+			],
+			"requirements": [
+				"googleapis-common-protos",
+				"opentelemetry-api",
+				"opentelemetry-exporter-http-transport",
+				"opentelemetry-exporter-otlp-common",
+				"opentelemetry-exporter-otlp-proto-common",
+				"opentelemetry-exporter-otlp-proto-http",
+				"opentelemetry-instrumentation",
+				"opentelemetry-instrumentation-redis",
+				"opentelemetry-proto",
+				"opentelemetry-sdk",
+				"opentelemetry-semantic-conventions",
+				"protobuf",
+				"wrapt"
+			]
 		}
 	},
 	"hooks": [

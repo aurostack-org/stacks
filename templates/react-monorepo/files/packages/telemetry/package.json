@@ -1,0 +1,20 @@
+{
+	"name": "@acme/telemetry",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@openobserve/browser-logs": "^0.4.3",
+		"@openobserve/browser-rum": "^0.4.3"
+	},
+	"devDependencies": {
+		"@acme/config": "workspace:*"
+	}
+}

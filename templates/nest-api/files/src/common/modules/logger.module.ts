@@ -19,10 +19,7 @@ import {
 				config: CustomConfigService,
 				gen: GeneratorService
 			) => ({
-				exclude: [
-					{ method: RequestMethod.ALL, path: 'health' },
-					{ method: RequestMethod.ALL, path: 'metrics' }
-				],
+				exclude: [{ method: RequestMethod.ALL, path: 'health' }],
 				pinoHttp: {
 					level: config.logger.level,
 					transport:
@@ -41,8 +38,7 @@ import {
 								'/dashboard',
 								'/openapi',
 								'/openapi-json',
-								'/docs',
-								'/metrics'
+								'/docs'
 							]; // Bull Board + API docs, all mounted outside Nest
 							return muted.some((p) => path === p || path.startsWith(p + '/'));
 						}

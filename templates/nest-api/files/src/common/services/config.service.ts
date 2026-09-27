@@ -54,7 +54,7 @@ namespace Config {
 	}
 	// @feature:end
 
-	// @feature:start openapi, queue, observability
+	// @feature:start openapi, queue
 	export interface BasicAuth {
 		user: string;
 		password: string;
@@ -129,7 +129,7 @@ namespace Config {
 		health: Health; // @feature observability
 		database: Database;
 		redis: Redis; // @feature cache
-		basicAuth: BasicAuth; // @feature openapi, queue, observability
+		basicAuth: BasicAuth; // @feature openapi, queue
 		betterAuth: BetterAuth;
 		growthbook: Growthbook; // @feature feature-flags
 		superuser: Superuser;
@@ -173,7 +173,7 @@ namespace Config {
 		HEALTH_DISK_THRESHOLD: num(z.number().min(0).max(1)).default(0.8),
 		HEALTH_DISK_PATH: str().default('/'),
 		// @feature:end
-		// @feature:start openapi, queue, observability
+		// @feature:start openapi, queue
 		BASIC_AUTH_USER: str(),
 		BASIC_AUTH_PASS: str(),
 		// @feature:end
@@ -249,7 +249,7 @@ namespace Config {
 			password: env.REDIS_PASSWORD || ''
 		},
 		// @feature:end
-		// @feature:start openapi, queue, observability
+		// @feature:start openapi, queue
 		basicAuth: {
 			user: env.BASIC_AUTH_USER || 'user',
 			password: env.BASIC_AUTH_PASS || 'password'
@@ -342,7 +342,7 @@ export class CustomConfigService {
 	}
 	// @feature:end
 
-	// @feature:start openapi, queue, observability
+	// @feature:start openapi, queue
 	get basicAuth() {
 		return this.config.get('basicAuth', { infer: true });
 	}

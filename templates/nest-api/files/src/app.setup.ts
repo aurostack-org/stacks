@@ -10,7 +10,7 @@ import { SwaggerModule } from '@nestjs/swagger'; // @feature openapi
 import { HttpAdapterHost, Reflector } from '@nestjs/core';
 import helmet from 'helmet';
 import express from 'express';
-import expressBasicAuth from 'express-basic-auth'; // @feature openapi, queue, observability
+import expressBasicAuth from 'express-basic-auth'; // @feature openapi, queue
 import { apiReference } from '@scalar/nestjs-api-reference'; // @feature openapi
 import { AuthService } from '@thallesp/nestjs-better-auth'; // @feature openapi
 import { Logger as PinoLogger } from 'nestjs-pino';
@@ -117,11 +117,11 @@ export const enableHelmet = (app: INestApplication) => {
 	app.use(helmet());
 };
 
-// @feature:start openapi, queue, observability
+// @feature:start openapi, queue
 /**
  * Lock the operator-facing surfaces behind basic auth. Every path added here is
- * something that leaks internals if left open — the API reference, the queue
- * dashboard, the metrics scrape endpoint — so a new one belongs in this list on
+ * something that leaks internals if left open — the API reference and the queue
+ * dashboard — so a new one belongs in this list on
  * the same commit that mounts it.
  */
 export const enableBasicAuth = (app: INestApplication) => {
@@ -132,8 +132,7 @@ export const enableBasicAuth = (app: INestApplication) => {
 		[
 			'/docs', // @feature openapi
 			'/openapi-json', // @feature openapi
-			'/dashboard', // @feature queue
-			'/metrics' // @feature observability
+			'/dashboard' // @feature queue
 		],
 		expressBasicAuth({
 			users: { [user]: password },

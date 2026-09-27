@@ -47,7 +47,35 @@
 			],
 			"packageJson": {
 				"dependencies": [
-					"bullmq"
+					"bullmq",
+					"bullmq-otel",
+					"ioredis"
+				]
+			}
+		},
+		"telemetry": {
+			"title": "OpenTelemetry → OpenObserve",
+			"description": "Traces, logs and metrics pushed over OTLP (set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend). Off at runtime until connected.",
+			"default": true,
+			"files": [
+				"src/telemetry/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@opentelemetry/api",
+					"@opentelemetry/core",
+					"@opentelemetry/sdk-node",
+					"@opentelemetry/auto-instrumentations-node",
+					"@opentelemetry/exporter-trace-otlp-proto",
+					"@opentelemetry/exporter-logs-otlp-proto",
+					"@opentelemetry/exporter-metrics-otlp-proto",
+					"@opentelemetry/sdk-logs",
+					"@opentelemetry/sdk-metrics",
+					"@opentelemetry/resources",
+					"@opentelemetry/semantic-conventions",
+					"@opentelemetry/instrumentation",
+					"import-in-the-middle",
+					"@prisma/instrumentation"
 				]
 			}
 		},

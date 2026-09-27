@@ -115,6 +115,42 @@ The shared code is literally the same files: `templates/react-app/derive.sh`
 re-flattens `packages/*` into `src/shared/*` and rewrites the import specifiers,
 so a fix in one lands in the other. See that template's README.
 
+### Observability
+
+Every template ships with OpenTelemetry (backend) or OpenObserve RUM (browser)
+wired in and switched on by default (`--without observability` for `nest-api`,
+`--without telemetry` for the rest). Nothing is sent until a project is
+connected; unset, the SDKs are never even loaded.
+
+| Template | Sends |
+|---|---|
+| `nest-api` | Traces (HTTP, GraphQL, Prisma, pg, ioredis, BullMQ jobs), logs with trace ids, runtime/HTTP/queue metrics |
+| `node-worker` | Job traces, Prisma/Redis spans, logs, metrics |
+| `py-worker` | One trace per job, Redis spans, logs, metrics |
+| `react-app` / `react-monorepo` | Page views, errors (including the error boundary's), slow resources, user actions, the signed-in user id, console errors as logs. API calls carry `traceparent`, so a click links to the backend trace it caused |
+
+To connect a project to its OpenObserve organization:
+
+1. Create an organization for the project in OpenObserve.
+2. **Backend:** from IAM → Ingestion Tokens, copy the org's ingestion token
+   (`o2oi_…`) and set `OPENOBSERVE_ORG` and `OPENOBSERVE_TOKEN`
+   (`OPENOBSERVE_URL` defaults to `https://o2.aurostack.co`). Each service
+   writes to its own stream, named after `OTEL_SERVICE_NAME`.
+3. **Frontend:** from Ingestion → RUM, copy the RUM token and set
+   `VITE_OPENOBSERVE_ORG` and `VITE_OPENOBSERVE_CLIENT_TOKEN`. It is a
+   write-only token built to ship in a bundle. Never put the backend's
+   ingestion token there.
+4. Add each app origin to the instance's `ZO_CORS_ALLOWED_ORIGINS`, or the
+   browser's RUM posts are blocked.
+
+Any other OTLP backend works too: set `OTEL_EXPORTER_OTLP_ENDPOINT` (and
+`_HEADERS`) instead of the `OPENOBSERVE_*` variables. `OTEL_SDK_DISABLED=true`
+turns telemetry off. Session replay is off by default
+(`sessionReplaySampleRate` in `initTelemetry`). The first request or two of a
+page load go out before the RUM SDK has started, so they carry no trace header.
+Source-map upload for readable browser stack traces needs OpenObserve
+Enterprise.
+
 ## How it works
 
 Templates are **subtractive**. `templates/<name>/files` is a complete, runnable

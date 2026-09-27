@@ -1,5 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { initTelemetry } from '@acme/telemetry'; // @feature telemetry
+import { API_URL, TELEMETRY } from './lib/env'; // @feature telemetry
 import { RouterProvider } from 'react-router';
 import '@acme/ui/globals.css';
 import { Providers } from './app/providers';
@@ -9,6 +11,8 @@ import { router } from './app/router';
 // in a component effect: at this point every module above has finished
 // evaluating and `providers` has already called `configureApi` at module scope,
 // so the fetch races the session check instead of queueing behind it.
+
+initTelemetry({ service: 'acme-client', ...TELEMETRY, apiUrls: [API_URL] }); // @feature telemetry
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>

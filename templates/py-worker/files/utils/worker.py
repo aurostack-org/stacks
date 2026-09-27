@@ -5,6 +5,7 @@ from urllib.parse import urlparse, quote, urlencode
 from config import CONFIG, Redis
 from utils.db import DB
 from utils.logger import Logger
+from utils.telemetry import job_span  # @feature telemetry
 
 
 def build_redis_url(options: Redis):
@@ -39,9 +40,19 @@ def create_worker(queue_name: str, process_function: Callable, concurrency: int 
         An instance of BullMQ Worker.
     """
     connection = build_redis_url(CONFIG.env.redis)
+
+    processor = process_function
+    # @feature:start telemetry
+    async def traced(job: Job, token: str):
+        with job_span(queue_name, job):
+            return await process_function(job, token)
+
+    processor = traced
+    # @feature:end
+
     worker = Worker(
         queue_name,
-        process_function,
+        processor,
         {
             "connection": connection,
             "autorun": True,

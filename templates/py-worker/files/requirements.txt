@@ -4,9 +4,21 @@ certifi==2026.5.20
 charset-normalizer==3.4.7
 cuid2==2.0.1
 dotenv==0.9.9
+googleapis-common-protos==1.75.4
 greenlet==3.5.1
 idna==3.18
 msgpack==1.1.2
+opentelemetry-api==1.45.0
+opentelemetry-exporter-http-transport==0.66b0
+opentelemetry-exporter-otlp-common==0.66b0
+opentelemetry-exporter-otlp-proto-common==1.45.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
+opentelemetry-instrumentation==0.66b0
+opentelemetry-instrumentation-redis==0.66b0
+opentelemetry-proto==1.45.0
+opentelemetry-sdk==1.45.0
+opentelemetry-semantic-conventions==0.66b0
+protobuf==7.36.2
 psycopg2-binary==2.9.12
 python-dotenv==1.2.2
 redis==6.4.0
@@ -16,3 +28,4 @@ SQLAlchemy==2.0.50
 typing_extensions==4.15.0
 urllib3==2.7.0
 websockets==16.0
+wrapt==2.5.0

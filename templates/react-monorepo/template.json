@@ -81,6 +81,52 @@
 				"packages/types/**"
 			]
 		},
+		"telemetry": {
+			"title": "Browser monitoring → OpenObserve",
+			"description": "The @acme/telemetry package: OpenObserve RUM and logs in every app — page views, errors (including the error boundary's), slow resources, user actions, the signed-in user id, and traceparent headers on API calls so frontend and backend traces link up. Session replay is off unless a project turns it on. Off at runtime until VITE_OPENOBSERVE_* are set.",
+			"default": true,
+			"files": [
+				"packages/telemetry/**"
+			],
+			"packageJson": [
+				{
+					"file": "apps/admin/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				},
+				{
+					"file": "apps/auth/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				},
+				{
+					"file": "apps/client/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				},
+				{
+					"file": "apps/landing/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				},
+				{
+					"file": "packages/layouts/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				},
+				{
+					"file": "packages/auth/package.json",
+					"dependencies": [
+						"@acme/telemetry"
+					]
+				}
+			]
+		},
 		"app-auth": {
 			"title": "Auth app",
 			"description": "Login, signup, forgot/reset password, email verification. The one app that owns the session; the others redirect here.",

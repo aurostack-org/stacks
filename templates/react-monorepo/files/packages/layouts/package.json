@@ -11,6 +11,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@acme/telemetry": "workspace:*",
 		"@acme/ui": "workspace:*",
 		"lucide-react": "^1.17.0"
 	},
