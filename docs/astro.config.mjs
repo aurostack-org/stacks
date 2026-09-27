@@ -8,12 +8,12 @@ import { sidebar } from './sidebar.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-// The public site lives under /stacks on GitHub Pages. A private build
-// (stackbook) overrides these through the environment, and points @internal at
-// its own notes; the public build resolves it to an empty directory, so no
-// internal content can reach it.
-const site = process.env.DOCS_SITE ?? 'https://aurostack-org.github.io';
-const base = process.env.DOCS_BASE ?? '/stacks';
+// The public site is served at the root of stacks.aurostack.co (GitHub Pages
+// with a custom domain). A private build (stackbook) overrides these through
+// the environment, and points @internal at its own notes; the public build
+// resolves it to an empty directory, so no internal content can reach it.
+const site = process.env.DOCS_SITE ?? 'https://stacks.aurostack.co';
+const base = process.env.DOCS_BASE ?? '/';
 const internalDir = process.env.DOCS_INTERNAL_DIR ?? path.join(here, 'src/internal-empty');
 
 export default defineConfig({
