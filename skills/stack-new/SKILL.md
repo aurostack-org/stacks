@@ -5,8 +5,9 @@ description: Scaffold a new project from the house templates — a NestJS API, a
 
 # Scaffolding a new project
 
-House templates live in `~/.claude/stacks/templates`, driven by a zero-dependency
-Node CLI at `~/.claude/stacks/cli/stack.mjs`.
+House templates live in `${CLAUDE_PLUGIN_ROOT}/templates`, driven by a
+zero-dependency Node CLI at `${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs` (the same CLI
+people run in a terminal as `stack`, from the `@aurostack/stacks` npm package).
 
 **Never hand-write this boilerplate.** If a template covers the stack, generate
 from it — hand-copying drifts from the template immediately and loses the
@@ -24,7 +25,7 @@ pile of fragments never does.
 
 ### 1. Establish what they are building
 
-Run `node ~/.claude/stacks/cli/stack.mjs list` and, for the likely template,
+Run `node ${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs list` and, for the likely template,
 `... info <template>` to see its features. Then ask only what you cannot infer:
 
 - **Which template.** Usually obvious from the request. A service with HTTP
@@ -58,7 +59,7 @@ about things with an obvious default.
 ### 2. Generate
 
 ```
-node ~/.claude/stacks/cli/stack.mjs new <template> <dir> \
+node ${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs new <template> <dir> \
   --name <name> --scope <scope> [--port N] \
   [--with a,b] [--without c,d]
 ```
@@ -93,7 +94,7 @@ The generated project records what produced it in `stack.json`.
 There is no `stack add`. To bring in a feature later, generate a throwaway
 project with `--dry-run` off into a temp directory and copy the parts across, or
 just install the dependency and wire it by hand — the manifest's feature entry
-(`~/.claude/stacks/templates/<t>/template.json`) lists exactly which files and
+(`${CLAUDE_PLUGIN_ROOT}/templates/<t>/template.json`) lists exactly which files and
 package keys that feature owns, which is the checklist to follow.
 
 ## When a template does not fit

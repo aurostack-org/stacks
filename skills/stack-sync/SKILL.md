@@ -5,8 +5,18 @@ description: Fold improvements from a live codebase back into the house template
 
 # Maintaining the house templates
 
-Templates live in `~/.claude/stacks/templates/<name>/` as a `template.json`
-manifest plus a `files/` tree. The CLI is `~/.claude/stacks/cli/stack.mjs`.
+Templates live in `templates/<name>/` as a `template.json` manifest plus a
+`files/` tree, in a **git checkout** of
+[aurostack-org/stacks](https://github.com/aurostack-org/stacks). Maintenance
+writes into the templates, so it always runs against that checkout, never an
+installed copy — this plugin and the npm package are both copies that the next
+update replaces, and `stack extract` refuses to run from one.
+
+A maintainer's checkout is set up with `bash install.sh`, which links the bare
+`stack` command to it. Use `stack` in the commands below. If `stack extract`
+says it needs a git checkout, the `stack` on PATH is an installed copy: clone
+the repo (`git clone https://github.com/aurostack-org/stacks.git`), run
+`bash stacks/install.sh`, and retry.
 
 `stack extract` is deliberately mechanical: it copies whatever the template's
 source config says. Deciding what is generic infrastructure and what is domain
@@ -41,7 +51,7 @@ come in, so a refresh never reintroduces the source's product name.
 ## Refreshing a template from its source repo
 
 ```
-node ~/.claude/stacks/cli/stack.mjs extract <template> [--source <dir>] [--prune]
+stack extract <template> [--source <dir>] [--prune]
 ```
 
 - **copied** — new or identical files, written.

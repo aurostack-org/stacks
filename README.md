@@ -8,11 +8,60 @@ stack info nest-api                     # its features and defaults
 stack new nest-api ~/Projects/acme/api --with realtime --without media
 ```
 
-The CLI is plain Node ESM with **no dependencies and no build step**:
+The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
+
+## Install
+
+### In Claude Code
+
+```
+/plugin marketplace add aurostack-org/stacks
+/plugin install stacks@aurostack
+```
+
+This adds two skills: `/stacks:stack-new` scaffolds a project (or just ask for
+"a new API"), and `/stacks:stack-sync` folds improvements back into the
+templates. The plugin carries the CLI and templates with it.
+
+To have Claude Code offer it to everyone who opens a repository, commit this to
+the repository's `.claude/settings.json`:
+
+```json
+{
+	"extraKnownMarketplaces": {
+		"aurostack": {
+			"source": { "source": "github", "repo": "aurostack-org/stacks" },
+			"autoUpdate": true
+		}
+	},
+	"enabledPlugins": {
+		"stacks@aurostack": true
+	}
+}
+```
+
+### In a terminal or CI
 
 ```sh
-alias stack='node ~/.claude/stacks/cli/stack.mjs'
+npx @aurostack/stacks new nest-api ./api      # one-off
+npm install -g @aurostack/stacks              # or keep `stack` around
+stack --version
 ```
+
+### Maintaining the templates
+
+Template work (`stack extract`, editing `templates/`, the `/stack-sync` skill)
+happens in a git checkout — the plugin and the npm package are copies that the
+next update replaces, and `stack extract` refuses to run from one:
+
+```sh
+git clone https://github.com/aurostack-org/stacks.git
+bash stacks/install.sh          # links `stack` to this checkout
+claude --plugin-dir ./stacks    # try skill edits without reinstalling
+```
+
+`package.json` holds the version; the plugin manifests repeat it, and
+`stack doctor` fails if they drift.
 
 ## The templates
 
@@ -142,7 +191,8 @@ than at the schema.
 ## Layout
 
 ```
-~/.claude/stacks/
+stacks/
+├── package.json        npm package @aurostack/stacks; the version lives here
 ├── .claude-plugin/     plugin + marketplace manifests
 ├── skills/
 │   ├── stack-new/      scaffolding a new project
@@ -155,14 +205,5 @@ than at the schema.
     └── files/          the runnable superset app
 ```
 
-This directory is its own git repository, pushed to
-[aurostack-org/stacks](https://github.com/aurostack-org/stacks) — `~/.claude` around it is
-not. Nothing here depends on the path, so it can be cloned anywhere; the CLI
-resolves the templates relative to its own location.
-
-Clone it onto a new machine with:
-
-```sh
-git clone git@github.com:aurostack-org/stacks.git ~/.claude/stacks
-bash ~/.claude/stacks/install.sh
-```
+Nothing here depends on where it lives: the CLI resolves the templates relative
+to its own location, and the skills reach it through `${CLAUDE_PLUGIN_ROOT}`.

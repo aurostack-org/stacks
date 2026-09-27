@@ -2,8 +2,8 @@
 /**
  * `stack` — scaffold a new project from a house template.
  *
- * Plain Node ESM with zero dependencies and no build step, so it runs straight
- * out of ~/.claude/stacks/cli on any machine that has Node.
+ * Plain Node ESM with zero dependencies and no build step, so it runs the same
+ * from the npm package, the Claude Code plugin, or a git checkout.
  *
  *   stack list
  *   stack info <template>
@@ -36,6 +36,9 @@ import { walk, matcher, isTextFile, readText, DEFAULT_SKIP_DIRS } from './src/fs
 import { kebab, interpolate } from './src/tokens.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const VERSION = JSON.parse(
+	fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')
+).version;
 
 // Colour only when attached to a terminal, so piping the output into a file
 // or another tool yields clean text.
@@ -68,6 +71,7 @@ ${c.bold('Commands')}
   new <template> <dir> [options]    Generate a project
   extract <template> [options]      Refresh a template from its source repo
   doctor [template]                 Validate templates against their manifests
+  version                           Print the stack version (also --version)
 
 ${c.bold('new options')}
   --name <name>        Project name        ${c.dim('(default: basename of <dir>)')}
@@ -165,6 +169,7 @@ function cmdNew(args, values) {
 
 	const options = {
 		name,
+		toolVersion: VERSION,
 		scope: values.scope,
 		description: values.description,
 		port: values.port ? Number(values.port) : undefined,
@@ -221,6 +226,15 @@ function cmdExtract(args, values) {
 	if (!templateName) {
 		log(c.red('Usage: stack extract <template>'));
 		process.exit(1);
+	}
+	// npm and Claude Code install stack as a copy that the next update
+	// replaces, so an extract there would write into files that get thrown away.
+	if (!fs.existsSync(path.join(ROOT, '.git'))) {
+		throw new Error(
+			`extract writes into the templates, so it needs a git checkout, not an installed copy (${ROOT}).\n` +
+				'  git clone https://github.com/aurostack-org/stacks.git && cd stacks && bash install.sh\n' +
+				'  then run extract from that checkout.'
+		);
 	}
 	const manifest = loadManifest(ROOT, templateName);
 	const config = sourceConfig(ROOT, manifest);
@@ -546,10 +560,40 @@ function doctorOne(name) {
 	return [...new Set(problems)];
 }
 
+/**
+ * The plugin manifests repeat package.json's version; a release that bumps one
+ * and not the others ships an npm package and a plugin that disagree. Only
+ * checked where the manifests exist (a checkout or the plugin, not npm).
+ */
+function versionProblems() {
+	const problems = [];
+	for (const rel of ['.claude-plugin/plugin.json', '.claude-plugin/marketplace.json']) {
+		const file = path.join(ROOT, rel);
+		if (!fs.existsSync(file)) continue;
+		const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+		const versions = rel.endsWith('marketplace.json')
+			? (json.plugins || []).map((p) => p.version)
+			: [json.version];
+		for (const v of versions) {
+			if (v !== VERSION) problems.push(`${rel} says ${v}, package.json says ${VERSION}`);
+		}
+	}
+	return problems;
+}
+
 function cmdDoctor(args) {
 	const names = args[0] ? [args[0]] : listTemplates(ROOT);
 	let total = 0;
 	log('');
+	if (!args[0]) {
+		const problems = versionProblems();
+		total += problems.length;
+		if (problems.length === 0) log(`  ${c.green('ok')}  version ${VERSION}`);
+		else {
+			log(`  ${c.red('!!')}  version`);
+			for (const p of problems) log(`      ${c.yellow(p)}`);
+		}
+	}
 	for (const name of names) {
 		const problems = doctorOne(name);
 		total += problems.length;
@@ -583,11 +627,17 @@ function main() {
 			prune: { type: 'boolean' },
 			'dry-run': { type: 'boolean' },
 			'no-hooks': { type: 'boolean' },
-			help: { type: 'boolean', short: 'h' }
+			help: { type: 'boolean', short: 'h' },
+			version: { type: 'boolean', short: 'v' }
 		}
 	});
 
 	const [command, ...rest] = positionals;
+
+	if (values.version || command === 'version') {
+		log(VERSION);
+		return;
+	}
 
 	if (!command || values.help || command === 'help') {
 		log(USAGE);

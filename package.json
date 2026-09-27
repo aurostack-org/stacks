@@ -1,0 +1,37 @@
+{
+	"name": "@aurostack/stacks",
+	"version": "0.1.0",
+	"description": "Scaffold new projects from house templates: a NestJS API, React app or Turborepo monorepo, and Node or Python workers. Subtractive templates plus a zero-dependency generator.",
+	"license": "MIT",
+	"author": "Aurostack (https://github.com/aurostack-org)",
+	"homepage": "https://github.com/aurostack-org/stacks#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aurostack-org/stacks.git"
+	},
+	"bugs": "https://github.com/aurostack-org/stacks/issues",
+	"keywords": [
+		"scaffold",
+		"generator",
+		"template",
+		"boilerplate",
+		"nestjs",
+		"react",
+		"turborepo",
+		"cli"
+	],
+	"type": "module",
+	"bin": {
+		"stack": "cli/stack.mjs"
+	},
+	"files": [
+		"cli/",
+		"templates/"
+	],
+	"engines": {
+		"node": ">=20.19"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
