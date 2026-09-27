@@ -1,0 +1,24 @@
+---
+title: react-monorepo features
+description: Every react-monorepo feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/react-monorepo/template.json`. The apps are features
+too: `app-auth` and `app-client` are on by default; `app-landing` and
+`app-admin` are opt-in.
+
+<FeatureTable template="react-monorepo" />
+
+## Notes
+
+- **Dropping `app-auth`** means another app must own `/login`: every guard and
+  every 401 sends users to `VITE_APP_AUTH_HOST/login`.
+- **`pwa`** and **`charts`** configure the client app only.
+- **`types`** off removes generated types; apps then type their API calls by
+  hand.
+- The Dockerfile, CI matrix and `build.sh` follow the app set: only the apps you
+  generate are built.

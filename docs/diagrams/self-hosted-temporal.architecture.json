@@ -1,0 +1,207 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "Self-hosted Temporal",
+		"quality_profile": "showcase",
+		"views": [
+			{
+				"id": "workers",
+				"label": "Workers and APIs connect",
+				"focus": [
+					"clients",
+					"gateway",
+					"temporal"
+				],
+				"note": "gRPC only passes the gateway with a client certificate from the stack's CA."
+			},
+			{
+				"id": "people",
+				"label": "People open the UI",
+				"focus": [
+					"browser",
+					"proxy",
+					"ui",
+					"sso",
+					"temporal"
+				],
+				"note": "The reverse proxy terminates HTTPS; the UI signs users in over OIDC."
+			},
+			{
+				"id": "state",
+				"label": "State and migrations",
+				"focus": [
+					"temporal",
+					"postgres",
+					"setup"
+				],
+				"note": "Setup applies schema migrations before every server start."
+			}
+		]
+	},
+	"components": [
+		{
+			"id": "clients",
+			"type": "external",
+			"label": "Workers and APIs",
+			"sublabel": "client certificate",
+			"pos": [40, 40],
+			"size": [150, 64]
+		},
+		{
+			"id": "gateway",
+			"type": "security",
+			"label": "mTLS gateway",
+			"sublabel": "Caddy :7233",
+			"pos": [300, 40],
+			"size": [150, 64]
+		},
+		{
+			"id": "setup",
+			"type": "backend",
+			"label": "Schema setup",
+			"sublabel": "admin-tools, each start",
+			"pos": [860, 40],
+			"size": [160, 64]
+		},
+		{
+			"id": "temporal",
+			"type": "backend",
+			"label": "Temporal server",
+			"sublabel": "all four roles",
+			"pos": [570, 175],
+			"size": [170, 70]
+		},
+		{
+			"id": "postgres",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "temporal + visibility",
+			"pos": [860, 178],
+			"size": [160, 64]
+		},
+		{
+			"id": "browser",
+			"type": "frontend",
+			"label": "Team browser",
+			"sublabel": "HTTPS",
+			"pos": [40, 320],
+			"size": [150, 64]
+		},
+		{
+			"id": "proxy",
+			"type": "security",
+			"label": "Reverse proxy",
+			"sublabel": "TLS \u00b7 32k buffers",
+			"pos": [300, 320],
+			"size": [150, 64]
+		},
+		{
+			"id": "ui",
+			"type": "frontend",
+			"label": "Temporal UI",
+			"sublabel": "loopback :8080",
+			"pos": [575, 320],
+			"size": [160, 64]
+		},
+		{
+			"id": "sso",
+			"type": "security",
+			"label": "OIDC provider",
+			"sublabel": "e.g. Keycloak",
+			"pos": [1110, 320],
+			"size": [160, 64]
+		}
+	],
+	"boundaries": [
+		{
+			"kind": "region",
+			"label": "Temporal host \u00b7 Docker network temporal",
+			"wraps": [
+				"gateway",
+				"setup",
+				"temporal",
+				"postgres",
+				"ui"
+			],
+			"pad": 22
+		}
+	],
+	"connections": [
+		{
+			"from": "clients",
+			"to": "gateway",
+			"label": "gRPC + mTLS",
+			"variant": "security"
+		},
+		{
+			"from": "gateway",
+			"to": "temporal",
+			"label": "h2c",
+			"variant": "emphasis"
+		},
+		{
+			"from": "temporal",
+			"to": "postgres",
+			"label": "SQL"
+		},
+		{
+			"from": "setup",
+			"to": "postgres",
+			"label": "migrations",
+			"variant": "dashed",
+			"labelDy": 24
+		},
+		{
+			"from": "browser",
+			"to": "proxy",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "proxy",
+			"to": "ui",
+			"label": "HTTP"
+		},
+		{
+			"from": "ui",
+			"to": "temporal",
+			"label": "gRPC"
+		},
+		{
+			"from": "ui",
+			"to": "sso",
+			"label": "OIDC",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "rose",
+			"title": "What is exposed",
+			"items": [
+				"Only the gateway's :7233, and only to certificate holders",
+				"The UI binds to a private address behind the proxy",
+				"Temporal and PostgreSQL are never published"
+			]
+		},
+		{
+			"dot": "cyan",
+			"title": "Startup order",
+			"items": [
+				"PostgreSQL healthy, then schema setup runs",
+				"Server starts once setup succeeds",
+				"Namespaces, UI and gateway follow a healthy server"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "Gotchas",
+			"items": [
+				"History shard count is fixed forever at first start",
+				"SSO cookies exceed nginx's default header buffer",
+				"The UI needs PKCE off and the OIDC issuer reachable"
+			]
+		}
+	]
+}

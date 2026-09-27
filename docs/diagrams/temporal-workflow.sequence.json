@@ -1,0 +1,141 @@
+{
+	"schema_version": 1,
+	"diagram_type": "sequence",
+	"meta": {
+		"title": "A Temporal workflow, from the API to a worker",
+		"quality_profile": "showcase",
+		"viewBox": [
+			960,
+			520
+		]
+	},
+	"participants": [
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "TemporalService"
+		},
+		{
+			"id": "temporal",
+			"type": "messagebus",
+			"label": "Temporal",
+			"sublabel": "task queues"
+		},
+		{
+			"id": "worker",
+			"type": "backend",
+			"label": "Worker",
+			"sublabel": "runs the code"
+		},
+		{
+			"id": "svc",
+			"type": "external",
+			"label": "Other systems",
+			"sublabel": "databases, APIs"
+		}
+	],
+	"segments": [
+		{
+			"from": 150,
+			"to": 196,
+			"label": "Start"
+		},
+		{
+			"from": 206,
+			"to": 400,
+			"label": "Run"
+		},
+		{
+			"from": 410,
+			"to": 440,
+			"label": "Result"
+		}
+	],
+	"messages": [
+		{
+			"id": "start",
+			"from": "api",
+			"to": "temporal",
+			"y": 180,
+			"label": "workflow.start('example', taskQueue)",
+			"variant": "emphasis"
+		},
+		{
+			"id": "task",
+			"from": "temporal",
+			"to": "worker",
+			"y": 214,
+			"label": "workflow task",
+			"variant": "return"
+		},
+		{
+			"id": "sched",
+			"from": "worker",
+			"to": "temporal",
+			"y": 248,
+			"label": "schedule an activity",
+			"variant": "default"
+		},
+		{
+			"id": "act",
+			"from": "temporal",
+			"to": "worker",
+			"y": 282,
+			"label": "activity task",
+			"variant": "return"
+		},
+		{
+			"id": "io",
+			"from": "worker",
+			"to": "svc",
+			"y": 316,
+			"label": "do the work",
+			"variant": "emphasis"
+		},
+		{
+			"id": "res",
+			"from": "svc",
+			"to": "worker",
+			"y": 350,
+			"label": "result",
+			"variant": "return"
+		},
+		{
+			"id": "done",
+			"from": "worker",
+			"to": "temporal",
+			"y": 384,
+			"label": "activity done, workflow completes",
+			"variant": "emphasis"
+		},
+		{
+			"id": "value",
+			"from": "temporal",
+			"to": "api",
+			"y": 418,
+			"label": "result, via handle.result()",
+			"variant": "return"
+		}
+	],
+	"activations": [
+		{
+			"participant": "temporal",
+			"from": 180,
+			"to": 424,
+			"type": "messagebus"
+		},
+		{
+			"participant": "worker",
+			"from": 214,
+			"to": 390,
+			"type": "backend"
+		},
+		{
+			"participant": "svc",
+			"from": 316,
+			"to": 356,
+			"type": "external"
+		}
+	]
+}

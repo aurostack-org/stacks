@@ -1,0 +1,56 @@
+---
+title: react-monorepo
+description: Separate React apps (landing, auth, client, admin) over shared packages, sharing one session across subdomains.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The front end as separate Vite + React 19 apps on separate origins, built from
+shared workspace packages with Yarn workspaces and Turborepo. The apps share one
+session through a cookie on the parent domain, so signing in on the auth app
+signs you in everywhere.
+
+```sh
+stack new react-monorepo ./web --name shop-web --with app-landing,app-admin
+```
+
+## Apps
+
+| App | Dev port | What | Feature |
+|---|---|---|---|
+| `apps/landing` | 3000 | Public marketing site, SEO files at build time | `app-landing` (opt-in) |
+| `apps/auth` | 3001 | Login, signup, password reset, email verification; the one app that owns the session | `app-auth` |
+| `apps/client` | 3002 | The signed-in product | `app-client` |
+| `apps/admin` | 3003 | Internal console, for the `admin` and `superuser` roles | `app-admin` (opt-in) |
+
+## Packages
+
+| Package | What |
+|---|---|
+| `@scope/ui` | shadcn-style Radix components, forms, theming, page meta |
+| `@scope/api` | The Redux store and the one RTK Query `baseApi`, uploads, Socket.IO |
+| `@scope/auth` | better-auth client, session state, route guards, cross-app redirects |
+| `@scope/layouts` | App shell, auth and marketing layouts, error boundary, state screens |
+| `@scope/types` | API types and Zod schemas generated from the API's OpenAPI document |
+| `@scope/telemetry` | OpenObserve RUM and logs |
+| `@scope/config` | Shared tsconfig, Vite config factory, ESLint and Tailwind theme |
+| `@scope/hooks` | Shared hooks (a placeholder to grow) |
+
+Packages are consumed as TypeScript source: no build step of their own.
+
+## When to choose it
+
+When surfaces ship on different schedules, scale differently, or need to be
+locked down separately: a marketing site that changes daily, an app that
+releases weekly, an admin console only reachable from a VPN. Otherwise
+[react-app](../react-app/) is one deployment and no cross-subdomain cookie.
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

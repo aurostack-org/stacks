@@ -1,0 +1,197 @@
+{
+	"schema_version": 1,
+	"diagram_type": "sequence",
+	"meta": {
+		"title": "Signing in across subdomains",
+		"quality_profile": "showcase",
+		"viewBox": [
+			1080,
+			644
+		]
+	},
+	"participants": [
+		{
+			"id": "user",
+			"type": "external",
+			"label": "Person",
+			"sublabel": "browser"
+		},
+		{
+			"id": "client",
+			"type": "frontend",
+			"label": "Client app",
+			"sublabel": "app.example.com"
+		},
+		{
+			"id": "auth",
+			"type": "frontend",
+			"label": "Auth app",
+			"sublabel": "auth.example.com"
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "better-auth /auth"
+		},
+		{
+			"id": "db",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "sessions"
+		}
+	],
+	"segments": [
+		{
+			"from": 150,
+			"to": 264,
+			"label": "Session check"
+		},
+		{
+			"from": 273,
+			"to": 472,
+			"label": "Sign in"
+		},
+		{
+			"from": 479,
+			"to": 576,
+			"label": "Back in the app"
+		}
+	],
+	"messages": [
+		{
+			"id": "open",
+			"from": "user",
+			"to": "client",
+			"y": 180,
+			"label": "open the app",
+			"variant": "default"
+		},
+		{
+			"id": "check",
+			"from": "client",
+			"to": "api",
+			"y": 214,
+			"label": "GET /auth/get-session",
+			"variant": "emphasis"
+		},
+		{
+			"id": "none",
+			"from": "api",
+			"to": "client",
+			"y": 248,
+			"label": "no session",
+			"variant": "return"
+		},
+		{
+			"id": "redirect",
+			"from": "client",
+			"to": "auth",
+			"y": 282,
+			"label": "redirect to /login?redirect=…",
+			"variant": "default"
+		},
+		{
+			"id": "creds",
+			"from": "user",
+			"to": "auth",
+			"y": 316,
+			"label": "email + password",
+			"variant": "default"
+		},
+		{
+			"id": "signin",
+			"from": "auth",
+			"to": "api",
+			"y": 350,
+			"label": "POST /auth/sign-in/email",
+			"variant": "security"
+		},
+		{
+			"id": "create",
+			"from": "api",
+			"to": "db",
+			"y": 384,
+			"label": "create session",
+			"variant": "default"
+		},
+		{
+			"id": "stored",
+			"from": "db",
+			"to": "api",
+			"y": 418,
+			"label": "session",
+			"variant": "return"
+		},
+		{
+			"id": "cookie",
+			"from": "api",
+			"to": "auth",
+			"y": 452,
+			"label": "Set-Cookie, Domain=.example.com",
+			"variant": "return"
+		},
+		{
+			"id": "back",
+			"from": "auth",
+			"to": "client",
+			"y": 486,
+			"label": "back to redirect, if trusted",
+			"variant": "emphasis"
+		},
+		{
+			"id": "recheck",
+			"from": "client",
+			"to": "api",
+			"y": 520,
+			"label": "get-session with the cookie",
+			"variant": "emphasis"
+		},
+		{
+			"id": "ok",
+			"from": "api",
+			"to": "client",
+			"y": 554,
+			"label": "session",
+			"variant": "return"
+		}
+	],
+	"activations": [
+		{
+			"participant": "client",
+			"from": 180,
+			"to": 561,
+			"type": "frontend"
+		},
+		{
+			"participant": "api",
+			"from": 214,
+			"to": 253,
+			"type": "backend"
+		},
+		{
+			"participant": "auth",
+			"from": 282,
+			"to": 490,
+			"type": "frontend"
+		},
+		{
+			"participant": "api",
+			"from": 350,
+			"to": 456,
+			"type": "backend"
+		},
+		{
+			"participant": "db",
+			"from": 384,
+			"to": 423,
+			"type": "database"
+		},
+		{
+			"participant": "api",
+			"from": 520,
+			"to": 558,
+			"type": "backend"
+		}
+	]
+}

@@ -1,0 +1,96 @@
+---
+title: Your first project
+description: Generate an API and a web app, run them, and sign in, in about ten minutes.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This walks through the most common pair: a [nest-api](../../templates/nest-api/)
+and a [react-app](../../templates/react-app/) talking to it, both on your
+machine. You need Node 24, Docker, and Yarn through Corepack
+(`corepack enable`).
+
+## 1. Generate the API
+
+```sh
+stack new nest-api ~/code/shop/api --name shop-api
+```
+
+The report lists the features you got and the ones left out. Then the hooks run:
+`.env` is seeded from `.env.example`, dependencies install, the code is
+formatted, the Prisma client is generated, and a first commit is made.
+
+<Steps>
+
+1. **Finish `.env`.** Two values are empty on purpose, because they're per
+   project: `SMTP_USER` and `SMTP_PASSWORD`. The API refuses to start without
+   them. For local development, point SMTP at a mail catcher (see
+   [SMTP](../../services/smtp/#locally)). Set a real `BETTER_AUTH_SECRET` too:
+
+   ```sh
+   openssl rand -base64 32
+   ```
+
+2. **Start PostgreSQL and Redis**, then wait for them:
+
+   ```sh
+   cd ~/code/shop/api
+   yarn dc:up && yarn dc:wait
+   ```
+
+3. **Create the database schema** and the admin user:
+
+   ```sh
+   yarn db:migrate   # asks for a migration name, e.g. "init"
+   yarn db:seed      # creates SUPERUSER_EMAIL with SUPERUSER_PASSWORD
+   ```
+
+4. **Run it:**
+
+   ```sh
+   yarn start
+   ```
+
+   Open [http://localhost:5000/docs](http://localhost:5000/docs) (basic auth:
+   `BASIC_AUTH_USER` / `BASIC_AUTH_PASS` from `.env`) for the API reference, and
+   [/health](http://localhost:5000/health) to see every check pass.
+
+</Steps>
+
+## 2. Generate the web app
+
+```sh
+stack new react-app ~/code/shop/web --name shop-web
+cd ~/code/shop/web
+yarn dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). You're sent to `/login`:
+sign in as the superuser from step 3, and you land in the app. The defaults
+already agree: the app calls the API at `http://localhost:5000`, and the API
+allows `http://localhost:3000`.
+
+<Aside title="Signing up a new user">
+New email-and-password users must verify their address before they can sign in,
+so signup needs working SMTP. With a local mail catcher, open its inbox and click
+the link.
+</Aside>
+
+## 3. Add a worker (optional)
+
+```sh
+stack new node-worker ~/code/shop/worker --name shop-worker
+```
+
+Copy the API's `prisma/schema/*.prisma` into the worker's `prisma/schema/`,
+then `yarn db:generate && yarn dev`. Its `.env` already points at the same
+PostgreSQL and Redis. See [node-worker development](../../templates/node-worker/development/).
+
+## What's next
+
+- **[Setup checklist](../../setup/checklist/)**: everything a project needs
+  before it goes anywhere near production.
+- **[Connecting services](../../services/)**: each service, local and
+  production.
+- **[A full-stack project](../../guides/full-stack/)**: how the pieces fit
+  together.

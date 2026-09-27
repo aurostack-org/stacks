@@ -1,0 +1,44 @@
+---
+title: 'Checks: doctor and CI'
+description: What stack doctor verifies, and what CI builds for every change.
+---
+
+## stack doctor
+
+`stack doctor` catches the mistakes that make a template silently generate
+broken projects. It runs in CI and before every release.
+
+1. **Versions agree.** `package.json`, `.claude-plugin/plugin.json` and every
+   plugin entry in `.claude-plugin/marketplace.json` carry the same version.
+2. **Every marker names a declared feature.** A typo in a marker would silently
+   delete code.
+3. **Every feature's `files` globs match something**, and every `requires`
+   names a declared feature.
+4. For every **selection** it tries (all features; the defaults; each default
+   dropped along with everything that needs it; each opt-in added):
+   - **brackets still balance** in every `.ts` file that carries markers, which
+     is what a marker on the closing line of a multi-line construct breaks;
+   - **every JSON file still parses** (comments and trailing commas allowed);
+   - **every import still resolves**, including aliased ones through
+     `aliasRoots`, so a barrel that re-exports a dropped module is caught.
+
+It doesn't try every combination of features: generate the ones you care about
+and build them (CI does that for the important ones).
+
+## CI
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`, and
+again as the first stage of every release:
+
+| Job | Variants | Runs |
+|---|---|---|
+| CLI, manifests and package | | `stack doctor`; `check-package` (every template file is in the npm package, nothing private leaks) |
+| nest-api | default, `--all`, without media, without observability, without users, minimal, without testing | typecheck, build, lint, unit tests, and e2e tests against real Postgres and Redis services |
+| node-worker | default, `--all`, without pm2 | typecheck, lint, format check, build |
+| py-worker | default, `--with temporal` | byte-compile every module |
+| react-app, react-monorepo | default, `--all` | typecheck, lint, build |
+| Docker images | nest-api, node-worker, node-worker `--with temporal` | `docker build` |
+| Docs | | build this site, including the env-coverage and link checks |
+
+Every job generates its project with `--strict`, so a failing install or
+format hook fails the job.

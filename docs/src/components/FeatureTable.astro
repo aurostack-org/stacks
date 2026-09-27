@@ -1,0 +1,71 @@
+---
+// Every feature of a template, straight from its template.json.
+import data from '../data/generated/templates.json';
+import { marked } from '../lib/markdown';
+
+interface Props {
+	template: keyof typeof data.templates;
+}
+const { template } = Astro.props;
+const t = data.templates[template];
+const state = (f: (typeof t.features)[number]) =>
+	f.core ? 'Always' : f.default ? 'On' : 'Opt-in';
+---
+
+<table class="feature-table">
+	<thead>
+		<tr>
+			<th>Feature</th>
+			<th>Default</th>
+			<th>What it adds</th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			t.features.map((f) => (
+				<tr id={`feature-${f.key}`}>
+					<td>
+						<code>{f.key}</code>
+						<div class="feature-title">{f.title}</div>
+					</td>
+					<td>
+						<span class={`badge badge-${state(f).toLowerCase()}`}>{state(f)}</span>
+					</td>
+					<td>
+						{f.description && <p set:html={marked(f.description)} />}
+						{f.requires.length > 0 && (
+							<p class="meta">
+								Requires{' '}
+								{f.requires.map((r, i) => (
+									<>
+										{i > 0 && ', '}
+										<a href={`#feature-${r}`}>
+											<code>{r}</code>
+										</a>
+									</>
+								))}
+							</p>
+						)}
+						{f.packages.length > 0 && (
+							<p class="meta">
+								Packages: {f.packages.map((p, i) => (<>{i > 0 && ', '}<code>{p}</code></>))}
+							</p>
+						)}
+						{f.files.length > 0 && (
+							<details>
+								<summary>Files it owns ({f.files.length})</summary>
+								<ul>
+									{f.files.map((file) => (
+										<li>
+											<code>{file}</code>
+										</li>
+									))}
+								</ul>
+							</details>
+						)}
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>

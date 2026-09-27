@@ -1,0 +1,94 @@
+---
+title: Refreshing templates
+description: Pull improvements from the live apps the templates were built from, and add features.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+The templates come from real, running applications. When one of those improves
+(a bug fix, a dependency upgrade, a new capability), `stack extract` copies the
+changes into the template, and you re-apply the markers by hand where needed.
+The Claude Code skill **`/stacks:stack-sync`** walks through all of this.
+
+## Setup (once)
+
+Work in a **git checkout** (`bash install.sh`); `extract` refuses to write into
+an npm or plugin install. Then describe each template's source in
+`stacks.local.json` at the repo root (gitignored, never published), or in the
+file named by `STACKS_LOCAL`:
+
+```json
+{
+	"sources": {
+		"nest-api": {
+			"path": "~/code/our-api",
+			"include": ["**"],
+			"exclude": ["**/.env", "**/.env.*", "prisma/migrations/**"],
+			"skipDirs": ["tmp"],
+			"replacements": [
+				{ "from": "Our Product", "to": "Acme Corp" },
+				{ "from": "our-product", "to": "acme" }
+			]
+		}
+	}
+}
+```
+
+`replacements` map the source's names onto the template's working names, longest
+first. `--source <dir>` overrides the path for one run.
+
+## Refresh a template
+
+<Steps>
+
+1. Preview: `stack extract nest-api --dry-run`.
+2. Copy: `stack extract nest-api`. New files are copied, identical files are
+   left alone, and files that **differ** are reported as conflicts and not
+   written.
+3. Resolve each conflict. Conflicts are usually files you've annotated with
+   markers: take the source's change, keep the markers, write the merged file.
+   `--overwrite` takes the source verbatim (then re-annotate).
+4. `--prune` deletes template files the source no longer has. Only files inside
+   the `include` globs can be pruned, so hand-written template files (an
+   `.env.example`, a seeder) are safe.
+5. `stack doctor nest-api`, then generate a project and run it.
+
+</Steps>
+
+<Aside type="danger" title="Never extract secrets or migrations">
+Exclude `.env*` (write `.env.example` by hand) and migrations. A template ships
+a schema, not a history.
+</Aside>
+
+## react-app is derived
+
+`react-app` isn't extracted: it's generated from `react-monorepo` by
+`templates/react-app/derive.sh`, which flattens the shared packages into
+`src/shared/*`, maps the auth, client and landing apps onto routes, rewrites
+`@acme/x` imports to `@/shared/x`, then copies `templates/react-app/overrides/`
+on top. Edit shared code in react-monorepo and re-run the script; edit routing,
+build and Docker files in react-app directly. Keep `overrides/` short.
+
+## Add a feature
+
+<Steps>
+
+1. Put the working code in `files/`, with everything on.
+2. Mark the shared places it touches (module imports, providers, env files,
+   Dockerfiles) with [markers](../../reference/markers/).
+3. Declare it in `template.json`: its `files`, `packageJson` or
+   `requirements`, `requires`, and whether it's on by default.
+4. Document its env variables in `docs/src/data/env-notes.json` (the docs build
+   fails otherwise; see [Writing docs](../docs/)).
+5. `stack doctor`, generate with and without it, and build both.
+
+</Steps>
+
+Would an unrelated business want this unchanged? If not, it's domain code:
+rename it into something generic, or leave it out.
+
+## Add a template
+
+Create `templates/<name>/template.json`, add a `stacks.local.json` entry, run
+`stack extract <name>`, then annotate. nest-api is the most complete model to
+copy from.

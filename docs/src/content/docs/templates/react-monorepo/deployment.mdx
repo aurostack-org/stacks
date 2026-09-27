@@ -1,0 +1,74 @@
+---
+title: Deploying a react-monorepo
+description: One image per app per environment, build.sh, nginx and CI.
+sidebar:
+  label: Deployment
+---
+
+## One Dockerfile, one image per app
+
+The Dockerfile builds any app: pick it with `--build-arg APP=<name>`. As with
+[react-app](../../react-app/deployment/), `VITE_*` values are baked in at build
+time, so each image is for one app in one environment.
+
+```sh
+docker build \
+  --build-arg APP=client \
+  --build-arg VITE_APP_API_URL=https://api.example.com \
+  --build-arg VITE_APP_AUTH_HOST=https://auth.example.com \
+  --build-arg VITE_APP_CLIENT_HOST=https://app.example.com \
+  --build-arg VITE_APP_ADMIN_HOST=https://admin.example.com \
+  --build-arg VITE_APP_LANDING=https://example.com \
+  -t web-client .
+```
+
+Landing also needs `VITE_APP_SITE_URL` (and usually `VITE_APP_SUPPORT_EMAIL`);
+the build refuses to run without it. Browser telemetry needs
+`VITE_OPENOBSERVE_URL`, `VITE_OPENOBSERVE_ORG` and
+`VITE_OPENOBSERVE_CLIENT_TOKEN`.
+
+The stages install dependencies from each workspace's `package.json` (only the
+workspaces this project has), build the app with `turbo --filter=<app>`, and
+copy its `dist/` into `nginx:stable-alpine`. The container listens on port 80
+and answers `/healthz`. The nginx configuration is the same as react-app's:
+[caching and headers](../../react-app/deployment/#nginx).
+
+## build.sh
+
+```sh
+./build.sh <app> [dev|test|staging|prod] [tag]
+```
+
+Reads `apps/<app>/.env[.test|.staging|.production]` (pull it with
+`yarn workspace <app> secrets -e <env>`), passes every `VITE_*` value as a build
+argument, and pushes `<registry>/web-<app>:<tag>` for `linux/amd64` and
+`linux/arm64`. Set the registry in the script's `REGISTRY` line.
+
+## CI
+
+`.forgejo/workflows/ci.yml` runs format check, lint, typecheck and build for
+every workspace on branch pushes and pull requests. `build-and-push.yml` builds
+every app's image on `main`, all with one shared tag, so a matching set can be
+deployed together (`web-<app>:<yy_mm_dd>_<random>`).
+
+| Secret | Value |
+|---|---|
+| `REGISTRY_URL`, `REGISTRY`, `DK_USER`, `DK_ACCESS_TOKEN` | Registry login and image prefix |
+| `VITE_APP_API_URL` | Production API URL |
+| `VITE_APP_AUTH_HOST`, `VITE_APP_CLIENT_HOST`, `VITE_APP_ADMIN_HOST`, `VITE_APP_LANDING` | Each app's production origin |
+| `VITE_APP_SITE_URL`, `VITE_APP_SUPPORT_EMAIL` | Landing |
+| `VITE_OPENOBSERVE_URL`, `VITE_OPENOBSERVE_ORG`, `VITE_OPENOBSERVE_CLIENT_TOKEN` | Browser telemetry |
+
+The matrix doesn't stop at the first failure, so a partial set can be pushed:
+re-run the job if one app fails.
+
+## Production checklist
+
+- Each app on its own subdomain of one parent domain, and the API's
+  `BETTER_AUTH_COOKIE_DOMAIN` set to it (`.example.com`).
+- Every app's origin in the API's trusted origins and CORS.
+- Every image built with the same set of `VITE_APP_*_HOST` values.
+- Landing: `PRODUCTION_ORIGIN` in `src/features/seo/routes.ts` matching
+  `VITE_APP_SITE_URL`, and the `security.txt` expiry reviewed.
+- Every origin in the OpenObserve instance's `ZO_CORS_ALLOWED_ORIGINS`.
+- TLS and HSTS at the reverse proxy.

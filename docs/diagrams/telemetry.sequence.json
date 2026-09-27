@@ -1,0 +1,139 @@
+{
+	"schema_version": 1,
+	"diagram_type": "sequence",
+	"meta": {
+		"title": "Telemetry from one user action",
+		"quality_profile": "showcase",
+		"viewBox": [
+			960,
+			560
+		]
+	},
+	"participants": [
+		{
+			"id": "browser",
+			"type": "frontend",
+			"label": "Browser",
+			"sublabel": "RUM SDK"
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "OpenTelemetry SDK"
+		},
+		{
+			"id": "redis",
+			"type": "messagebus",
+			"label": "Redis",
+			"sublabel": "BullMQ"
+		},
+		{
+			"id": "worker",
+			"type": "backend",
+			"label": "node-worker",
+			"sublabel": "OpenTelemetry SDK"
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "one org per project"
+		}
+	],
+	"segments": [
+		{
+			"from": 150,
+			"to": 277,
+			"label": "Request"
+		},
+		{
+			"from": 286,
+			"to": 344,
+			"label": "Background"
+		},
+		{
+			"from": 347,
+			"to": 429,
+			"label": "Export"
+		}
+	],
+	"messages": [
+		{
+			"id": "rum",
+			"from": "browser",
+			"to": "o2",
+			"y": 180,
+			"label": "page view, action, errors (RUM)",
+			"variant": "dashed"
+		},
+		{
+			"id": "call",
+			"from": "browser",
+			"to": "api",
+			"y": 214,
+			"label": "API call + traceparent",
+			"variant": "emphasis"
+		},
+		{
+			"id": "enqueue",
+			"from": "api",
+			"to": "redis",
+			"y": 248,
+			"label": "add job (trace context attached)",
+			"variant": "default"
+		},
+		{
+			"id": "respond",
+			"from": "api",
+			"to": "browser",
+			"y": 282,
+			"label": "response",
+			"variant": "return"
+		},
+		{
+			"id": "take",
+			"from": "redis",
+			"to": "worker",
+			"y": 316,
+			"label": "job, continuing the trace",
+			"variant": "emphasis"
+		},
+		{
+			"id": "apiexp",
+			"from": "api",
+			"to": "o2",
+			"y": 350,
+			"label": "OTLP: traces, logs, metrics",
+			"variant": "dashed"
+		},
+		{
+			"id": "wexp",
+			"from": "worker",
+			"to": "o2",
+			"y": 384,
+			"label": "OTLP: traces, logs, metrics",
+			"variant": "dashed"
+		}
+	],
+	"activations": [
+		{
+			"participant": "api",
+			"from": 214,
+			"to": 286,
+			"type": "backend"
+		},
+		{
+			"participant": "worker",
+			"from": 316,
+			"to": 329,
+			"type": "backend"
+		},
+		{
+			"participant": "o2",
+			"from": 180,
+			"to": 389,
+			"type": "external"
+		}
+	]
+}

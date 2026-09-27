@@ -1,0 +1,90 @@
+---
+title: Setup checklist
+description: Everything a newly generated project needs, from first run to first deploy.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Generation gets a project to "installed and committed". Everything below is what
+stays with you: values that are per project, per environment or secret, and so
+can't come from a template. Work through the section for each repository you
+generated, then the shared list at the end.
+
+<Aside>
+Most of this is setting env variables. Every variable of every template is on
+[All environment variables](../environment/), and each template's own
+Environment page explains its variables in detail.
+</Aside>
+
+## nest-api
+
+**To run locally**
+
+- [ ] `SMTP_USER`, `SMTP_PASSWORD` set (empty on purpose; the API won't start
+      without them). A local catcher works: [SMTP](../../services/smtp/#locally).
+- [ ] `BETTER_AUTH_SECRET` replaced: `openssl rand -base64 32`.
+- [ ] `yarn dc:up && yarn dc:wait`, `yarn db:migrate`, `yarn db:seed`.
+- [ ] With `--with feature-flags`: `GROWTHBOOK_API_HOST`, `GROWTHBOOK_CLIENT_KEY`.
+- [ ] With `--with temporal`: `docker compose up -d temporal`.
+
+**Before production**
+
+- [ ] `APP_ENV=production`; `SERVER_HOST`, `BETTER_AUTH_URL` = the API's public URL.
+- [ ] `FRONTEND_HOST` = the front end's origin; other front-end origins in `MISC_CORS_ORIGINS`.
+- [ ] `BETTER_AUTH_COOKIE_DOMAIN`: empty for one origin, `.example.com` for apps on
+      subdomains. See [Auth, cookies and CORS](../../services/auth-domains/).
+- [ ] `BASIC_AUTH_USER`/`BASIC_AUTH_PASS` and `SUPERUSER_*` changed from the examples.
+- [ ] Real [PostgreSQL](../../services/postgres/), [Redis](../../services/redis/),
+      [SMTP](../../services/smtp/) and [S3](../../services/s3/) (with `media`).
+- [ ] `RATE_LIMIT_IP_HEADERS` = the header your reverse proxy sets.
+- [ ] `HEALTH_*` sized to the container.
+- [ ] [Google sign-in](../../services/google-oauth/), if you want it.
+- [ ] Migrations run before each deploy: [deployment](../../templates/nest-api/deployment/#migrations).
+
+## react-app
+
+- [ ] `VITE_APP_API_URL` = the API (build argument in production).
+- [ ] The API trusts this origin: its `FRONTEND_HOST`.
+- [ ] `yarn gen` run against the API and the types committed (`API_DOC_*`).
+- [ ] With `marketing`: `VITE_APP_SITE_URL`, `PRODUCTION_ORIGIN` in
+      `src/features/seo/routes.ts`, `VITE_APP_SUPPORT_EMAIL`.
+- [ ] Legal pages (`src/routes/legal/`) written: they ship as placeholders.
+
+## react-monorepo
+
+- [ ] Each `apps/*/.env`: `VITE_APP_API_URL` and the sibling `VITE_APP_*_HOST` origins.
+- [ ] The API trusts every app's origin (`FRONTEND_HOST` + `MISC_CORS_ORIGINS`), and
+      its cookie domain covers every app's host.
+- [ ] `packages/types/.env` created with `API_DOC_*`, types generated and committed.
+- [ ] With `app-landing`: `VITE_APP_SITE_URL`, `PRODUCTION_ORIGIN`, and the
+      terms, privacy and contact pages other apps link to.
+
+## node-worker
+
+- [ ] The API's Prisma schema copied in (or shared as a submodule), `yarn db:generate`.
+- [ ] `DATABASE_URL` and `REDIS_*` identical to the API's.
+- [ ] Queue names identical to the API's producers (`src/workers/constants.ts`).
+- [ ] With `temporal`: `TEMPORAL_TASK_QUEUE` = where the API starts workflows.
+
+## py-worker
+
+- [ ] `HOME_PATH` = the project's absolute path (`/app` in Docker).
+- [ ] `DB_*` and `REDIS_*` identical to the API's.
+- [ ] SQLAlchemy models written under `models/` to match the API's schema.
+- [ ] With `temporal`: the API starts Python workflows on `python` (or your queue).
+
+## Every project
+
+- [ ] **Secrets in Infisical**, one project with `dev`, `test`, `staging` and `prod`
+      environments; `INFISICAL_PROJECT_ID` in your shell and in CI.
+      [Secrets with Infisical](../secrets/).
+- [ ] **CI secrets** on each repository: `REGISTRY_URL`, `REGISTRY`, `DK_USER`,
+      `DK_ACCESS_TOKEN`, plus `INFISICAL_TOKEN` (API) and the `VITE_*` build
+      values (front ends). [Deploying](../../guides/deploying/).
+- [ ] **OpenObserve**: an org for the project, its ingestion token on the
+      back ends, a RUM token on the front ends, and every front-end origin in
+      the instance's CORS list. [OpenObserve](../../services/openobserve/).
+- [ ] **Temporal** (if used): a namespace and a client certificate for the
+      project. [Temporal](../../services/temporal/).
+- [ ] **DNS and TLS** for every public hostname, at your reverse proxy.
+- [ ] A distinct `OTEL_SERVICE_NAME` per service, so each has its own stream.

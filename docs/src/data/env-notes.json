@@ -1,0 +1,318 @@
+{
+	"APP_ENV": {
+		"production": "`production`.",
+		"notes": "Switches logs to JSON on stdout and is stamped on all telemetry as `deployment.environment.name`. In nest-api, `development` also adds local servers to the OpenAPI document."
+	},
+	"node-worker:APP_ENV": {
+		"production": "`production`.",
+		"notes": "`production` logs JSON to stdout; anything else pretty-prints when the pretty printer is installed. Stamped on telemetry as `deployment.environment.name`."
+	},
+	"APP_NAME": {
+		"production": "Your product's display name.",
+		"notes": "Used in emails, the Swagger title and better-auth. Set by `--name`."
+	},
+	"APP_HOST": {
+		"production": "`0.0.0.0` in a container.",
+		"notes": "The address the server binds to. `127.0.0.1` would make it unreachable from outside the container."
+	},
+	"PORT": {
+		"production": "The port the process listens on (nest-api: the container's exposed port).",
+		"notes": "Changing it after generation means changing `SERVER_HOST` and `BETTER_AUTH_URL` too; `--port` at generation does all three."
+	},
+	"react-app:PORT": {
+		"production": "Not used: production is a static bundle served by nginx on port 80.",
+		"notes": "The dev server's port. It's strict: a port in use makes Vite exit instead of moving."
+	},
+	"react-monorepo:PORT": {
+		"production": "Not used: each app's image serves on port 80.",
+		"notes": "Each app's dev server port (landing 3000, auth 3001, client 3002, admin 3003). Change one and update the sibling `VITE_APP_*_HOST` values."
+	},
+	"SERVER_HOST": {
+		"production": "The API's public URL, e.g. `https://api.example.com`.",
+		"notes": "Used in email links, the OpenAPI servers list and the `/health` HTTP check, which calls it from inside the container, so it must resolve there."
+	},
+	"FRONTEND_HOST": {
+		"production": "The front end's origin, e.g. `https://app.example.com`.",
+		"notes": "Trusted by auth and allowed by CORS. The welcome email links to it. Other front-end origins go in `MISC_CORS_ORIGINS`."
+	},
+	"MISC_CORS_ORIGINS": {
+		"production": "Every other front-end origin, comma-separated; empty for a single front end.",
+		"notes": "A full origin (`http://localhost:3001`) is used as written; a bare hostname (`example.com`) expands to https origins for it and its `auth.`, `app.` and `admin.` subdomains. See [Auth, cookies and CORS](/services/auth-domains/)."
+	},
+	"DATABASE_URL": {
+		"production": "`postgresql://<user>:<password>@<host>:5432/<db>?sslmode=require`.",
+		"source": "Your PostgreSQL provider.",
+		"notes": "A worker's value must be the API's database. URL-encode special characters in the password. See [PostgreSQL](/services/postgres/)."
+	},
+	"BETTER_AUTH_SECRET": {
+		"production": "A random 32-byte value: `openssl rand -base64 32`.",
+		"notes": "Signs sessions. The example value boots, but anyone reading the template knows it. Changing it signs every user out."
+	},
+	"BETTER_AUTH_URL": {
+		"production": "The API's public URL, like `SERVER_HOST`.",
+		"notes": "better-auth's base URL: OAuth callbacks are `<this>/auth/callback/<provider>`."
+	},
+	"BETTER_AUTH_COOKIE_DOMAIN": {
+		"production": "Empty for a single front-end origin; `.example.com` to share one login across subdomains.",
+		"notes": "The domain must cover the host the browser talks to, or the cookie is silently dropped and every sign-in bounces. See [Auth, cookies and CORS](/services/auth-domains/)."
+	},
+	"BETTER_AUTH_COOKIE_PREFIX": {
+		"production": "Keep the generated value (the project name).",
+		"notes": "Distinguishes this project's cookies from others on the same parent domain. The runtime and tooling instances must agree."
+	},
+	"SUPERUSER_EMAIL": {
+		"production": "The first admin's address.",
+		"notes": "`yarn db:seed` creates this user, verified, with the `superuser` role. Seeding again fails on the existing email."
+	},
+	"SUPERUSER_PASSWORD": {
+		"production": "A strong password, changed after first sign-in.",
+		"notes": "Only read by the seeder."
+	},
+	"OAUTH_GOOGLE_CLIENT_ID": {
+		"production": "Your Google OAuth client id.",
+		"source": "Google Cloud console → Credentials. See [Google sign-in](/services/google-oauth/).",
+		"notes": "Empty disables Google sign-in (the button fails)."
+	},
+	"OAUTH_GOOGLE_CLIENT_SECRET": {
+		"production": "The client's secret.",
+		"source": "Google Cloud console → Credentials."
+	},
+	"LOG_LEVEL": {
+		"production": "`info`.",
+		"notes": "pino levels: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `silent`. An empty value fails validation in nest-api."
+	},
+	"OPENOBSERVE_URL": {
+		"production": "Your OpenObserve instance.",
+		"notes": "Telemetry is on only when the URL, org and token are all set. See [OpenObserve](/services/openobserve/)."
+	},
+	"OPENOBSERVE_ORG": {
+		"production": "The project's organization identifier.",
+		"source": "OpenObserve → organization settings (or the org segment of its URLs)."
+	},
+	"OPENOBSERVE_TOKEN": {
+		"production": "The organization's ingestion token (`o2oi_…`).",
+		"source": "OpenObserve → IAM → Ingestion Tokens.",
+		"notes": "Write-only, but secret: never use it in a browser app (front ends use a RUM token)."
+	},
+	"OTEL_SERVICE_NAME": {
+		"production": "A distinct name per service: `shop-api`, `shop-worker`, `shop-py`.",
+		"notes": "The service name on every span, and the default stream name, so each service gets its own stream."
+	},
+	"HEALTH_HEAP_MAX_MB": {
+		"production": "Below the container's memory limit, e.g. 75% of it.",
+		"notes": "Past it, `/health` reports down and orchestrators restart the instance."
+	},
+	"HEALTH_RSS_MAX_MB": {
+		"production": "Below the container's memory limit.",
+		"notes": "Resident memory, heap included."
+	},
+	"HEALTH_DISK_THRESHOLD": {
+		"production": "The fraction of the volume that may be used, e.g. `0.9`."
+	},
+	"HEALTH_DISK_PATH": {
+		"production": "The volume to watch: `/`, or where logs and uploads are written."
+	},
+	"BASIC_AUTH_USER": {
+		"production": "A new operator username.",
+		"notes": "Guards `/docs`, `/openapi`, `/openapi-json` and `/dashboard`. Front ends' `yarn gen` uses it as `API_DOC_USER`."
+	},
+	"BASIC_AUTH_PASS": {
+		"production": "A strong password, not the example's."
+	},
+	"REDIS_HOST": {
+		"production": "Your Redis host; identical on the API and every worker.",
+		"notes": "A worker on a different Redis connects fine and never receives a job. See [Redis](/services/redis/)."
+	},
+	"REDIS_PORT": {
+		"production": "Your Redis port (6379)."
+	},
+	"REDIS_USER": {
+		"production": "An ACL user, if your Redis uses them."
+	},
+	"REDIS_PASSWORD": {
+		"production": "The Redis password."
+	},
+	"SMTP_HOST": {
+		"production": "Your mail provider's SMTP host.",
+		"notes": "See [Email (SMTP)](/services/smtp/), including a local catcher."
+	},
+	"SMTP_PORT": {
+		"production": "`465` or `587`.",
+		"notes": "No other value validates. For a local catcher, map it to 587."
+	},
+	"SMTP_SECURE": {
+		"production": "`true` with 465, `false` with 587 (STARTTLS)."
+	},
+	"SMTP_USER": {
+		"production": "The SMTP username.",
+		"source": "Your mail provider.",
+		"notes": "Required and empty by default: the API won't start until it's set."
+	},
+	"SMTP_PASSWORD": {
+		"production": "The SMTP password or API key.",
+		"source": "Your mail provider.",
+		"notes": "Required and empty by default."
+	},
+	"SMTP_FROM": {
+		"production": "`Name <no-reply@your-domain>`, on a domain with SPF, DKIM and DMARC.",
+		"notes": "Without those records, verification emails land in spam, and new users can't sign in until they verify."
+	},
+	"SMTP_SUPPORT_EMAIL": {
+		"production": "Your support address.",
+		"notes": "Shown in the welcome email; keep it equal to a landing site's `VITE_APP_SUPPORT_EMAIL`."
+	},
+	"S3_REGION": {
+		"production": "The bucket's region."
+	},
+	"S3_ENDPOINT": {
+		"production": "The endpoint URL, even on AWS: `https://s3.<region>.amazonaws.com`.",
+		"notes": "Also the prefix of stored file URLs: empty, they're relative and browsers can't load them. See [Object storage](/services/s3/)."
+	},
+	"S3_BUCKET_NAME": {
+		"production": "The bucket.",
+		"notes": "Must allow object ACLs: uploads outside the private folders are `public-read`."
+	},
+	"S3_ACCESS_KEY_ID": {
+		"production": "An access key for the bucket.",
+		"source": "Your storage provider's IAM."
+	},
+	"S3_SECRET_ACCESS_KEY": {
+		"production": "Its secret."
+	},
+	"TEMPORAL_ADDRESS": {
+		"production": "Your Temporal frontend, e.g. `temporal-grpc.example.com:7233`.",
+		"notes": "See [Temporal](/services/temporal/)."
+	},
+	"TEMPORAL_NAMESPACE": {
+		"production": "The project's namespace, the same on the API and its workers."
+	},
+	"TEMPORAL_TASK_QUEUE": {
+		"production": "The queue a worker polls.",
+		"notes": "API: where workflows are started. Worker: the queue it polls. A mismatch is silent: workflows wait forever."
+	},
+	"py-worker:TEMPORAL_TASK_QUEUE": {
+		"production": "This worker's own queue (`python`).",
+		"notes": "Keep Python workflows on a queue no Node worker polls: a workflow task handed to a worker that doesn't know the type fails and retries. The API starts Python workflows on this queue."
+	},
+	"TEMPORAL_TLS_CA": {
+		"production": "The CA that signed the server's certificate, as PEM; empty if it's publicly trusted.",
+		"notes": "Escaped `\\n` are accepted, so it fits on one line."
+	},
+	"TEMPORAL_TLS_CERT": {
+		"production": "The project's client certificate, as PEM.",
+		"source": "Issued by whoever runs your Temporal (the gateway's CA).",
+		"notes": "Set it together with `TEMPORAL_TLS_KEY`, or startup fails."
+	},
+	"TEMPORAL_TLS_KEY": {
+		"production": "The client certificate's private key, as PEM.",
+		"notes": "A secret: keep it in your secret store."
+	},
+	"RATE_LIMIT_ENABLED": {
+		"production": "`true`.",
+		"notes": "Off in `.env.test` so specs don't share a rate-limit window."
+	},
+	"RATE_LIMIT_TTL": {
+		"production": "The window for app routes, in **milliseconds** (default 60000)."
+	},
+	"RATE_LIMIT_MAX": {
+		"production": "Requests per window per client IP on app routes (default 120)."
+	},
+	"RATE_LIMIT_AUTH_WINDOW": {
+		"production": "better-auth's window for `/auth/*`, in **seconds** (default 10).",
+		"notes": "Sign-in, sign-up and password routes also have stricter built-in rules."
+	},
+	"RATE_LIMIT_AUTH_MAX": {
+		"production": "Requests per auth window per client IP (default 100)."
+	},
+	"RATE_LIMIT_IP_HEADERS": {
+		"production": "The header your reverse proxy sets to the client's IP (`x-forwarded-for`, `cf-connecting-ip`, …).",
+		"notes": "Behind a proxy without it, every client shares one bucket, and if no IP resolves, better-auth stops rate limiting. Exposed directly, a client can spoof it."
+	},
+	"GROWTHBOOK_API_HOST": {
+		"production": "`https://cdn.growthbook.io` or your GrowthBook's API host.",
+		"notes": "Required with `feature-flags` and empty by default. See [GrowthBook](/services/growthbook/)."
+	},
+	"GROWTHBOOK_CLIENT_KEY": {
+		"production": "An SDK connection's client key (`sdk-…`).",
+		"source": "GrowthBook → SDK Connections."
+	},
+	"PUPPETEER_EXECUTABLE_PATH": {
+		"production": "Set by the Docker image (`/usr/bin/chromium` or `/usr/bin/chromium-browser`).",
+		"notes": "Empty uses Puppeteer's own Chromium, which the image doesn't download."
+	},
+	"HOME_PATH": {
+		"production": "`/app` in the Docker image.",
+		"notes": "Required and absolute: logs, `input/` and `output/` resolve beneath it."
+	},
+	"DB_HOST": {
+		"production": "The API's database host.",
+		"notes": "Must be the API's database. See [PostgreSQL](/services/postgres/)."
+	},
+	"DB_PORT": {
+		"production": "5432."
+	},
+	"DB_USER": {
+		"production": "A database user with access to the tables this worker uses."
+	},
+	"DB_PASSWORD": {
+		"production": "Its password."
+	},
+	"DB_NAME": {
+		"production": "The API's database name."
+	},
+	"VITE_APP_API_URL": {
+		"production": "The API's public URL, as a **build argument**.",
+		"notes": "Compiled into the bundle. Auth lives at `<this>/auth`, and requests to it carry the `traceparent` header."
+	},
+	"VITE_APP_ALLOWED_HOSTS": {
+		"production": "Not used in production.",
+		"notes": "Hostnames the dev server answers beyond localhost: a tunnel or `*.lvh.me`."
+	},
+	"VITE_OPENOBSERVE_URL": {
+		"production": "Your OpenObserve instance, as a build argument.",
+		"notes": "Telemetry is on only when the URL, org and client token are all set."
+	},
+	"VITE_OPENOBSERVE_ORG": {
+		"production": "The project's organization identifier, as a build argument."
+	},
+	"VITE_OPENOBSERVE_CLIENT_TOKEN": {
+		"production": "A RUM token, as a build argument.",
+		"source": "OpenObserve → Ingestion → RUM.",
+		"notes": "Public by design (write-only). Never the back ends' ingestion token. The instance must list this origin in `ZO_CORS_ALLOWED_ORIGINS`."
+	},
+	"VITE_APP_SITE_URL": {
+		"production": "The canonical public origin, as a build argument.",
+		"notes": "Must equal `PRODUCTION_ORIGIN` in `src/features/seo/routes.ts`; any other value builds as `noindex` with a disallowing robots.txt, so previews can't outrank production."
+	},
+	"VITE_APP_SUPPORT_EMAIL": {
+		"production": "A monitored security and support address, as a build argument.",
+		"notes": "Published in `/.well-known/security.txt`; empty skips the file."
+	},
+	"API_DOC_URL": {
+		"production": "Not used in production: only by `yarn gen`.",
+		"notes": "The API's OpenAPI document, `<API>/openapi-json`."
+	},
+	"API_DOC_USER": {
+		"production": "Not used in production.",
+		"notes": "The API's `BASIC_AUTH_USER`."
+	},
+	"API_DOC_PASSWORD": {
+		"production": "Not used in production.",
+		"notes": "The API's `BASIC_AUTH_PASS`."
+	},
+	"VITE_APP_LANDING": {
+		"production": "The landing site's origin, e.g. `https://example.com`, as a build argument.",
+		"notes": "Every app lists its siblings: they're the trusted redirect targets. The auth app links to its terms and privacy pages."
+	},
+	"VITE_APP_AUTH_HOST": {
+		"production": "The auth app's origin, e.g. `https://auth.example.com`.",
+		"notes": "Every guard and 401 redirects to `<this>/login`."
+	},
+	"VITE_APP_CLIENT_HOST": {
+		"production": "The client app's origin, e.g. `https://app.example.com`.",
+		"notes": "Where the auth app sends people after sign-in by default."
+	},
+	"VITE_APP_ADMIN_HOST": {
+		"production": "The admin app's origin, e.g. `https://admin.example.com`."
+	}
+}

@@ -1,0 +1,64 @@
+---
+title: Deploying a node-worker
+description: Docker image, PM2, CI and production settings for node-worker.
+sidebar:
+  label: Deployment
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Docker image
+
+`Dockerfile` builds in two stages:
+
+1. **Build:** `corepack enable` (the base image's Yarn 1 hands over to the Yarn 4
+   pinned in `package.json`), `yarn install --immutable` from `yarn.lock` and
+   `.yarnrc.yml`, `yarn db:generate`, `yarn build`, then drop dev dependencies.
+2. **Runtime:** `node_modules` and `dist` only, started by `pm2-runtime` (with
+   `pm2`) or `node --import ./dist/src/instrumentation.js dist/src/index.js`.
+
+`Dockerfile.dev` is identical but keeps dev dependencies.
+
+| Features | Base image |
+|---|---|
+| default | the Alpine house image `aurostack.dev/wesnetech/nodejs:24` (includes `pm2-runtime`) |
+| `--with temporal` | `node:24-bookworm-slim` (Temporal needs glibc); `pm2` is installed with npm |
+| `--with browser` | adds Chromium (apk or apt), roughly 800 MB |
+
+The image has no `.env`: `.dockerignore` excludes it. Pass every variable at
+runtime.
+
+<Aside title="APP_ENV in the image">
+Run the image with `APP_ENV=production`. The image logs JSON either way (the
+pretty printer is a dev dependency it doesn't include), but `APP_ENV` also
+reaches telemetry as the deployment environment.
+</Aside>
+
+## CI
+
+`.forgejo/workflows/build-and-push.yml` runs on every push to `main`: checks out
+(with submodules, for a shared schema), builds the image and pushes it tagged
+`latest` and `<yy_mm_dd>_<random>`. It needs four repository secrets:
+
+| Secret | Value |
+|---|---|
+| `REGISTRY_URL` | Registry host to log in to |
+| `REGISTRY` | Image prefix, e.g. the registry host plus namespace |
+| `DK_USER` | Registry user |
+| `DK_ACCESS_TOKEN` | Registry token with push rights |
+
+## Production checklist
+
+- `APP_ENV=production`, `LOG_LEVEL=info`.
+- `DATABASE_URL` and `REDIS_*` identical to the API's production values.
+- The Prisma client regenerated from the **current** API schema; redeploy the
+  worker whenever the API's schema changes.
+- Telemetry: `OPENOBSERVE_ORG`, `OPENOBSERVE_TOKEN`, and a distinct
+  `OTEL_SERVICE_NAME` per worker.
+- Temporal: the server address, the project's namespace, `TEMPORAL_TLS_*`
+  with the project's client certificate, and the same task queue the API uses.
+- A restart policy on the container: PM2 is configured not to restart a crashed
+  worker.
+- A stop timeout long enough for your longest job: on SIGTERM the worker waits
+  for active jobs before exiting (`docker stop -t`, or the orchestrator's grace
+  period).

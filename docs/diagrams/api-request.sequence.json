@@ -1,0 +1,179 @@
+{
+	"schema_version": 1,
+	"diagram_type": "sequence",
+	"meta": {
+		"title": "An API request",
+		"quality_profile": "showcase",
+		"viewBox": [
+			960,
+			560
+		]
+	},
+	"participants": [
+		{
+			"id": "client",
+			"type": "frontend",
+			"label": "Front end",
+			"sublabel": "credentials: include"
+		},
+		{
+			"id": "limit",
+			"type": "security",
+			"label": "Rate limit",
+			"sublabel": "Redis bucket per IP"
+		},
+		{
+			"id": "auth",
+			"type": "security",
+			"label": "AuthGuard",
+			"sublabel": "better-auth session"
+		},
+		{
+			"id": "zod",
+			"type": "backend",
+			"label": "Validation",
+			"sublabel": "Zod schema"
+		},
+		{
+			"id": "handler",
+			"type": "backend",
+			"label": "Handler",
+			"sublabel": "controller + service"
+		},
+		{
+			"id": "db",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "Prisma"
+		}
+	],
+	"segments": [
+		{
+			"from": 150,
+			"to": 299,
+			"label": "Guards"
+		},
+		{
+			"from": 308,
+			"to": 427,
+			"label": "Handler"
+		},
+		{
+			"from": 433,
+			"to": 502,
+			"label": "Response"
+		}
+	],
+	"messages": [
+		{
+			"id": "req",
+			"from": "client",
+			"to": "limit",
+			"y": 180,
+			"label": "POST /v1/…",
+			"variant": "emphasis"
+		},
+		{
+			"id": "under",
+			"from": "limit",
+			"to": "auth",
+			"y": 214,
+			"label": "under the limit (else 429)",
+			"variant": "default"
+		},
+		{
+			"id": "lookup",
+			"from": "auth",
+			"to": "db",
+			"y": 248,
+			"label": "session lookup",
+			"variant": "security"
+		},
+		{
+			"id": "session",
+			"from": "db",
+			"to": "auth",
+			"y": 282,
+			"label": "session + role",
+			"variant": "return"
+		},
+		{
+			"id": "valid",
+			"from": "auth",
+			"to": "zod",
+			"y": 316,
+			"label": "signed in (else 401)",
+			"variant": "default"
+		},
+		{
+			"id": "body",
+			"from": "zod",
+			"to": "handler",
+			"y": 350,
+			"label": "valid input (else 400)",
+			"variant": "default"
+		},
+		{
+			"id": "query",
+			"from": "handler",
+			"to": "db",
+			"y": 384,
+			"label": "query",
+			"variant": "emphasis"
+		},
+		{
+			"id": "rows",
+			"from": "db",
+			"to": "handler",
+			"y": 418,
+			"label": "rows",
+			"variant": "return"
+		},
+		{
+			"id": "resp",
+			"from": "handler",
+			"to": "client",
+			"y": 452,
+			"label": "response, shaped by @Returns",
+			"variant": "return"
+		}
+	],
+	"activations": [
+		{
+			"participant": "limit",
+			"from": 180,
+			"to": 218,
+			"type": "security"
+		},
+		{
+			"participant": "auth",
+			"from": 214,
+			"to": 320,
+			"type": "security"
+		},
+		{
+			"participant": "zod",
+			"from": 316,
+			"to": 354,
+			"type": "backend"
+		},
+		{
+			"participant": "handler",
+			"from": 350,
+			"to": 457,
+			"type": "backend"
+		},
+		{
+			"participant": "db",
+			"from": 248,
+			"to": 286,
+			"type": "database"
+		},
+		{
+			"participant": "db",
+			"from": 384,
+			"to": 421,
+			"type": "database"
+		}
+	]
+}

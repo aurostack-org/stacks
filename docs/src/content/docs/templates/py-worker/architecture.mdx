@@ -1,0 +1,75 @@
+---
+title: py-worker architecture
+description: How the Python worker starts, consumes jobs, runs workflows and shuts down.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+
+<Diagram name="py-worker" title="py-worker: the asyncio process and the services it shares with the API" height={600} />
+
+## Startup
+
+`worker.py` runs `main()` under asyncio:
+
+1. Importing `config` builds the `CONFIG` singleton from the environment (and
+   `.env` through `python-dotenv`). It fails immediately if `HOME_PATH` is unset.
+2. `setup_telemetry()` starts OpenTelemetry if it's [connected](../../../services/openobserve/),
+   and does nothing otherwise.
+3. SIGINT and SIGTERM handlers set a shutdown event.
+4. Each BullMQ consumer starts (`create_worker("hello", hello_process)`), and
+   with Temporal, the Temporal worker runs as a background task.
+5. The process waits for the shutdown event.
+
+## BullMQ consumers
+
+`create_worker(queue_name, process_function, concurrency=1)` in
+`utils/worker.py` builds the Redis URL from config and starts consuming at once
+(`autorun: True`). With telemetry, each job runs inside a span named
+`process <queue>`, so every job is its own trace in OpenObserve.
+
+A processor is `async def process(job, job_token)`. Raising marks the job
+failed and lets BullMQ retry it per the producer's `attempts` and `backoff`.
+`JobUtil` helps with progress and logs (`process_log`, `finalize`).
+
+The queue name is a string literal in `worker.py`: keep it identical to the
+producer's.
+
+## Database
+
+`utils/db.py` opens a SQLAlchemy connection and session from the `DB_*`
+settings. The models are **hand-written** under `models/`, mirroring the API's
+Prisma schema; nothing checks they agree, so update them whenever the API's
+schema changes. The template ships the building blocks, not tables:
+
+- `models/mixins.py`: the declarative `Base`, annotated column types (`uuid_pk`,
+  `dcml`, and so on) and timestamp mixins;
+- `models/enums.py`: `e(MyEnum)` binds to a PostgreSQL enum the API's
+  migrations created, with `create_type=False` so SQLAlchemy never tries to
+  create or race it;
+- `models/decorators.py`: `@repr` and `@to_dict`.
+
+## Temporal (opt-in)
+
+`utils/temporal.py` connects (mTLS when certificates are set) and creates a
+worker for `TEMPORAL_TASK_QUEUE` with the workflows and activities listed there.
+When telemetry is on, Temporal's `TracingInterceptor` adds a span per workflow
+and activity, continuing the trace of whatever started the workflow.
+
+The Python worker polls its **own** task queue (`python`), not the Node
+worker's: a workflow task handed to a worker that doesn't know its type fails
+and retries, so each language gets its own queue.
+
+## Logging
+
+`utils/logger.Logger` writes rotating files (100 kB, 5 backups) under
+`$HOME_PATH/logs`: `worker.log`, and `workers/<name>.log` per job type. Records
+at INFO and above also go to stdout, so `docker logs` shows them. With telemetry
+on, every record also goes to OpenObserve.
+
+## Shutdown
+
+On SIGINT or SIGTERM: BullMQ consumers close, the Temporal worker stops polling
+and waits for running activities, then telemetry flushes. If the Temporal worker
+stops on its own (a fatal error), the whole process shuts down with it.

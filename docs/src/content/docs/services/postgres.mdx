@@ -1,0 +1,52 @@
+---
+title: PostgreSQL
+description: The database the API owns and the workers share.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+The API owns the database: its Prisma schema and migrations define every table.
+Workers read and write the same database directly.
+
+| Template | Variables |
+|---|---|
+| nest-api | `DATABASE_URL` |
+| node-worker | `DATABASE_URL` |
+| py-worker | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` |
+
+## Locally
+
+`yarn dc:up` in the API starts PostgreSQL 15 from `compose.yml` on port 5432
+(user `root`, password `postgres`, database `main`), which every template's
+`.env.example` already points at. Data persists in the `database` volume;
+`yarn dc:recreate` starts over.
+
+Tests use a separate PostgreSQL on **5499** (`compose.test.yml`), because the
+e2e suite truncates every table between specs.
+
+## Production
+
+```ini
+DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<database>?sslmode=require
+```
+
+- **PostgreSQL 15 or later.** Transactions run at `Serializable` isolation, so
+  expect and retry serialization failures under contention.
+- **Apply migrations before deploying** a new API version:
+  `yarn db:migrate:prod` from CI or the build image (the runtime image has no
+  Prisma CLI). See [deployment](../../templates/nest-api/deployment/#migrations).
+- **Connections:** each API and node-worker process opens a pool through the
+  `pg` adapter; size PostgreSQL's `max_connections` for every instance of every
+  service.
+- **URL-encode** special characters in a password inside `DATABASE_URL`
+  (`@` → `%40`). py-worker escapes its `DB_*` parts itself.
+
+<Aside type="caution" title="Keep the workers' schema in step">
+A worker compiled against an old schema keeps running until it touches a column
+that's gone. Share the API's `prisma/schema` with node-worker through a git
+submodule, update py-worker's models with every migration, and redeploy workers
+after schema changes.
+</Aside>
+
+<Internal id="postgres" />

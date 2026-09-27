@@ -1,0 +1,64 @@
+---
+title: Developing a py-worker
+description: From a fresh py-worker to processing jobs locally.
+sidebar:
+  label: Development
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## After generating
+
+Generation copied `.env.example` to `.env`, created `.venv`, installed
+`requirements.txt` into it, and made the first commit.
+
+<Steps>
+
+1. **Set `HOME_PATH`** in `.env` to the project's absolute path
+   (`pwd` in the project directory).
+
+2. **Point it at the API's services:** `DB_*` and `REDIS_*` exactly as the API
+   has them. With the API's `yarn dc:up` running, the defaults match.
+
+3. **Model the tables you need** under `models/`, mirroring the API's Prisma
+   schema, using `Base` and the mixins in `models/mixins.py`.
+
+4. **Run it:**
+
+   ```sh
+   source .venv/bin/activate
+   python worker.py
+   ```
+
+5. **Send it a job** on the `hello` queue from the API, and watch
+   `logs/workers/hello.log`.
+
+</Steps>
+
+## Adding a job type
+
+1. Create `workers/<name>/process.py` with an `async def <name>_process(job, job_token)`.
+2. Start it in `worker.py`: `create_worker("<queue>", <name>_process)`, and add
+   `await <worker>.close()` to the cleanup block.
+3. Produce to the same queue name from the API.
+
+## Temporal locally
+
+With `--with temporal`, the worker connects to `localhost:7233` (the dev server
+in the API's `compose.yml`) and polls task queue `python`:
+
+```sh
+temporal workflow execute --type example --task-queue python \
+  --workflow-id try-py --input '{"name":"python"}'
+```
+
+Add a workflow class to `temporal/workflows.py` and an activity to
+`temporal/activities.py`, then register both in the lists in
+`utils/temporal.py`. Workflow code must be deterministic: use `workflow.now()`
+and `workflow.random()`, never I/O.
+
+## Dependencies
+
+`requirements.txt` pins every package. Add one with
+`.venv/bin/pip install <pkg>` and pin its version in `requirements.txt`; the
+Docker image installs exactly that file.

@@ -1,0 +1,29 @@
+---
+title: py-worker environment
+description: Every variable in py-worker's .env, and what to set in production.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Generation copies `.env.example` to `.env`; `config.py` loads it with
+`python-dotenv`. Variables already set in the environment win.
+
+<Aside type="caution" title="HOME_PATH is required, and must be absolute">
+`HOME_PATH` is empty by default and the worker refuses to start without it.
+Logs (and `input/`, `output/`) resolve beneath it, so a relative path silently
+writes somewhere else. Locally, the project directory; in Docker, `/app`.
+</Aside>
+
+<EnvTable template="py-worker" />
+
+## Not in `.env.example`
+
+| Variable | Used by | Effect |
+|---|---|---|
+| `APP_ENV` | telemetry | Sets `deployment.environment.name` (default `development`) |
+| `OPENOBSERVE_STREAM` | telemetry | Stream name; defaults to `OTEL_SERVICE_NAME` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry | Any OTLP backend instead of OpenObserve; takes precedence |
+| `OTEL_SDK_DISABLED=true` | telemetry | Turns telemetry off |

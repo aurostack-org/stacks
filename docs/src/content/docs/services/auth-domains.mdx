@@ -1,0 +1,116 @@
+---
+title: Auth, cookies and CORS
+description: Make sessions work across the API and every front end, locally and on subdomains.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+Sessions are better-auth cookies set by the API. For a front end to use them,
+three things must line up: **the cookie's domain**, **the origins the API
+trusts**, and **CORS**. When they don't, sign-in returns 200 and the very next
+request is signed out, with nothing in any log.
+
+<Diagram name="sign-in" title="Signing in and landing back where you started" height={560} />
+
+## The settings
+
+| API variable | Controls |
+|---|---|
+| `BETTER_AUTH_COOKIE_DOMAIN` | The session cookie's `Domain`. Empty: the API's own host. `.example.com`: shared by every subdomain |
+| `BETTER_AUTH_COOKIE_PREFIX` | The cookie's name prefix. Keep it distinct per project on a shared domain |
+| `FRONTEND_HOST` | The front end's origin: trusted by auth and allowed by CORS |
+| `MISC_CORS_ORIGINS` | More origins, comma-separated, trusted by auth and allowed by CORS. Full origins (`http://localhost:3001`) are used as written; bare hostnames (`example.com`) expand to `https://` for the host and its `auth.`, `app.` and `admin.` subdomains |
+| `BETTER_AUTH_URL` | The API's public URL: callback URLs and email links |
+
+A browser drops any cookie whose domain doesn't cover the host that set it:
+a `Domain=.example.com` cookie from `api.example.com` is kept, one from
+`localhost` isn't.
+
+## Recipes
+
+<Tabs>
+<TabItem label="Local, one front end">
+
+API on `localhost:5000`, react-app on `localhost:3000`: the defaults.
+
+```ini
+FRONTEND_HOST='http://localhost:3000'
+BETTER_AUTH_COOKIE_DOMAIN=''
+```
+
+</TabItem>
+<TabItem label="Local, monorepo">
+
+Every app on `localhost` with its own port: cookies aren't port-specific, so an
+empty domain covers them all. List the apps beyond `FRONTEND_HOST`:
+
+```ini
+FRONTEND_HOST='http://localhost:3002'
+MISC_CORS_ORIGINS='http://localhost:3000,http://localhost:3001,http://localhost:3003'
+BETTER_AUTH_COOKIE_DOMAIN=''
+```
+
+</TabItem>
+<TabItem label="Local, subdomains">
+
+To mirror production's subdomains, use `lvh.me`, a public name that resolves
+every subdomain to `127.0.0.1`: `api.lvh.me:5000`, `app.lvh.me:3002`,
+`auth.lvh.me:3001`.
+
+```ini
+SERVER_HOST='http://api.lvh.me:5000'
+BETTER_AUTH_URL='http://api.lvh.me:5000'
+FRONTEND_HOST='http://app.lvh.me:3002'
+MISC_CORS_ORIGINS='http://auth.lvh.me:3001,http://lvh.me:3000'
+BETTER_AUTH_COOKIE_DOMAIN='.lvh.me'
+```
+
+Each app also needs the hostnames in `VITE_APP_ALLOWED_HOSTS` and its
+`VITE_APP_*` URLs to match.
+
+</TabItem>
+<TabItem label="Production, one origin">
+
+react-app on `https://shop.example.com`, API on `https://api.shop.example.com`:
+
+```ini
+FRONTEND_HOST='https://shop.example.com'
+BETTER_AUTH_COOKIE_DOMAIN=''   # or .shop.example.com
+```
+
+With an empty domain, the cookie belongs to the API's host; the front end sends
+it on its credentialed requests to the API.
+
+</TabItem>
+<TabItem label="Production, subdomains">
+
+react-monorepo on `example.com`, `auth.example.com`, `app.example.com`,
+`admin.example.com`, API on `api.example.com`:
+
+```ini
+FRONTEND_HOST='https://app.example.com'
+MISC_CORS_ORIGINS='example.com'   # expands to https://example.com, auth., app., admin.
+BETTER_AUTH_COOKIE_DOMAIN='.example.com'
+```
+
+</TabItem>
+</Tabs>
+
+## When sign-in bounces
+
+1. In the browser's dev tools, look at the sign-in response's `Set-Cookie`.
+   A warning on it ("domain attribute invalid") means the cookie domain doesn't
+   cover the host.
+2. Check the next request to the API carries the cookie. If not: the request
+   isn't credentialed (the templates' clients always are), or the cookie's
+   domain or `SameSite` excludes it.
+3. A CORS error in the console means the page's origin isn't in the API's CORS
+   list for this environment.
+4. A redirect back to the login page after success means the `redirect` target
+   isn't a trusted origin: the front end falls back to its default.
+
+<Aside>
+The API's CORS also allows the `traceparent` and `tracestate` headers, which the
+front ends' telemetry adds. A custom CORS list must keep them.
+</Aside>

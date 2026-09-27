@@ -1,0 +1,41 @@
+---
+title: Deploying a py-worker
+description: Docker image, CI and production settings for py-worker.
+sidebar:
+  label: Deployment
+---
+
+## Docker image
+
+```dockerfile
+FROM aurostack.dev/wesnetech/python:3.14
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "worker.py"]
+```
+
+`.env` is excluded from the image. Pass everything at runtime, including
+**`HOME_PATH=/app`**.
+
+Logs go to stdout (INFO and above, so `docker logs` shows them) and to rotating
+files under `$HOME_PATH/logs`; mount a volume at `/app/logs` to keep the files.
+
+## CI
+
+`.forgejo/workflows/build-amd-push.yml` builds and pushes the image on every
+push to `main`, tagged `latest` and `<yy_mm_dd>_<random>`, using the repository
+secrets `REGISTRY_URL`, `REGISTRY`, `DK_USER` and `DK_ACCESS_TOKEN` (see
+[node-worker's CI](../../node-worker/deployment/#ci)). It doesn't check out
+submodules.
+
+## Production checklist
+
+- `HOME_PATH=/app` (or wherever the code lives), `APP_ENV=production`.
+- `DB_*` and `REDIS_*` identical to the API's production values.
+- Models updated to match the API's current schema.
+- Telemetry: `OPENOBSERVE_ORG`, `OPENOBSERVE_TOKEN`, a distinct
+  `OTEL_SERVICE_NAME`.
+- Temporal: address, namespace, `TEMPORAL_TLS_*`, and the `python` task queue
+  (or whichever queue the API starts Python workflows on).

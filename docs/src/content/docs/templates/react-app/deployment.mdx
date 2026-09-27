@@ -1,0 +1,85 @@
+---
+title: Deploying a react-app
+description: Build-time configuration, the nginx image, build.sh and CI.
+sidebar:
+  label: Deployment
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## One image per environment
+
+Vite bakes `VITE_*` values into the bundle, so they're **build arguments**, not
+runtime settings: setting them in compose or Kubernetes does nothing. Build one
+image per environment. The Dockerfile refuses to build without
+`VITE_APP_API_URL`, rather than silently baking `undefined` into the bundle.
+
+```sh
+docker build \
+  --build-arg VITE_APP_API_URL=https://api.example.com \
+  --build-arg VITE_APP_SITE_URL=https://example.com \
+  --build-arg VITE_APP_SUPPORT_EMAIL=support@example.com \
+  --build-arg VITE_OPENOBSERVE_ORG=shop \
+  --build-arg VITE_OPENOBSERVE_CLIENT_TOKEN=rumo… \
+  -t web .
+```
+
+`VITE_OPENOBSERVE_URL` defaults to nothing in the image: pass it too, or
+telemetry stays off. The RUM client token is public by design (it only writes).
+
+Stages: install with the lockfile, `yarn build` (typecheck included), then copy
+`dist/` into `nginx:stable-alpine` with `docker/nginx.conf`. The container
+listens on port 80 and answers `/healthz` for health checks.
+
+## build.sh
+
+```sh
+./build.sh [dev|test|staging|prod] [tag]
+```
+
+Reads `.env`, `.env.test`, `.env.staging` or `.env.production` (pull them with
+`yarn secrets -e <env>`), passes their `VITE_*` values (the OpenObserve ones
+included) as build arguments, and
+builds for `linux/amd64` and `linux/arm64` with `docker buildx --push`. Set
+`REGISTRY` and `IMAGE` in the environment to choose where it goes.
+
+## nginx
+
+`docker/nginx.conf` serves the single-page app:
+
+| Path | Caching |
+|---|---|
+| `/assets/*` (hashed) | one year, immutable |
+| `sw.js`, `registerSW.js`, `workbox-*.js` | never (a cached service worker keeps users on an old build) |
+| manifests | no-cache |
+| images, fonts | one week |
+| everything else | no-cache, falling back to `index.html` for client routes |
+
+It adds `X-Content-Type-Options`, `Referrer-Policy` and `X-Frame-Options`, and
+denies dotfiles except `/.well-known/`. HSTS belongs on the TLS-terminating
+proxy in front of it, not here.
+
+## CI
+
+`.forgejo/workflows/ci.yml` runs format check, lint and build on every branch
+push and pull request (except `main` and `development`). `build-and-push.yml`
+builds and pushes the image on `main`, tagged `latest` and
+`<yy_mm_dd>_<random>`, with these repository secrets:
+
+| Secret | Value |
+|---|---|
+| `REGISTRY_URL`, `REGISTRY`, `DK_USER`, `DK_ACCESS_TOKEN` | Registry login and image prefix |
+| `VITE_APP_API_URL` | Production API URL |
+| `VITE_APP_SITE_URL`, `VITE_APP_SUPPORT_EMAIL` | With `marketing` |
+| `VITE_OPENOBSERVE_URL`, `VITE_OPENOBSERVE_ORG`, `VITE_OPENOBSERVE_CLIENT_TOKEN` | With `telemetry` |
+
+## Production checklist
+
+- `VITE_APP_API_URL` set to the production API; the API's trusted origins and
+  CORS include this app's origin.
+- With `marketing`: `PRODUCTION_ORIGIN` in `src/features/seo/routes.ts`
+  matches `VITE_APP_SITE_URL`, or the site builds as `noindex`; review the
+  `security.txt` expiry date before it lapses.
+- Browser telemetry: the three OpenObserve build arguments, and this origin in
+  the OpenObserve instance's `ZO_CORS_ALLOWED_ORIGINS`.
+- TLS and HSTS at your reverse proxy.

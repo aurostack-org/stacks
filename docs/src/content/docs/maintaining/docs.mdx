@@ -1,0 +1,76 @@
+---
+title: Writing docs and diagrams
+description: How this site is built, and the checks that keep it in step with the templates.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This site lives in `docs/` in the stacks repository: Astro Starlight, deployed
+to GitHub Pages from `main`.
+
+```sh
+cd docs
+npm install
+npm run dev     # http://localhost:4321/stacks/
+npm run build   # what CI runs
+```
+
+## Generated from the templates
+
+`scripts/sync-templates.mjs` reads every `templates/*/template.json` and
+`.env*.example` into `src/data/generated/templates.json` before each dev or
+build run. The feature tables (`<FeatureTable>`) and environment tables
+(`<EnvTable>`) render from it, so they always match the templates: a feature's
+default, requirements, files and packages, and each variable's default, owning
+feature and comment.
+
+## Every variable needs a note
+
+The comment in `.env.example` says what a variable is. What a new project needs
+beyond that (the production value, where to get it, what breaks) lives in
+`src/data/env-notes.json`:
+
+```json
+{
+	"OPENOBSERVE_TOKEN": {
+		"production": "The org's ingestion token.",
+		"source": "OpenObserve → IAM → Ingestion Tokens (`o2oi_…`).",
+		"notes": "Write-only. Never use it in a browser app."
+	},
+	"nest-api:PORT": { "production": "…" }
+}
+```
+
+A key is either a variable name (for every template) or `template:NAME` (one
+template). **`npm run build` fails if any variable in any `.env*.example` has no
+note**, so adding a variable to a template means documenting it here in the same
+change.
+
+<Aside>
+Notes support `code`, **bold** and [links](../../setup/environment/). Links
+starting with `/` are resolved against the site's base.
+</Aside>
+
+## Diagrams
+
+Diagrams are [archify](https://github.com/tt-a1i/archify) specs in
+`docs/diagrams/<name>.<type>.json`, rendered to `docs/public/diagrams/<name>.html`
+and embedded with `<Diagram name="…" title="…" />`. The rendered HTML is
+committed, because rendering needs the archify skill and a local Chrome.
+
+```sh
+scripts/render-diagrams.sh             # every diagram
+scripts/render-diagrams.sh release     # one
+```
+
+The script validates each spec at showcase quality, renders it, and runs
+archify's visual check (containment and readability at desktop sizes). Set
+`ARCHIFY_CHROME` to a Chrome binary if yours is sandboxed (snap Chromium can't
+read hidden directories).
+
+## Internal notes
+
+Shared pages can carry `<Internal id="…" />`. The public build renders nothing
+for it; a private build of these docs points the `@internal` alias at its own
+directory, and `@internal/<id>.mdx` appears in its place. Internal content never
+enters this repository.

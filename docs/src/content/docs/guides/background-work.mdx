@@ -1,0 +1,51 @@
+---
+title: 'Background work: BullMQ or Temporal'
+description: When a queue job is enough, and when work needs a durable workflow.
+---
+
+import Diagram from '../../../components/Diagram.astro';
+
+Both are for work that shouldn't happen inside an HTTP request. They're good at
+different things, and a project can use both.
+
+| | BullMQ (built in) | Temporal (`--with temporal`) |
+|---|---|---|
+| Unit of work | a job: one function call | a workflow: many steps, waits and decisions |
+| Survives a crash mid-way | the job restarts from the beginning | resumes exactly where it stopped |
+| Waiting | delayed jobs (fixed delays) | durable timers of any length, signals, human approval |
+| State | whatever you store yourself | the workflow's own variables, persisted |
+| Retries | per job: attempts and backoff | per activity, with its own policy; the workflow carries on |
+| Visibility | Bull Board at `/dashboard` | full history of every run in the Temporal UI |
+| Infrastructure | Redis, already there | a Temporal cluster |
+| Workers | node-worker, py-worker | node-worker, py-worker |
+
+**Use BullMQ** for fire-and-forget work: send an email, resize an image,
+generate a report, a nightly sweep. If the job fails, running it again from the
+top is fine.
+
+**Use Temporal** when the work has steps that must each happen exactly once, or
+waits between them: onboarding sequences (send, wait three days, check, follow
+up), payments and refunds, provisioning across several services, anything
+that has to undo earlier steps when a later one fails (a saga).
+
+## A job's life
+
+<Diagram name="job-lifecycle" title="A BullMQ job's states" height={480} />
+
+A job waits in its queue (or is delayed), becomes active on a worker, and
+completes or fails. A failed job with attempts left goes back to waiting after
+its backoff; with none left, it stays failed, visible on the dashboard, until
+you retry or remove it. The API removes completed jobs automatically
+(`removeOnComplete`).
+
+## A workflow's life
+
+<Diagram name="temporal-workflow" title="A Temporal workflow from the API to a worker" height={560} />
+
+The API starts a workflow; Temporal records every step in the workflow's
+history. A worker runs the workflow code, which schedules activities (the real
+work) and timers. If the worker dies, another replays the history to rebuild the
+workflow's state and continues from the same point. That's why workflow code
+must be deterministic, and why every side effect belongs in an activity.
+
+See [Temporal](../../services/temporal/) to connect it.

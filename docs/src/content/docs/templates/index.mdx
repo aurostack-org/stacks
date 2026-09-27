@@ -1,0 +1,50 @@
+---
+title: Choosing templates
+description: Which templates to combine for a project, and monolith or monorepo for the front end.
+---
+
+import Diagram from '../../../components/Diagram.astro';
+
+A project is usually two to four generated repositories: an API, a front end,
+and a worker per kind of background work.
+
+| You need | Generate |
+|---|---|
+| An HTTP API, auth, a database | `nest-api` |
+| A web front end | `react-app` (or `react-monorepo`, below) |
+| Slow or heavy jobs outside the API process | `node-worker` |
+| Jobs that need Python libraries | `py-worker` |
+| Durable, multi-step workflows | `--with temporal` on the API and a worker ([why](../guides/background-work/)) |
+
+<Diagram name="full-stack" title="A full stacks project and the services it runs on" height={640} />
+
+## Monolith or monorepo
+
+`react-app` and `react-monorepo` are the same code: react-app is generated from
+the monorepo's packages. The choice is about deployment, not code.
+
+| | react-app | react-monorepo |
+|---|---|---|
+| Deployments | one image | one image per app |
+| Auth screens | routes (`/login`) | their own app and origin |
+| Session | a plain cookie on one origin | one cookie shared across subdomains |
+| Releases | together | each app independently |
+| Moving parts | fewer | cookie domain, trusted origins, CORS for every app |
+
+Start with **react-app**. Move to the monorepo when surfaces genuinely need to
+ship on different schedules, scale separately, or be locked down on their own
+(an admin console reachable only from a VPN, a marketing site edited daily).
+
+## How they connect
+
+| Link | Setting that must match |
+|---|---|
+| Front end → API | the front end's `VITE_APP_API_URL`; the API's `FRONTEND_HOST` (and `MISC_CORS_ORIGINS`) |
+| API ↔ workers (jobs) | the same `REDIS_*`, and the same queue names on both sides |
+| API ↔ workers (data) | the same database; the worker's models match the API's schema |
+| API → Temporal → workers | the same `TEMPORAL_ADDRESS` and `TEMPORAL_NAMESPACE`; the worker polls the task queue the API starts on |
+| Everything → OpenObserve | one org per project, a distinct `OTEL_SERVICE_NAME` per service |
+
+Mismatches are mostly silent: a worker on the wrong Redis connects happily and
+never receives a job. [A full-stack project](../guides/full-stack/) walks
+through each link.

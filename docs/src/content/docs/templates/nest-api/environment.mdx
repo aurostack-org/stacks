@@ -1,0 +1,55 @@
+---
+title: nest-api environment
+description: Every nest-api variable, how validation works, and what to set in production.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## How configuration works
+
+Every variable is validated with Zod when the app boots
+(`src/common/services/config.service.ts`), and **the process refuses to start**
+if one is missing or malformed, instead of failing later inside a request.
+
+- An **empty** value counts as missing for a required string: `SMTP_USER=''`
+  fails.
+- Numbers must parse: `PORT=''` fails (a default applies only when the variable
+  is absent altogether).
+- App code never reads `process.env`: it injects `CustomConfigService`. Adding a
+  variable means three edits in that file (the interface, the schema and
+  `getVariables`) and a line in `.env.example`.
+
+<Aside type="caution" title="A fresh .env doesn't boot yet">
+Some required values ship empty on purpose, because they're per project:
+`SMTP_USER` and `SMTP_PASSWORD` (and `GROWTHBOOK_*` with feature flags). Set
+them, or pull the whole file from Infisical, before `yarn start`. See the [setup
+checklist](../../../setup/checklist/#nest-api).
+</Aside>
+
+## Development and production values
+
+<EnvTable template="nest-api" file=".env.example" />
+
+## Test values
+
+`.env.test` (from `.env.test.example`) is what every test script runs against:
+each is wrapped in `dotenv -e .env.test --`. It points at the separate test
+stack (PostgreSQL 5499, Redis 6399), never at your development database: the
+e2e factory truncates every table between specs. Variables it doesn't set
+(telemetry, health, Temporal) fall back to schema defaults or to `.env`.
+
+<EnvTable template="nest-api" file=".env.test.example" />
+
+## Not in `.env.example`
+
+| Variable | Used by | Effect |
+|---|---|---|
+| `OPENOBSERVE_STREAM` | telemetry | Stream name; defaults to `OTEL_SERVICE_NAME` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry | Any OTLP backend instead of OpenObserve; takes precedence |
+| `OTEL_SDK_DISABLED=true` | telemetry | Turns telemetry off |
+| `OTEL_METRIC_EXPORT_INTERVAL` | telemetry | Metrics interval in ms (default 60000) |
+| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH` | `yarn secrets` | See [Secrets with Infisical](../../../setup/secrets/) |
+| `INFISICAL_TOKEN`, `INFISICAL_API_URL` | Infisical CLI, CI | Machine token and your Infisical host |

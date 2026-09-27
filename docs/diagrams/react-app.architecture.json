@@ -1,0 +1,177 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "react-app",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "browser",
+			"type": "external",
+			"label": "Browser",
+			"sublabel": "one origin",
+			"pos": [
+				40,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "nginx",
+			"type": "cloud",
+			"label": "nginx",
+			"sublabel": "static bundle",
+			"pos": [
+				260,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "app",
+			"type": "frontend",
+			"label": "react-app",
+			"sublabel": "routes · providers",
+			"pos": [
+				480,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "rtk",
+			"type": "backend",
+			"label": "RTK Query",
+			"sublabel": "one baseApi",
+			"pos": [
+				720,
+				110
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "authc",
+			"type": "security",
+			"label": "Auth client",
+			"sublabel": "better-auth",
+			"pos": [
+				720,
+				270
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "nest-api",
+			"pos": [
+				960,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "RUM · logs",
+			"pos": [
+				480,
+				340
+			],
+			"size": [
+				150,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "browser",
+			"to": "nginx",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "nginx",
+			"to": "app"
+		},
+		{
+			"from": "app",
+			"to": "rtk"
+		},
+		{
+			"from": "app",
+			"to": "authc",
+			"variant": "security"
+		},
+		{
+			"from": "rtk",
+			"to": "api",
+			"label": "JSON + cookie",
+			"variant": "emphasis"
+		},
+		{
+			"from": "authc",
+			"to": "api",
+			"label": "/auth",
+			"variant": "security"
+		},
+		{
+			"from": "app",
+			"to": "o2",
+			"label": "RUM",
+			"variant": "dashed",
+			"labelDy": 28
+		}
+	],
+	"cards": [
+		{
+			"dot": "cyan",
+			"title": "One deployment",
+			"items": [
+				"The whole front end in one image",
+				"Auth screens are routes: /login, /signup",
+				"Marketing moves the app to /app"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Data layer",
+			"items": [
+				"Features inject endpoints into one baseApi",
+				"Tag names share one namespace: keep them unique",
+				"Any 401 redirects to /login"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "Build time",
+			"items": [
+				"VITE_* values are baked into the bundle",
+				"Build one image per environment",
+				"Types are generated from the API's OpenAPI"
+			]
+		}
+	]
+}

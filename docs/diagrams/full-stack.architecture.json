@@ -1,0 +1,242 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "A project in production",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "browser",
+			"type": "external",
+			"label": "Users",
+			"sublabel": "browser",
+			"pos": [
+				40,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "proxy",
+			"type": "security",
+			"label": "Reverse proxy",
+			"sublabel": "TLS · HSTS",
+			"pos": [
+				260,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "web",
+			"type": "frontend",
+			"label": "Web app",
+			"sublabel": "nginx image",
+			"pos": [
+				480,
+				60
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "nest-api image",
+			"pos": [
+				480,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "ext",
+			"type": "external",
+			"label": "S3 · SMTP",
+			"sublabel": "providers",
+			"pos": [
+				480,
+				320
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "redis",
+			"type": "messagebus",
+			"label": "Redis",
+			"sublabel": "cache · queues",
+			"pos": [
+				720,
+				120
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "pg",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "the API's schema",
+			"pos": [
+				720,
+				260
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "workers",
+			"type": "backend",
+			"label": "Workers",
+			"sublabel": "node · py images",
+			"pos": [
+				960,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "traces · logs · RUM",
+			"pos": [
+				960,
+				40
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "temporal",
+			"type": "messagebus",
+			"label": "Temporal",
+			"sublabel": "mTLS, optional",
+			"pos": [
+				960,
+				330
+			],
+			"size": [
+				150,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "browser",
+			"to": "proxy",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "proxy",
+			"to": "web"
+		},
+		{
+			"from": "proxy",
+			"to": "api",
+			"variant": "emphasis"
+		},
+		{
+			"from": "api",
+			"to": "ext"
+		},
+		{
+			"from": "api",
+			"to": "redis"
+		},
+		{
+			"from": "api",
+			"to": "pg",
+			"label": "SQL"
+		},
+		{
+			"from": "workers",
+			"to": "redis",
+			"label": "jobs"
+		},
+		{
+			"from": "workers",
+			"to": "pg"
+		},
+		{
+			"from": "workers",
+			"to": "temporal",
+			"variant": "dashed"
+		},
+		{
+			"from": "workers",
+			"to": "o2",
+			"label": "OTLP",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "rose",
+			"title": "Public edge",
+			"items": [
+				"Only the proxy is public: web and API behind it",
+				"Workers expose no port",
+				"Temporal only admits client certificates"
+			]
+		},
+		{
+			"dot": "cyan",
+			"title": "Shared state",
+			"items": [
+				"The API owns the schema and migrations",
+				"Workers share its database and Redis",
+				"Queues and task queues must match on both sides"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Operations",
+			"items": [
+				"Images from Forgejo CI, config from the environment",
+				"One OpenObserve org, a stream per service",
+				"Migrate first, then API, workers, front ends"
+			]
+		}
+	],
+	"boundaries": [
+		{
+			"kind": "security-group",
+			"label": "Private network",
+			"wraps": [
+				"api",
+				"redis",
+				"pg",
+				"workers"
+			],
+			"pad": 20
+		}
+	]
+}

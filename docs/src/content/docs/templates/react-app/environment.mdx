@@ -1,0 +1,42 @@
+---
+title: react-app environment
+description: Every variable in react-app's .env, and how build-time values work.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="VITE_ values are public and fixed at build time">
+Vite inlines every `VITE_*` variable into the JavaScript bundle when you build.
+Anything prefixed `VITE_` ships to every browser, so never put a secret there.
+And a built bundle (or image) is pinned to the values it was built with:
+changing them at runtime does nothing. Build one bundle per environment.
+</Aside>
+
+Generation copies `.env.example` to `.env`. In development, Vite reads it on
+start; restart `yarn dev` after changing it.
+
+<EnvTable template="react-app" />
+
+## Not in `.env.example`
+
+| Variable | Used by | Effect |
+|---|---|---|
+| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH` | `yarn secrets` | See [Secrets with Infisical](../../../setup/secrets/) |
+
+There is deliberately no `VITE_APP_URL`: absolute links (email verification
+callbacks) use `window.location.origin`. A stale URL baked into an image would
+send every verification link to the previous environment, invisibly, until a
+user clicked one.
+
+## What the API must agree with
+
+- The API's trusted origins and CORS must include this app's origin (for local
+  development, `http://localhost:3000`), with credentials allowed and the
+  `traceparent` header permitted. See [Auth, cookies and
+  CORS](../../../services/auth-domains/).
+- better-auth must be served at `${VITE_APP_API_URL}/auth`.
+- With `types`, the API's OpenAPI document at `API_DOC_URL`, behind the basic
+  auth in `API_DOC_USER` and `API_DOC_PASSWORD`.

@@ -1,0 +1,28 @@
+---
+title: react-app features
+description: Every react-app feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/react-app/template.json`.
+
+<FeatureTable template="react-app" />
+
+## Notes
+
+- **`marketing`** moves the signed-in app from `/` to `/app`, and adds
+  build-time `robots.txt`, `sitemap.xml` and `security.txt`. Set
+  `PRODUCTION_ORIGIN` in `src/features/seo/routes.ts` to your real origin:
+  every other origin builds as `noindex`.
+- **`admin`** gates `/admin` in the UI only. The API must enforce the role.
+- **`pwa`**: the update prompt and install button are yours to build, with the
+  plugin's `useRegisterSW`.
+- **`charts`** adds ApexCharts and its theme-aware palette tokens; no chart
+  components ship.
+- **`realtime`** adds a Socket.IO client for the API's `/realtime` path. Call
+  `connectSocket(url)` where your app needs it; nothing connects by default.
+- **`auth-screens`** off means you bring your own `/login`: the guards and the
+  401 handler still send users there.

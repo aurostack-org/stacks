@@ -1,0 +1,58 @@
+---
+title: Email (SMTP)
+description: Transactional email for nest-api, locally with a catcher and in production.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+With the `mail` feature, nest-api sends verification, welcome and password
+emails. Each is a BullMQ job on the `mail` queue, rendered from a React Email
+template in `emails/` and sent over SMTP.
+
+| Variable | Value |
+|---|---|
+| `SMTP_HOST` | The server |
+| `SMTP_PORT` | `465` (TLS from the start) or `587` (STARTTLS). No other port validates |
+| `SMTP_SECURE` | `true` for 465, `false` for 587 |
+| `SMTP_USER`, `SMTP_PASSWORD` | Credentials. Required and empty by default: the API won't start until they're set |
+| `SMTP_FROM` | `Shop <no-reply@shop.example>` |
+| `SMTP_SUPPORT_EMAIL` | Shown in the welcome email |
+
+<Aside type="caution" title="Email is on the sign-up path">
+With `mail` on, email verification is mandatory: a new user can't sign in until
+they click the link. If SMTP is broken, signups silently can't complete. Watch
+the `mail` queue at `/dashboard` for failed jobs.
+</Aside>
+
+## Locally
+
+Run [Mailpit](https://mailpit.axllent.org), which accepts everything and shows it
+in a web inbox. Map it to port 587, since the API only accepts 465 or 587:
+
+```sh
+docker run -d --name mailpit -p 587:1025 -p 8025:8025 axllent/mailpit
+```
+
+```ini
+SMTP_HOST='localhost'
+SMTP_PORT='587'
+SMTP_SECURE='false'
+SMTP_USER='dev'
+SMTP_PASSWORD='dev'
+```
+
+Sign up, open [http://localhost:8025](http://localhost:8025), and click the
+verification link. `yarn email:dev` previews the templates themselves on port
+5003.
+
+## Production
+
+Use a transactional provider (Postmark, Amazon SES, Mailgun, Resend, or your
+own server) on 587 with STARTTLS or 465 with TLS. Set up SPF, DKIM and DMARC
+for the `SMTP_FROM` domain, or verification emails land in spam.
+
+Links in emails are built from `SERVER_HOST` and `BETTER_AUTH_URL`, so set those
+to public URLs before sending anything real.
+
+<Internal id="smtp" />

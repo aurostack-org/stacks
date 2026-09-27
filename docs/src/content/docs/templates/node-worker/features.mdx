@@ -1,0 +1,26 @@
+---
+title: node-worker features
+description: Every node-worker feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/node-worker/template.json`. Drop a default with
+`--without`, add an opt-in with `--with`.
+
+<FeatureTable template="node-worker" />
+
+## Notes
+
+- **`temporal`** changes the Docker base image: Temporal's native core ships
+  glibc builds only and won't load on Alpine, even with `gcompat`, so the image
+  builds on `node:24-bookworm-slim` instead of the Alpine house image. The
+  `browser` and `pm2` steps have Debian equivalents.
+- **`browser`** adds Chromium to the image, roughly 800 MB. `launchBrowser()`
+  in `src/utils/browser.ts` isn't called anywhere by default.
+- **`pm2`** runs `dist/` with `autorestart: false`: a crash is not restarted by
+  PM2. Rely on your container's restart policy, or change it.
+- **`queue`** off leaves a worker that only runs Temporal workflows (or nothing,
+  as a base for your own loop).

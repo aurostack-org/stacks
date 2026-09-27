@@ -1,0 +1,86 @@
+---
+title: react-monorepo architecture
+description: Apps, shared packages, cross-subdomain sessions and redirects in react-monorepo.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Diagram name="react-monorepo" title="react-monorepo: four apps over shared packages, one API" height={620} />
+
+## How the apps start
+
+Each app's `src/app/providers.tsx` configures the shared packages at module
+scope, before the first request:
+
+- `configureApi({ baseUrl: VITE_APP_API_URL, onUnauthorized: redirectToLogin })`;
+- `configureAuth({ authApiBaseUrl: <API>/auth, authAppUrl, trustedOrigins, defaultRedirect })`,
+  where `authAppUrl` is the auth app's origin (`VITE_APP_AUTH_HOST`) and
+  `trustedOrigins` lists every sibling app.
+
+Then the same provider tree everywhere: `ThemeProvider` → `MetaProvider` →
+Redux `Provider` → `AuthProvider`.
+
+## One session across apps
+
+<Diagram name="sign-in" title="Signing in on the auth app, landing back on the client" height={560} />
+
+1. The client app asks the API for the session (`/auth/get-session`) with the
+   cookie. While that round trip is in flight, `ProtectedRoute` shows a skeleton.
+2. With no session, `redirectToLogin()` sends the browser to the auth app:
+   `<auth>/login?redirect=<where you were>`.
+3. The auth app signs in against the API. better-auth sets the session cookie on
+   the **parent domain** (`BETTER_AUTH_COOKIE_DOMAIN`, e.g. `.example.com`), so
+   every subdomain sends it.
+4. The auth app sends you back to `redirect`, but only if its origin is one of
+   the trusted sibling apps; otherwise to the client app.
+5. Back on the client, the session check now succeeds.
+
+Any 401 from the API, in any app, triggers the same redirect. Sign-out clears
+the cookie and tells other tabs of the same app through a `BroadcastChannel`
+(other apps notice on their next request).
+
+<Aside type="caution" title="Three settings must agree">
+The API's `BETTER_AUTH_COOKIE_DOMAIN` must cover every app's host, the API's
+trusted origins and CORS must list every app's origin, and each app's
+`VITE_APP_*_HOST` values must name the others. When they disagree, login
+appears to succeed and then bounces straight back to the login page. See
+[Auth, cookies and CORS](../../../services/auth-domains/).
+</Aside>
+
+## Data layer
+
+One RTK Query `baseApi` in `@scope/api`, which every feature extends with
+`injectEndpoints` in `features/<name>/api.ts` of its app. All requests include
+credentials; every 401 goes through one chokepoint. Tag types and endpoint names
+share one global namespace across every app and package: collisions are silent,
+so declare tags in `base-api.ts` and keep them specific.
+
+## Types
+
+`@scope/types` holds TypeScript types and Zod schemas generated from the API's
+OpenAPI document. Every app compiles against them, so regenerate and commit them
+when the API changes. See [Development](../development/#api-types).
+
+## Admin
+
+`apps/admin` renders only for the `admin` and `superuser` roles (`RoleRoute`);
+signed-out visitors go to the auth app, and other users see Forbidden. That's
+the UI; the API must enforce the same roles on every endpoint the console calls.
+
+## Landing
+
+`apps/landing` builds `robots.txt`, `sitemap.xml` and `security.txt` at build
+time, and marks every build that isn't for the production origin as `noindex`,
+so a preview can't outrank production. Set `PRODUCTION_ORIGIN` in
+`src/features/seo/routes.ts` to your real origin. Pages are rendered in the
+browser: crawlers that don't run JavaScript see an empty shell unless you add a
+prerender step.
+
+## Theming and telemetry
+
+As in [react-app](../../react-app/architecture/#theming): light, dark or system
+per origin, applied before first paint, and OpenObserve RUM in every app (each
+with its own service name) with `traceparent` on API calls.

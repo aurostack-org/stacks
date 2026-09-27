@@ -1,0 +1,85 @@
+---
+title: Developing a react-monorepo
+description: From a fresh monorepo to signing in across apps locally.
+sidebar:
+  label: Development
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## After generating
+
+Generation copied each `apps/*/.env.example` to `.env`, ran `yarn install`,
+formatted the code and made the first commit.
+
+<Steps>
+
+1. **Run the API** (a [nest-api](../../nest-api/development/) on port 5000).
+   Its trusted origins and CORS must include every app you run.
+
+2. **Start every app:**
+
+   ```sh
+   yarn dev   # turbo runs each app's dev server
+   ```
+
+   landing on 3000, auth on 3001, client on 3002, admin on 3003 (those you
+   generated).
+
+3. **Sign in:** open the client at `http://localhost:3002`. You're sent to the
+   auth app's `/login`, and after signing in, back to the client.
+
+</Steps>
+
+<Aside type="caution" title="Sharing the session locally">
+On `localhost`, every app is the same host on a different port, so they share
+cookies without a cookie domain: leave the API's `BETTER_AUTH_COOKIE_DOMAIN`
+empty (the default). To mirror production's subdomains instead, use
+`*.lvh.me` (which resolves to `127.0.0.1`): `http://app.lvh.me:3002`,
+`http://auth.lvh.me:3001` and so on, set the API's cookie domain to `.lvh.me`,
+list those hostnames in each app's `VITE_APP_ALLOWED_HOSTS`, and update the
+`VITE_APP_*_HOST` values and the API's origins to match.
+</Aside>
+
+## Scripts
+
+Root scripts run across every workspace through Turborepo:
+
+| Script | Does |
+|---|---|
+| `yarn dev` | Every app's dev server |
+| `yarn build` | Typecheck and build every app |
+| `yarn typecheck`, `yarn lint` | Across apps and packages |
+| `yarn format`, `yarn format:check` | Prettier |
+| `yarn secrets [-e env]` | Each workspace's `.env` from Infisical |
+
+One app: `yarn workspace client dev`, `yarn workspace landing build`.
+
+## API types
+
+`@scope/types` needs `packages/types/.env` (not created for you):
+
+```ini
+API_DOC_URL=http://localhost:5000/openapi-json
+API_DOC_USER=admin       # the API's BASIC_AUTH_USER
+API_DOC_PASSWORD=…       # the API's BASIC_AUTH_PASS
+```
+
+Then `yarn workspace @scope/types gen`, and commit `src/types/api/`: every app
+compiles against it. A fresh project ships empty placeholders so it typechecks
+before the API exists.
+
+## Adding a page
+
+Add the route to the app's `src/app/router.tsx`, and to `src/app/nav.tsx` if it
+belongs in the sidebar (the shell builds the sidebar from that list, not from
+the router). Put its data calls in `src/features/<name>/api.ts` with
+`baseApi.injectEndpoints`.
+
+## Adding a package
+
+Create `packages/<name>` with a `package.json` named `@scope/<name>` whose
+`exports` points at `./src/index.ts`, depend on it from the apps
+(`"@scope/<name>": "workspace:*"`), and add a line for it to the Dockerfile's
+dependency stage. If it contains Tailwind classes, add it to the `@source` lines
+in the UI kit's `globals.css`.

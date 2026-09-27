@@ -1,0 +1,85 @@
+---
+// A template's env variables: default, owning feature and the template's own
+// comment (from its .env example), plus the hand-written note from
+// src/data/env-notes.json.
+import data from '../data/generated/templates.json';
+import notesData from '../data/env-notes.json';
+import { marked } from '../lib/markdown';
+
+interface Props {
+	template: keyof typeof data.templates;
+	/** One env file, e.g. "apps/client/.env.example"; defaults to every file. */
+	file?: string;
+	/** Only variables kept by this feature expression. */
+	feature?: string;
+}
+type Note = { production?: string; source?: string; notes?: string };
+const notes = notesData as Record<string, Note>;
+const { template, file, feature } = Astro.props;
+const t = data.templates[template];
+const files = t.env.filter((f) => !file || f.file === file);
+const noteFor = (name: string) => notes[`${template}:${name}`] ?? notes[name] ?? {};
+---
+
+{
+	files.map((f) => {
+		const vars = f.vars.filter((v) => !feature || v.feature === feature);
+		return (
+			vars.length > 0 && (
+				<>
+					{files.length > 1 && (
+						<p class="env-file">
+							<code>{f.file}</code>
+						</p>
+					)}
+					<table class="env-table">
+						<thead>
+							<tr>
+								<th>Variable</th>
+								<th>What to set</th>
+							</tr>
+						</thead>
+						<tbody>
+							{vars.map((v) => {
+								const n = noteFor(v.name);
+								return (
+									<tr id={`env-${v.name}`}>
+										<td>
+											<code class="env-name">{v.name}</code>
+											<div class="meta">
+												{v.default ? (
+													<>default <code>{v.default}</code></>
+												) : (
+													<>empty by default</>
+												)}
+											</div>
+											{v.feature && (
+												<div class="meta">
+													feature <code>{v.feature}</code>
+												</div>
+											)}
+										</td>
+										<td>
+											{v.comment && <p class="env-comment">{v.comment}</p>}
+											{n.production && (
+												<p>
+													<strong>Production:</strong> <Fragment set:html={marked(n.production)} />
+												</p>
+											)}
+											{n.source && (
+												<p>
+													<strong>Where to get it:</strong> <Fragment set:html={marked(n.source)} />
+												</p>
+											)}
+											{n.notes && <Fragment set:html={marked(n.notes)} />}
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				</>
+			)
+		);
+	})
+}

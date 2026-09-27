@@ -1,0 +1,52 @@
+---
+title: react-app
+description: The whole front end as one Vite + React 19 app, with auth, data layer, UI kit and optional marketing and admin.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+One Vite app carrying the whole front end: an RTK Query data layer over the API,
+better-auth sessions and route guards, the login and signup screens as routes, a
+shadcn-style UI kit with light and dark themes, and generated API types.
+Optionally, a public marketing site at `/` and an admin console at `/admin`.
+
+```sh
+stack new react-app ./web --name shop-web --with marketing,admin
+```
+
+**Stack:** Vite 8, React 19, react-router, Redux Toolkit and RTK Query,
+better-auth, Tailwind CSS 4 with Radix components, Formik and Zod, OpenObserve
+RUM. Served by nginx in Docker.
+
+## At a glance
+
+| | |
+|---|---|
+| Dev server | `yarn dev` on port 3000 |
+| Routes | `src/routes/`: app pages, `auth/`, `legal/`, `marketing/`, `admin/` |
+| Shared code | `src/shared/`: `ui`, `api`, `auth`, `layouts`, `types`, `telemetry` |
+| Talks to | the API at `VITE_APP_API_URL`, auth at `${VITE_APP_API_URL}/auth` |
+| Build output | a static bundle; `VITE_*` values are baked in at build time |
+| Tests | none shipped: `format:check`, `lint`, `typecheck` and `build` |
+
+## react-app or react-monorepo?
+
+Start with **react-app**: one origin, one build, one image. Auth screens are
+routes (`/login`), so the session guard navigates within the app and there's
+no cross-subdomain cookie to configure. Choose
+[react-monorepo](../react-monorepo/) when surfaces must ship on different
+cadences, scale separately or be locked down on their own (see [Choosing
+templates](../)).
+
+The shared code is the same files: react-app is **derived** from
+react-monorepo, which flattens its packages into `src/shared/*`.
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

@@ -1,0 +1,101 @@
+---
+title: template.json
+description: The template manifest, field by field.
+---
+
+Every template is a directory `templates/<name>/` holding `template.json` and
+`files/` (the complete app). The CLI discovers templates from that directory;
+nothing needs registering.
+
+## Top-level fields
+
+| Field | Type | Meaning |
+|---|---|---|
+| `name` | string | Template id; matches the directory name |
+| `version` | string | Written to the generated `stack.json` as `templateVersion` |
+| `title`, `description` | string | Shown by `stack list` and `stack info` |
+| `defaults.port` | number | Default for `{{port}}` and `--port` |
+| `derivedFrom` | string | Marks a template generated from another (react-app is derived from react-monorepo); `extract` then explains how to regenerate it instead |
+| `replacements` | rule[] | Renames applied to file contents |
+| `pathReplacements` | rule[] | Renames applied to file paths (unused today) |
+| `features` | object | The features; see below |
+| `hooks` | hook[] | Commands run after generation |
+| `nextSteps` | string[] | Printed after generation; `{{tokens}}` are filled in |
+| `aliasRoots` | `{ prefix: dir \| null }` | Lets `doctor` follow aliased imports (`"@/": "src/"`); `null` means "build output, skip" |
+| `generatedPaths` | glob[] | Import targets that exist only after a build step (the Prisma client), so `doctor` doesn't report them missing |
+
+## Features
+
+```json
+"realtime": {
+	"title": "Socket.IO realtime layer",
+	"description": "What it gives you, and what it costs.",
+	"default": false,
+	"requires": ["cache", "auth"],
+	"files": ["src/realtime/**"],
+	"packageJson": { "dependencies": ["socket.io"] }
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `title`, `description` | Shown in `stack info` and these docs |
+| `core` | Always on; `--without` is an error |
+| `default` | On unless `--without` |
+| `requires` | Features pulled in with it (transitively) |
+| `files` | Globs dropped whole when the feature is off. Include its tests |
+| `packageJson` | `{ dependencies, devDependencies, scripts }` to remove when off, for the root `package.json`; or an array of those, each with a `file`, for workspaces (`apps/admin/package.json`) |
+| `requirements` | Python distributions to remove from `requirements.txt` when off (matched by name, case-insensitively, whatever the pin) |
+
+Globs: `**` matches any depth including none, `*` stays within a path segment,
+braces and character classes work, and a path without wildcards matches the
+whole directory beneath it.
+
+## Replacements and tokens
+
+Replacement rules are `{ from, to, regex?, flags?, when? }`, applied in order
+to every text file after marker stripping. Put the longest identifiers first
+(`AcmeCorp` before `Acme`). `when` limits a rule to a feature expression.
+
+`to`, hook commands and next steps can use these tokens (for `--name "my app"`):
+
+| Token | Value |
+|---|---|
+| `{{name}}` | `my-app` |
+| `{{Name}}` | `My App` |
+| `{{pascal}}` | `MyApp` |
+| `{{camel}}` | `myApp` |
+| `{{snake}}` | `my_app` |
+| `{{constant}}` | `MY_APP` |
+| `{{scope}}` | `--scope`, or the name |
+| `{{description}}` | `--description`, or `"<Name> service"` |
+| `{{port}}` | `--port`, `defaults.port`, or 5000 |
+| `{{author}}` | `--author`, or empty |
+| `{{year}}` | the current year |
+
+Package names in `packageJson` are renamed with the same rules before they're
+matched, so `@acme/telemetry` in a manifest still finds `@shop/telemetry` in a
+generated file. Script names are not renamed.
+
+## Hooks
+
+```json
+{ "title": "install dependencies", "run": "yarn install --no-immutable", "optional": true }
+```
+
+| Key | Meaning |
+|---|---|
+| `run` | Shell command; `{{tokens}}` filled in |
+| `cwd` | Relative to the project; default `.` |
+| `when` | Feature expression; the hook is skipped when false |
+| `optional` | A failure warns and generation continues (unless `--strict`) |
+| `title` | Label in the output |
+
+Every hook in every current template is optional.
+
+## File names
+
+npm drops nested `.gitignore` and `.npmrc` files from published packages, so
+templates store them as `_gitignore` and `_npmrc`; generation renames them back.
+Binary files are copied untouched. Text files are recognised by extension and
+by name (`Dockerfile*`, `.env*`, and common dotfiles).

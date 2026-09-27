@@ -1,0 +1,118 @@
+---
+title: nest-api architecture
+description: Boot order, request pipeline, modules, auth, data, queues and telemetry in nest-api.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Diagram name="nest-api" title="nest-api: modules and the services they use" height={620} />
+
+## Boot
+
+`src/main.ts` imports `./instrumentation` first (OpenTelemetry has to patch
+modules before anything loads them), creates the app with the body parser
+**off** (better-auth needs raw bodies on its own routes), then applies the steps
+in `src/app.setup.ts` in order:
+
+1. pino as the logger;
+2. basic auth on `/docs`, `/openapi`, `/openapi-json` and `/dashboard`;
+3. URI versioning: controllers opt in with `version: '1'` (`/v1/...`);
+4. static files from `public/`;
+5. JSON and form body parsing, for every path except `/auth/*`;
+6. the global Zod validation pipe and response serialiser;
+7. Prisma exception filters (a unique violation becomes 409, a missing record 404);
+8. the OpenAPI document, Swagger UI at `/openapi`, and Scalar at `/docs`;
+9. CORS, then Helmet;
+10. the Socket.IO adapter (with `realtime`);
+11. `listen(PORT, APP_HOST)`.
+
+The e2e test factory mirrors this list (without basic auth and realtime), so
+anything added to `app.setup.ts` must be added there too.
+
+## A request
+
+<Diagram name="api-request" title="An API request, from rate limit to response" height={520} />
+
+1. **Rate limit** (`ThrottlerGuard`, first global guard): a Redis bucket per
+   client IP, so a flood is rejected before any database lookup.
+2. **Auth** (`AuthGuard`, second): better-auth resolves the session from the
+   cookie. Every route requires one unless it's `@AllowAnonymous()`.
+3. **Permissions**, where declared: `@UserPermissions('list')` and friends check
+   the role's statements in `src/lib/access.ts`.
+4. **Validation**: `@Body/@Query/@Param({ schema })` validate against Zod; a
+   failure is one 400 `Validation: <field>: <message>`.
+5. **Handler** → services → Prisma, Redis, queues.
+6. **Serialisation**: the response goes through the schema declared with
+   `@Returns(schema)`. Undeclared fields are dropped, so a leaked column can't
+   reach a client.
+
+## Modules
+
+| Module | Provides |
+|---|---|
+| `CommonModule` (global) | Config, Prisma, cache, mail, logger, throttler storage, feature flags, Temporal, health. Anything in its `exports` is injectable everywhere |
+| `AuthModule` (better-auth) | `/auth/*`, sessions in PostgreSQL, the admin plugin, Google sign-in |
+| `UsersModule` | `GET /v1/user` (the signed-in user), onboarding, avatar upload; `GET /v1/users` and `/v1/users/:id` for admins |
+| `MediaModule` | S3 uploads (`MediaService`, `S3Service`) and a `media` queue for deletions |
+| `RealtimeModule` | Socket.IO gateway at path `/realtime`, Redis presence and adapter |
+| `NotificationsModule` | Stored notifications and their endpoints; pushed live when realtime is on |
+| `GraphQLModule` | Apollo at `/graphql`, code-first |
+
+## Auth
+
+better-auth at `/auth`, with sessions stored in PostgreSQL through Prisma. The
+session cookie is shared across subdomains (`BETTER_AUTH_COOKIE_DOMAIN`), so one
+login covers every front end. See [Auth, cookies and
+CORS](../../../services/auth-domains/).
+
+- **Email and password**, with email verification required when mail is on: a
+  new user can't sign in until they click the link.
+- **Google** sign-in, when `OAUTH_GOOGLE_*` are set.
+- **Roles**: `user`, `admin`, `superuser`, with their statements in
+  `src/lib/access.ts`. Use `hasRole(role, 'admin')` rather than `===`: a user can
+  hold several roles (`"admin,superuser"`).
+- **Superuser**: `yarn db:seed` creates it from `SUPERUSER_EMAIL` and
+  `SUPERUSER_PASSWORD`, already verified.
+
+`src/lib/auth.ts` is a second better-auth instance for tooling (seeders, types).
+Keep its cookie settings identical to the runtime one in `src/app.module.ts`, or
+realtime sockets are rejected.
+
+## Data
+
+Prisma 7 with a **multi-file schema** in `prisma/schema/` (`base.prisma`,
+`auth.prisma`, `enum.prisma`, and one file per feature). The client generates to
+`prisma/generated` and imports as `@db/client`. No migrations ship: the first
+`yarn db:migrate` creates them.
+
+`PrismaService` runs transactions at `Serializable` isolation and adds `.x`, an
+extended client with `exists()` and `paginate()` on every model.
+
+## Queues
+
+BullMQ on Redis. `QueueModule.register(name)` registers a queue and its
+dashboard panel. The template has two: `mail` (every email is a job, rendered
+from a React Email template in `emails/` and sent over SMTP) and `media`
+(deleting replaced files). The dashboard is at `/dashboard`.
+
+<Aside>
+Workers in other processes ([node-worker](../../node-worker/),
+[py-worker](../../py-worker/)) consume the same Redis. Producing to a queue here
+and consuming it there is how heavy work leaves the API.
+</Aside>
+
+## Telemetry and health
+
+With [OpenObserve connected](../../../services/openobserve/), traces cover HTTP
+handlers, GraphQL, Prisma, PostgreSQL, Redis and BullMQ jobs; logs carry trace
+ids; runtime, HTTP and queue metrics are exported. `/health` reports HTTP,
+database, heap, RSS and disk, and returns 503 when any is down.
+
+## Temporal (opt-in)
+
+`TemporalService` holds a lazily connected client: the API boots and serves
+everything else while Temporal is down. Start workflows by name on the task
+queue a worker polls. See [Temporal](../../../services/temporal/).

@@ -1,0 +1,95 @@
+---
+title: react-app architecture
+description: Routing, the data layer, sessions, theming and telemetry in react-app.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Diagram name="react-app" title="react-app: the app, its shared layers and the API it talks to" height={600} />
+
+## Startup
+
+`src/main.tsx` starts telemetry (a no-op until it's [connected](../../../services/openobserve/)),
+then renders the providers and the router. `src/app/providers.tsx` configures
+everything at module scope, before the first request:
+
+- `configureApi({ baseUrl: API_URL, onUnauthorized })`: the data layer's base
+  URL, and what to do on a 401 (a hard redirect to `/login`, discarding
+  in-memory state);
+- `configureAuth({ authApiBaseUrl: API_URL + "/auth", defaultRedirect })`:
+  the better-auth client;
+- a Zod error map for form messages.
+
+The provider tree is `ThemeProvider` → `MetaProvider` → Redux `Provider` →
+`AuthProvider`, with a `Toaster`.
+
+## Routing
+
+Routes live in `src/app/router.tsx`, with paths from `src/lib/paths.ts`:
+
+| Path | What | Feature |
+|---|---|---|
+| `/` | Marketing home page | `marketing` |
+| `/terms`, `/privacy` | Legal placeholders, always shipped (signup links to them) | |
+| `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify-email`, `/verified` | Auth screens | `auth-screens` |
+| `/` or `/app` | The signed-in app (`home`, `settings`) behind `ProtectedRoute` | |
+| `/admin` | Admin console behind `RoleRoute` (`admin`, `superuser`) | `admin` |
+
+With `marketing`, the landing page owns `/` and the signed-in app moves to
+`/app` (`APP_BASE`). Auth paths are deliberately flat and stable: they're baked
+into verification and reset emails already sitting in people's inboxes.
+
+<Aside type="caution" title="The admin gate is UI, not security">
+`RoleRoute` decides what renders. Every endpoint behind the console must enforce
+the same role on the API, or the console is an honour system.
+</Aside>
+
+## Data layer
+
+One RTK Query `baseApi` (`src/shared/api/base-api.ts`) that every feature
+extends with `injectEndpoints` in `src/features/<name>/api.ts`. All requests
+include credentials (the session cookie), and any 401 anywhere triggers the
+login redirect: the single chokepoint for session expiry.
+
+`tagTypes` and endpoint names share one global namespace, and collisions are
+silent: two features that both invent `Items` invalidate each other's caches.
+Declare tags in `base-api.ts`, and keep them specific.
+
+`uploadBaseQuery` handles multipart uploads with progress, and aborts a stalled
+upload after 45 seconds without progress.
+
+## Sessions
+
+`AuthProvider` asks better-auth for the session (`get-session`) and keeps it in
+the `auth` slice (`loading`, `authenticated`, `unauthenticated`).
+`ProtectedRoute` renders a skeleton until the session resolves, then either the
+page or a redirect to `/login?redirect=<where you were>`. After login,
+`getSafeRedirect` sends you back only if the target is on this origin.
+
+The frontend never sets cookies: the API's better-auth sets and reads the
+session cookie. Sign-out clears it and tells other tabs through a
+`BroadcastChannel`.
+
+## Types
+
+`src/shared/types/api` holds TypeScript types and Zod schemas generated from
+the API's OpenAPI document by `yarn gen`. Commit them: they're the contract the
+app compiles against. See [Development](../development/#api-types).
+
+## Theming
+
+Light, dark or system, remembered per origin in `localStorage`. An inline
+script in `index.html` applies the theme before first paint (no flash), and
+keeps `<meta name="theme-color">` in step. That inline script is also why the
+nginx config sends no Content-Security-Policy: add one only with a nonce or hash
+for it.
+
+## Telemetry
+
+[OpenObserve RUM](../../../services/openobserve/#browser-details): page views,
+errors (including the error boundary's), slow resources, user actions, and the
+signed-in user's id. Requests to `VITE_APP_API_URL` carry a `traceparent`
+header, so a click links to the backend trace it caused.
