@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # generated from ../templates by scripts/sync-templates.mjs
 src/data/generated/
+
+# a private build (stackbook) copies its internal layer here; never commit it
+src/content/docs/internal/
+sidebar.private.mjs
