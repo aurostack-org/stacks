@@ -155,7 +155,7 @@ export class AppFactory {
 			bufferLogs: true
 		});
 
-		setup.usePinoLogger(app); // @feature observability
+		setup.usePinoLogger(app);
 		setup.enableVersioning(app);
 		setup.setStatic(app);
 		setup.enableJsonBodyParser(app);

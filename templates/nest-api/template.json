@@ -258,32 +258,23 @@
 			"core": true
 		},
 		"observability": {
-			"title": "Structured logs, metrics and health",
-			"description": "nestjs-pino request logging, a Prometheus /metrics endpoint, and Terminus health checks including a Prisma indicator.",
+			"title": "Metrics and health checks",
+			"description": "A Prometheus /metrics endpoint and Terminus health checks, including a Prisma indicator. Structured pino logging is always included.",
 			"default": true,
 			"files": [
 				"src/common/modules/metrics.module.ts",
-				"src/common/modules/logger.module.ts",
-				"src/common/services/logger.service.ts",
 				"src/common/controllers/metrics.controller.ts",
 				"src/common/controllers/health.controller.ts",
 				"src/common/interceptors/metrics.interceptor.ts",
-				"src/common/constants/pino.ts",
 				"src/common/misc/prisma.indicator.ts",
 				"src/common/__tests__/health.controller.spec.ts",
 				"src/common/__tests__/prisma.indicator.spec.ts"
 			],
 			"packageJson": {
 				"dependencies": [
-					"nestjs-pino",
-					"pino",
-					"pino-http",
 					"prom-client",
 					"@willsoto/nestjs-prometheus",
 					"@nestjs/terminus"
-				],
-				"devDependencies": [
-					"pino-pretty"
 				]
 			}
 		},
@@ -308,7 +299,8 @@
 				"auth"
 			],
 			"files": [
-				"src/media/**"
+				"src/media/**",
+				"src/users/dto/avatar.dto.ts"
 			],
 			"packageJson": {
 				"dependencies": [

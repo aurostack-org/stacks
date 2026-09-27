@@ -26,11 +26,11 @@ namespace Config {
 		key: string;
 	}
 
-	// @feature:start observability
 	export interface Logger {
 		level: string;
 	}
 
+	// @feature:start observability
 	/** Limits past which /health reports the process as down. */
 	export interface Health {
 		heapMaxMb: number;
@@ -125,7 +125,7 @@ namespace Config {
 
 	export interface Env {
 		app: App;
-		logger: Logger; // @feature observability
+		logger: Logger;
 		health: Health; // @feature observability
 		database: Database;
 		redis: Redis; // @feature cache
@@ -166,8 +166,8 @@ namespace Config {
 		SUPERUSER_PASSWORD: str(),
 		OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
 		OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
-		// @feature:start observability
 		LOG_LEVEL: str().default('info'),
+		// @feature:start observability
 		HEALTH_HEAP_MAX_MB: num(z.number().positive()).default(300),
 		HEALTH_RSS_MAX_MB: num(z.number().positive()).default(300),
 		HEALTH_DISK_THRESHOLD: num(z.number().min(0).max(1)).default(0.8),
@@ -225,10 +225,10 @@ namespace Config {
 			port: Number(env.PORT) || 5000,
 			key: env.APP_KEY || ''
 		},
-		// @feature:start observability
 		logger: {
 			level: env.LOG_LEVEL || 'info'
 		},
+		// @feature:start observability
 		health: {
 			heapMaxMb: Number(env.HEALTH_HEAP_MAX_MB) || 300,
 			rssMaxMb: Number(env.HEALTH_RSS_MAX_MB) || 300,
@@ -322,11 +322,11 @@ export class CustomConfigService {
 		return this.config.get('app', { infer: true });
 	}
 
-	// @feature:start observability
 	get logger() {
 		return this.config.get('logger', { infer: true });
 	}
 
+	// @feature:start observability
 	get health() {
 		return this.config.get('health', { infer: true });
 	}

@@ -2,7 +2,7 @@ import { TestBed, type Mocked } from '@suites/unit';
 import { Entity } from '@test/factory/entity';
 import { CurrentUserController } from '../controllers';
 import { CurrentUserService } from '../services';
-import { CurrentUserEntity } from '../entity';
+import { CurrentUserEntity, toCurrentUser } from '../entity';
 
 describe('CurrentUserController', () => {
 	let controller: CurrentUserController;
@@ -20,6 +20,19 @@ describe('CurrentUserController', () => {
 		expect(controller).toBeDefined();
 	});
 
+	describe('completeOnboarding', () => {
+		it('delegates to CurrentUserService with the session user', async () => {
+			const session = Entity.userSession.build();
+			const updated = toCurrentUser(session.user);
+			service.completeOnboarding.mockResolvedValue(updated);
+
+			const result = await controller.completeOnboarding(session);
+
+			expect(service.completeOnboarding).toHaveBeenCalledWith(session.user);
+			expect(result).toBe(updated);
+		});
+	});
+
 	describe('getCurrentUser', () => {
 		it('should return a CurrentUserEntity from session user', () => {
 			const session = Entity.userSession.build();
@@ -32,6 +45,7 @@ describe('CurrentUserController', () => {
 		});
 	});
 
+	// @feature:start media
 	describe('updateAvatar', () => {
 		const file = {
 			originalname: 'photo.jpg',
@@ -59,4 +73,5 @@ describe('CurrentUserController', () => {
 			expect(service.updateAvatar).toHaveBeenCalledWith(session.user, file);
 		});
 	});
+	// @feature:end
 });

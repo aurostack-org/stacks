@@ -10,7 +10,7 @@ import * as setup from './app.setup';
 		bodyParser: false,
 		bufferLogs: true
 	});
-	setup.usePinoLogger(app); // @feature observability
+	setup.usePinoLogger(app);
 	setup.enableBasicAuth(app); // @feature openapi, queue, observability
 	setup.enableVersioning(app);
 	setup.setStatic(app);

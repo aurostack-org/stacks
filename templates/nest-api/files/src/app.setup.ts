@@ -13,7 +13,7 @@ import express from 'express';
 import expressBasicAuth from 'express-basic-auth'; // @feature openapi, queue, observability
 import { apiReference } from '@scalar/nestjs-api-reference'; // @feature openapi
 import { AuthService } from '@thallesp/nestjs-better-auth'; // @feature openapi
-import { Logger as PinoLogger } from 'nestjs-pino'; // @feature observability
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { join } from 'path';
 import {
 	PrismaClientKnownRequestExceptionFilter,
@@ -30,12 +30,10 @@ export const enableVersioning = (app: INestApplication) => {
 	});
 };
 
-// @feature:start observability
 export const usePinoLogger = (app: INestApplication) => {
 	const logger = app.get(PinoLogger);
 	app.useLogger(logger);
 };
-// @feature:end
 
 export const setStatic = (app: INestApplication) => {
 	app.use(express.static(join(__dirname, '..', '..', 'public')));

@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { UserSession } from '@thallesp/nestjs-better-auth';
 import { PrismaService } from 'common/services';
-import { MediaService } from 'media/services';
-import { FileEntity } from 'media/entity';
+import { MediaService } from 'media/services'; // @feature media
+import { FileEntity } from 'media/entity'; // @feature media
 import { CurrentUserEntity, toCurrentUser } from '../entity';
 
 @Injectable()
 export class CurrentUserService {
 	constructor(
-		private media: MediaService,
+		private media: MediaService, // @feature media
 		private db: PrismaService
 	) {}
 
+	// @feature:start media
 	async updateAvatar(
 		user: UserSession['user'],
 		file: Express.Multer.File
@@ -26,6 +27,7 @@ export class CurrentUserService {
 		});
 		return { path: image };
 	}
+	// @feature:end
 
 	/**
 	 * Stamp the user's onboarding as complete (idempotent — re-stamps on repeat).

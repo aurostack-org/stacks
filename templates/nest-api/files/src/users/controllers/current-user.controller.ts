@@ -1,20 +1,22 @@
 import {
-	BadRequestException,
+	BadRequestException, // @feature media
 	Controller,
 	Get,
 	HttpCode,
 	Post,
-	UploadedFile,
-	UseInterceptors
+	UploadedFile, // @feature media
+	UseInterceptors // @feature media
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody } from '@nestjs/swagger'; // @feature media
+import { FileInterceptor } from '@nestjs/platform-express'; // @feature media
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
-import { MultipartFormData, Op, Returns } from 'common/decorators';
-import { FileEntity } from 'media/entity';
+import { Op, Returns } from 'common/decorators';
+import { MultipartFormData } from 'common/decorators'; // @feature media
+import { FileEntity } from 'media/entity'; // @feature media
 import { CurrentUserService } from '../services';
 import { CurrentUserEntity, toCurrentUser } from '../entity';
-import { AVATAR_UPLOAD_SCHEMA } from '../dto';
+import { AVATAR_UPLOAD_SCHEMA } from '../dto'; // @feature media
 
 @ApiTags('Current User')
 @Controller({ path: 'user', version: '1' })
@@ -40,6 +42,7 @@ export class CurrentUserController {
 		return this.service.completeOnboarding(user);
 	}
 
+	// @feature:start media
 	@Post('avatar')
 	@Op(
 		'avatar',
@@ -75,4 +78,5 @@ export class CurrentUserController {
 	) {
 		return this.service.updateAvatar(user, file);
 	}
+	// @feature:end
 }

@@ -1,2 +1,2 @@
 export * from './options';
-export * from './pino'; // @feature observability
+export * from './pino';

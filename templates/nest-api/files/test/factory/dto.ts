@@ -1,7 +1,7 @@
 import { Factory } from 'fishery';
 import type { z } from 'zod';
 import { CommonFilters } from 'common/dto';
-import { UserFilters } from 'users/dto';
+import { UserFilters } from 'users/dto'; // @feature users
 
 export class Dto {
 	/**
@@ -16,10 +16,12 @@ export class Dto {
 		return Factory.define<CommonFilters>(() => ({}));
 	}
 
+	// @feature:start users
 	static get userFilters() {
 		return Factory.define<UserFilters>(() => ({
 			page: 1,
 			limit: 10
 		}));
 	}
+	// @feature:end
 }

@@ -50,8 +50,13 @@ const c = {
 };
 
 const log = (...args) => console.log(...args);
+// Accepts `--with a,b` and repeated `--with a --with b` alike.
 const csv = (v) =>
-	(v ? String(v).split(',') : []).map((s) => s.trim()).filter(Boolean);
+	[]
+		.concat(v ?? [])
+		.flatMap((s) => String(s).split(','))
+		.map((s) => s.trim())
+		.filter(Boolean);
 
 const USAGE = `
 ${c.bold('stack')} — scaffold a new project from a house template
@@ -68,8 +73,8 @@ ${c.bold('new options')}
   --scope <scope>      npm scope, no @     ${c.dim('(default: --name)')}
   --description <s>    Package description
   --port <n>           Default listen port
-  --with a,b           Enable optional features
-  --without a,b        Disable default features
+  --with a,b           Enable optional features (repeatable)
+  --without a,b        Disable default features (repeatable)
   --all                Enable every optional feature
   --no-hooks           Skip install / prisma generate / git init
   --force              Write into a non-empty directory
@@ -566,8 +571,8 @@ function main() {
 			description: { type: 'string' },
 			author: { type: 'string' },
 			port: { type: 'string' },
-			with: { type: 'string' },
-			without: { type: 'string' },
+			with: { type: 'string', multiple: true },
+			without: { type: 'string', multiple: true },
 			source: { type: 'string' },
 			all: { type: 'boolean' },
 			force: { type: 'boolean' },
