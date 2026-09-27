@@ -9,24 +9,28 @@
 # IMPORTANT: Vite inlines `VITE_*` values into the JS bundle at BUILD time, so a
 # built image is pinned to one environment. The URLs below are build args, not
 # runtime env — setting them in compose does nothing. Build one image per
-# environment, or move to runtime config (see docker/README.md).
+# environment.
 
 # ---------- deps ----------
 # Manifests only, so `yarn install` re-runs solely when a dependency changes.
 FROM aurostack.dev/wesnetech/nodejs:24 AS deps
 WORKDIR /repo
 
+# One line per workspace: every workspace in the project must be here (yarn
+# install --immutable fails on a lockfile naming a missing one), and nothing
+# else (COPY of a missing file fails the build).
 COPY package.json yarn.lock .yarnrc.yml turbo.json ./
-COPY apps/admin/package.json      apps/admin/
-COPY apps/auth/package.json       apps/auth/
-COPY apps/client/package.json     apps/client/
-COPY apps/landing/package.json    apps/landing/
+COPY apps/admin/package.json      apps/admin/ # @feature app-admin
+COPY apps/auth/package.json       apps/auth/ # @feature app-auth
+COPY apps/client/package.json     apps/client/ # @feature app-client
+COPY apps/landing/package.json    apps/landing/ # @feature app-landing
 COPY packages/api/package.json    packages/api/
 COPY packages/auth/package.json   packages/auth/
 COPY packages/config/package.json packages/config/
-COPY packages/hooks/package.json  packages/hooks/
+COPY packages/hooks/package.json  packages/hooks/ # @feature hooks
 COPY packages/layouts/package.json packages/layouts/
-COPY packages/types/package.json  packages/types/
+COPY packages/telemetry/package.json packages/telemetry/ # @feature telemetry
+COPY packages/types/package.json  packages/types/ # @feature types
 COPY packages/ui/package.json     packages/ui/
 
 RUN corepack enable && yarn install --immutable
@@ -56,6 +60,16 @@ ARG VITE_APP_SUPPORT_EMAIL
 # generated sitemap.xml. Must be a build arg — .dockerignore excludes .env, so a
 # local value never reaches the image.
 ARG VITE_APP_SITE_URL
+# @feature:start telemetry
+# Browser monitoring. Leave unset and the bundle ships with telemetry off. The
+# client token is a RUM token, write-only and meant to be public.
+ARG VITE_OPENOBSERVE_URL
+ARG VITE_OPENOBSERVE_ORG
+ARG VITE_OPENOBSERVE_CLIENT_TOKEN
+ENV VITE_OPENOBSERVE_URL=$VITE_OPENOBSERVE_URL \
+	VITE_OPENOBSERVE_ORG=$VITE_OPENOBSERVE_ORG \
+	VITE_OPENOBSERVE_CLIENT_TOKEN=$VITE_OPENOBSERVE_CLIENT_TOKEN
+# @feature:end
 ENV VITE_APP_API_URL=$VITE_APP_API_URL \
 	VITE_APP_AUTH_HOST=$VITE_APP_AUTH_HOST \
 	VITE_APP_CLIENT_HOST=$VITE_APP_CLIENT_HOST \

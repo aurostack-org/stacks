@@ -20,3 +20,4 @@ dev-dist/
 
 # Maintainer-only extraction config (source paths, include/exclude, identifier map).
 stacks.local.json
+__pycache__/

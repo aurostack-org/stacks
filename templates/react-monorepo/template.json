@@ -145,14 +145,14 @@
 		},
 		"app-admin": {
 			"title": "Admin console",
-			"description": "Role-gated internal console over the same data layer.",
+			"description": "Internal console over the same data layer, gated to the admin and superuser roles in the UI. The API must enforce the role on every endpoint it calls.",
 			"files": [
 				"apps/admin/**"
 			]
 		},
 		"app-landing": {
 			"title": "Marketing site",
-			"description": "Public landing site with a prerender step for static routes.",
+			"description": "Public marketing site: a home page, an SEO route table, and build-time robots.txt, sitemap.xml and security.txt.",
 			"files": [
 				"apps/landing/**"
 			]
@@ -173,7 +173,7 @@
 		},
 		"pwa": {
 			"title": "Installable PWA (client app)",
-			"description": "vite-plugin-pwa: app-shell offline caching, auto-update with an update prompt, and a custom install button.",
+			"description": "vite-plugin-pwa configured for the client app: app-shell offline caching, and registerType 'prompt' so a new build waits for the user instead of swapping assets under a running app. The update prompt and install button are yours to build with the plugin's useRegisterSW.",
 			"requires": [
 				"app-client"
 			],
@@ -186,7 +186,7 @@
 		},
 		"charts": {
 			"title": "Charts (client app)",
-			"description": "ApexCharts via react-apexcharts, theme-aware through the shared chart palette.",
+			"description": "ApexCharts and react-apexcharts in the client app, with a theme-aware chart palette (the --chart-* tokens in the UI kit). No chart components ship.",
 			"requires": [
 				"app-client"
 			],
@@ -239,11 +239,43 @@
 				"apps/*/.bin/**",
 				"packages/types/.bin/**"
 			],
-			"packageJson": {
-				"scripts": [
-					"secrets"
-				]
-			}
+			"packageJson": [
+				{
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "apps/admin/package.json",
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "apps/auth/package.json",
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "apps/client/package.json",
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "apps/landing/package.json",
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "packages/types/package.json",
+					"scripts": [
+						"secrets"
+					]
+				}
+			]
 		}
 	},
 	"hooks": [

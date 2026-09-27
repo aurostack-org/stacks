@@ -1,12 +1,11 @@
-# Builds and pushes all four frontend apps from one Dockerfile.
+# Builds and pushes every app's image from one Dockerfile.
 #
-# Unlike web-backend / web-coming-soon this repo produces FOUR images, so the
-# tag is generated once in a separate job and shared by every matrix leg —
+# The tag is generated once in a separate job and shared by every matrix leg;
 # otherwise each app would get its own random tag and there would be no way to
 # deploy a matching set.
 #
 # Vite compiles the VITE_* URLs into each bundle at build time, so these images
-# are specific to one environment. See frontend/docker/README.md.
+# are specific to one environment.
 
 name: Build and Push
 
@@ -33,12 +32,10 @@ jobs:
           DATE=$(date +'%y_%m_%d')
           RAND=$(printf '%05d' "$((RANDOM % 100000))")
           echo "TAG=${DATE}_${RAND}" >> "$GITHUB_OUTPUT"
-          # Derived from `github.repository` (which web-backend's workflow already
-          # relies on) rather than `github.repository_owner`, so this doesn't
-          # depend on a context variable Forgejo may not populate. This repo is
-          # `acme-corp/web-frontend`, so OWNER=acme-corp and the
-          # images land as <registry>/acme-corp/web-<app>, matching
-          # stack/frontend.compose.yml.
+          # Derived from `github.repository` rather than
+          # `github.repository_owner`, so this doesn't depend on a context
+          # variable Forgejo may not populate. Images land as
+          # <registry>/<owner>/web-<app>.
           echo "OWNER=$(echo '${{ github.repository }}' | cut -d/ -f1)" >> "$GITHUB_OUTPUT"
 
   build-and-push:
@@ -49,7 +46,11 @@ jobs:
       # failure. Note this means a partial set can be pushed — re-run the job.
       fail-fast: false
       matrix:
-        app: [landing, auth, client, admin]
+        app:
+          - landing # @feature app-landing
+          - auth # @feature app-auth
+          - client # @feature app-client
+          - admin # @feature app-admin
 
     steps:
       - name: Checkout repository
@@ -83,6 +84,9 @@ jobs:
             VITE_APP_LANDING=${{ secrets.VITE_APP_LANDING }}
             VITE_APP_SUPPORT_EMAIL=${{ secrets.VITE_APP_SUPPORT_EMAIL }}
             VITE_APP_SITE_URL=${{ secrets.VITE_APP_SITE_URL }}
+            VITE_OPENOBSERVE_URL=${{ secrets.VITE_OPENOBSERVE_URL }} # @feature telemetry
+            VITE_OPENOBSERVE_ORG=${{ secrets.VITE_OPENOBSERVE_ORG }} # @feature telemetry
+            VITE_OPENOBSERVE_CLIENT_TOKEN=${{ secrets.VITE_OPENOBSERVE_CLIENT_TOKEN }} # @feature telemetry
           tags: |
             ${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:latest
             ${{ secrets.REGISTRY }}/${{ needs.meta.outputs.owner }}/web-${{ matrix.app }}:${{ needs.meta.outputs.tag }}

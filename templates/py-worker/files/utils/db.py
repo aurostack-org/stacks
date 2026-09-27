@@ -1,37 +1,22 @@
 """
-@File: db.py
-@Version: 1.0
+Database access over SQLAlchemy, with the connection settings from config
+(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME).
 
-Database wrapper to manage PostgreSQL connections using SQLAlchemy
+Usage:
 
-DB('my_database') will create a connection to the specified PostgreSQL database
-using credentials from the .env file (user, password, host, port).
+from utils.db import DB
 
-Usage example:
-
-from utils import DB
-
-db = DB('my_database')
-
-# Read data
-df = db.read_sql('SELECT * FROM my_table')
-
-# Write data
-db.write_sql(df, 'my_table', if_exists='append')
-
-# Use engine or session without having to create a new connection or variable
-db.session.query(...)
-db.engine.execute(...)
-# ... perform operations ...
+db = DB()
+rows = db.session.execute(select(MyModel)).scalars().all()
 db.session.commit()
-
-# Close the connection when done
 db.close()
 
+The models under models/ are hand-written to match the API's Prisma schema:
+the API owns the tables and their migrations.
 """
 
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import URL, Connection
 from sqlalchemy.orm import sessionmaker, Session
 
 from config import CONFIG
@@ -40,9 +25,17 @@ from config import CONFIG
 class DB:
     def __init__(self):
         db = CONFIG.env.db
-        self._engine = create_engine(
-            f"postgresql://{db.user}:{db.password}@{db.host}:{db.port}/{db.name}"
-        ).connect()
+        # URL.create escapes the credentials, so a password with @, / or : in it
+        # can't break the connection string.
+        url = URL.create(
+            "postgresql",
+            username=db.user,
+            password=db.password,
+            host=db.host,
+            port=db.port,
+            database=db.name,
+        )
+        self._engine = create_engine(url).connect()
         Session = sessionmaker(bind=self.engine)
         self._session = Session()
 

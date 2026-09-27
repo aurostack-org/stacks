@@ -3,7 +3,7 @@ from bullmq import Worker, Job
 from urllib.parse import urlparse, quote, urlencode
 
 from config import CONFIG, Redis
-from utils.db import DB
+from utils.db import DB  # @feature database
 from utils.logger import Logger
 from utils.telemetry import job_span  # @feature telemetry
 
@@ -84,7 +84,7 @@ class JobUtil:
             await self._job.updateProgress(progress)
         await self._job.log(message)
 
-    async def finalize(self, db: DB | None = None):
+    async def finalize(self, db: "DB | None" = None):
         if db:
             db.close()
         await self._job.updateProgress(100)

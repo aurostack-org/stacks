@@ -48,6 +48,12 @@
 			"flags": "gm"
 		},
 		{
+			"from": "^(SERVER_HOST|BETTER_AUTH_URL)='http://localhost:5000'$",
+			"to": "$1='http://localhost:{{port}}'",
+			"regex": true,
+			"flags": "gm"
+		},
+		{
 			"from": "^EXPOSE 5000$",
 			"to": "EXPOSE {{port}}",
 			"regex": true,
@@ -171,6 +177,9 @@
 		"observability": {
 			"title": "Observability: OpenTelemetry and health checks",
 			"description": "OpenTelemetry traces, logs and metrics pushed over OTLP (built for OpenObserve; set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend), plus Terminus health checks with a Prisma indicator. Off at runtime until connected.",
+			"requires": [
+				"http-client"
+			],
 			"default": true,
 			"files": [
 				"src/common/controllers/health.controller.ts",
@@ -217,10 +226,11 @@
 		"media": {
 			"title": "File uploads (S3)",
 			"description": "MediaService and S3Service for public and private uploads, with multipart decorators.",
-			"default": true,
 			"requires": [
-				"auth"
+				"auth",
+				"queue"
 			],
+			"default": true,
 			"files": [
 				"src/media/**",
 				"src/users/dto/avatar.dto.ts"
@@ -276,7 +286,7 @@
 		},
 		"notifications": {
 			"title": "Persistent user notifications",
-			"description": "A Notification model plus dispatch/read endpoints. Emits over the realtime layer when that feature is also on, and persists either way.",
+			"description": "A Notification model plus dispatch/read endpoints. Pushes each new notification over the realtime layer when that feature is also on, and persists either way.",
 			"requires": [
 				"auth"
 			],
@@ -291,7 +301,8 @@
 			"description": "A session-aware FeatureFlagGuard and FeatureFlagService for gating routes on flags.",
 			"requires": [
 				"cache",
-				"auth"
+				"auth",
+				"scheduler"
 			],
 			"files": [
 				"src/common/services/feature-flag.service.ts",
@@ -408,6 +419,9 @@
 		"ci": {
 			"title": "Forgejo Actions CI",
 			"description": "A workflow that spins up the test stack and runs both Vitest projects on pull requests.",
+			"requires": [
+				"secrets"
+			],
 			"default": true,
 			"files": [
 				".forgejo/**"

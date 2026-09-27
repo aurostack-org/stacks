@@ -1,7 +1,7 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter } from 'react-router';
-import { ProtectedRoute, signOut, useAuth } from '@acme/auth';
-import { AppShell, AppShellSkeleton, ErrorBoundary, NotFound, RouteFallback } from '@acme/layouts';
+import { RoleRoute, signOut, useAuth } from '@acme/auth';
+import { AppShell, AppShellSkeleton, ErrorBoundary, Forbidden, NotFound, RouteFallback } from '@acme/layouts';
 import { NAV_ITEMS } from './nav';
 import { HomeRoute } from '../routes/home';
 
@@ -15,8 +15,8 @@ const lazyRoute = (element: ReactNode) => <Suspense fallback={<RouteFallback />}
 
 /**
  * The shell reads the session itself rather than taking it as a prop —
- * `ProtectedRoute` has already established the user is authenticated by the
- * time this renders.
+ * `RoleRoute` has already established the user is signed in with an admin role
+ * by the time this renders.
  *
  * `ErrorBoundary` wraps the shell rather than being passed as the route's
  * `errorElement`: it is a plain React error boundary taking `children`, so it
@@ -35,11 +35,15 @@ export const router = createBrowserRouter([
 	{
 		// `fallback` is required and must not be blank: the session round trip is
 		// cross-origin and takes most of a second, and rendering nothing for that
-		// long reads as a broken app.
+		// long reads as a broken app. Signed-out visitors go to the auth app;
+		// signed-in users without an admin role see Forbidden.
+		//
+		// The gate is UI, not security: every endpoint this console calls must
+		// enforce the same role on the API.
 		element: (
-			<ProtectedRoute fallback={<AppShellSkeleton />}>
+			<RoleRoute allow={['admin', 'superuser']} fallback={<AppShellSkeleton />} forbidden={<Forbidden />}>
 				<Shell />
-			</ProtectedRoute>
+			</RoleRoute>
 		),
 		children: [
 			{ index: true, element: <HomeRoute /> },

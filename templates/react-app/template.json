@@ -127,7 +127,7 @@
 		},
 		"pwa": {
 			"title": "Installable PWA",
-			"description": "vite-plugin-pwa: app-shell offline caching and an update prompt rather than a silent takeover.",
+			"description": "vite-plugin-pwa: app-shell offline caching, and registerType 'prompt' so a new build waits for the user instead of swapping assets under a running app. The update prompt and install button are yours to build with the plugin's useRegisterSW.",
 			"packageJson": {
 				"devDependencies": [
 					"vite-plugin-pwa"
@@ -136,7 +136,7 @@
 		},
 		"charts": {
 			"title": "Charts",
-			"description": "ApexCharts via react-apexcharts, theme-aware through the shared chart palette.",
+			"description": "ApexCharts and react-apexcharts, with a theme-aware chart palette (the --chart-* tokens in the UI kit). No chart components ship.",
 			"packageJson": {
 				"dependencies": [
 					"apexcharts",

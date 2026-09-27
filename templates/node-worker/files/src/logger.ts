@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import pino, { stdTimeFunctions, levels } from 'pino';
 import config from '#app/config.js';
 
@@ -26,10 +27,22 @@ const PINO_CONSOLE_TARGET_PROD = {
 	}
 };
 
+// pino-pretty is a dev dependency, so the production image doesn't have it.
+// Pretty-print only where it's installed; anywhere else (an image run with an
+// APP_ENV other than production, say) log JSON to stdout instead of crashing.
+const prettyAvailable = (() => {
+	try {
+		createRequire(import.meta.url).resolve('pino-pretty');
+		return true;
+	} catch {
+		return false;
+	}
+})();
+
 const logger = pino({
 	level: config.app.logLevel,
 	transport:
-		config.app.env === 'production'
+		config.app.env === 'production' || !prettyAvailable
 			? { targets: [PINO_CONSOLE_TARGET_PROD, PINO_FILE_TARGET] }
 			: { targets: [PINO_CONSOLE_TARGET, PINO_FILE_TARGET] },
 	base: {

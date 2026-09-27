@@ -1,3 +1,17 @@
+/**
+ * pino-pretty is a dev dependency, so the production image doesn't have it.
+ * Pretty-print only where it's installed; anywhere else (an image run with an
+ * APP_ENV other than production, say) log JSON to stdout instead of crashing.
+ */
+export const PRETTY_AVAILABLE = (() => {
+	try {
+		require.resolve('pino-pretty');
+		return true;
+	} catch {
+		return false;
+	}
+})();
+
 export const PINO_CONSOLE_TARGET = {
 	target: 'pino-pretty',
 	options: {

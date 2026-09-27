@@ -47,6 +47,7 @@ yarn-error.log
 .env
 .env.test
 .env.production
+.env.staging
 .npmrc
 docker-compose.dev.yaml
 
