@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
-import { sidebar } from './sidebar.mjs';
+import { sidebar as publicSidebar } from './sidebar.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,6 +15,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const site = process.env.DOCS_SITE ?? 'https://stacks.aurostack.co';
 const base = process.env.DOCS_BASE ?? '/';
 const internalDir = process.env.DOCS_INTERNAL_DIR ?? path.join(here, 'src/internal-empty');
+// A private build can also replace the sidebar (a module exporting `sidebar`,
+// usually the public one plus its own section), hide the edit links (they point
+// at the public repository), and mark every page noindex.
+const sidebar = process.env.DOCS_SIDEBAR
+	? (await import(path.resolve(process.env.DOCS_SIDEBAR))).sidebar
+	: publicSidebar;
+const editLinks = process.env.DOCS_EDIT_LINKS !== 'false';
+const noindex = process.env.DOCS_NOINDEX === 'true';
 
 export default defineConfig({
 	site,
@@ -30,9 +38,12 @@ export default defineConfig({
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/aurostack-org/stacks' }
 			],
-			editLink: {
-				baseUrl: 'https://github.com/aurostack-org/stacks/edit/main/docs/'
-			},
+			...(editLinks && {
+				editLink: { baseUrl: 'https://github.com/aurostack-org/stacks/edit/main/docs/' }
+			}),
+			head: noindex
+				? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' } }]
+				: [],
 			lastUpdated: true,
 			customCss: ['./src/styles/custom.css'],
 			sidebar,
