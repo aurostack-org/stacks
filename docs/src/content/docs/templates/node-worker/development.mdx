@@ -1,0 +1,73 @@
+---
+title: Developing a node-worker
+description: From a fresh node-worker to processing jobs locally.
+sidebar:
+  label: Development
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## After generating
+
+Generation already copied `.env.example` to `.env`, ran `yarn install`,
+formatted the code, generated the Prisma client against the placeholder model,
+and made the first commit.
+
+<Steps>
+
+1. **Bring in the API's models.** Copy the API's `prisma/schema/*.prisma` into
+   `prisma/schema/` beside `base.prisma`, and replace the placeholder `User`
+   with the API's real one (`src/db.ts` extensions are typed against a `User`
+   with an `email`, so replace it rather than delete it). Better: add the
+   API's schema directory as a git submodule so both always agree.
+
+2. **Point it at the API's services** in `.env`: `DATABASE_URL` and `REDIS_*`
+   exactly as the API has them. With the API's `yarn dc:up` running, the
+   defaults (`localhost:5432`, `localhost:6379`) already match.
+
+3. **Generate and run:**
+
+   ```sh
+   yarn db:generate
+   yarn dev          # or yarn dev:watch to restart on changes
+   ```
+
+4. **Send it a job** from the API (a producer on the `example` queue), and watch
+   `Processing job` in the log.
+
+</Steps>
+
+## Scripts
+
+| Script | Does |
+|---|---|
+| `yarn dev`, `yarn dev:watch` | Run from source with tsx (the `development` import condition resolves `#app/*` to `src/`) |
+| `yarn build` | Compile to `dist/` |
+| `yarn start` | Run `dist/` with the instrumentation preload |
+| `yarn db:generate` | `prisma generate`. With `-c studio`, Prisma Studio on port 5025; `-c push` pushes the schema (test/prod only) |
+| `yarn typecheck`, `yarn lint`, `yarn format:check` | What CI runs |
+| `yarn secrets [-e prod]` | Pull `.env` from Infisical ([details](../../../setup/secrets/)) |
+
+Imports use Node subpath aliases: `#app/*` (`src/*`), `#utils/*`,
+`#lib/*` and `#prisma/*` (the generated client), always with a `.js`
+extension, as ESM requires.
+
+## Temporal locally
+
+With `--with temporal`, the worker connects to `localhost:7233`, the dev server
+in the API's `compose.yml`. Keep `TEMPORAL_TASK_QUEUE` equal to the API's
+(`main` by default). Try it without the API:
+
+```sh
+temporal workflow execute --type example --task-queue main \
+  --workflow-id try-1 --input '{"name":"dev"}'
+```
+
+The Temporal UI at [http://localhost:8233](http://localhost:8233) shows every
+run, its history and its result.
+
+<Aside title="Adding workflows">
+Export a workflow function from `src/temporal/workflows/index.ts` and it becomes
+a workflow type. Keep workflow code deterministic (no I/O, no network, no
+filesystem); put that work in activities in `src/temporal/activities/`.
+</Aside>

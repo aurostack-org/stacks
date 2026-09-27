@@ -1,0 +1,107 @@
+---
+title: Installation
+description: Install the stack CLI from npm, as a Claude Code plugin, or from a clone.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+stacks needs **Node.js 20.19 or later**. The CLI has no dependencies of its own:
+it is plain Node, with nothing to build. The generated projects have their own
+requirements (Yarn 4 through Corepack, Docker, Python 3.14 for py-worker),
+listed on each template's page.
+
+<Tabs>
+<TabItem label="npm">
+
+Run it once without installing:
+
+```sh
+npx @aurostack/stacks new nest-api ./api
+```
+
+Or keep the `stack` command around:
+
+```sh
+npm install -g @aurostack/stacks
+stack --version
+```
+
+Update with `npm install -g @aurostack/stacks@latest`. The package contains the
+CLI and the templates, and nothing else.
+
+</TabItem>
+<TabItem label="Claude Code plugin">
+
+Inside Claude Code:
+
+```text
+/plugin marketplace add aurostack-org/stacks
+/plugin install stacks@aurostack
+```
+
+The plugin brings the CLI, the templates and two skills:
+
+- **`/stacks:stack-new`** scaffolds a project. It asks which template and
+  features you need, runs the CLI, and walks you through the setup the project
+  still needs. It never hand-writes boilerplate the templates already contain.
+- **`/stacks:stack-sync`** folds changes from a real project back into a
+  template (for maintainers; see [Refreshing templates](../../maintaining/extract/)).
+
+You can also just ask for "a new API" or "a worker" and the skill picks it up.
+
+To offer the plugin to everyone who opens a repository, commit this to the
+repository's `.claude/settings.json`:
+
+```json
+{
+	"extraKnownMarketplaces": {
+		"aurostack": {
+			"source": { "source": "github", "repo": "aurostack-org/stacks" },
+			"autoUpdate": true
+		}
+	},
+	"enabledPlugins": { "stacks@aurostack": true }
+}
+```
+
+</TabItem>
+<TabItem label="From a clone">
+
+Needed only to **maintain** the templates (`stack extract` refuses to run from
+an npm or plugin install, because the next update would replace its work):
+
+```sh
+git clone https://github.com/aurostack-org/stacks.git
+bash stacks/install.sh
+```
+
+`install.sh` is safe to re-run. It checks Node, links `cli/stack.mjs` as
+`stack` into `~/.local/bin` (or `~/bin`; otherwise it prints an alias to add),
+warns if another `stack` shadows it on your `PATH`, runs `stack doctor`, and
+prints how to load the plugin from the checkout with
+`claude --plugin-dir <path>` so skill edits apply without reinstalling.
+
+Without installing anything, `node cli/stack.mjs <command>` works from the
+checkout directly.
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="One stack on your PATH">
+If you install from npm **and** link a clone, whichever `stack` comes first on
+your `PATH` wins. `install.sh` warns when they disagree; remove one with
+`npm uninstall -g @aurostack/stacks` or reorder your `PATH`.
+</Aside>
+
+## What each generated project needs
+
+| Template | Needs on your machine |
+|---|---|
+| nest-api | Node 24, Yarn 4 (`corepack enable`), Docker (for local Postgres and Redis) |
+| react-app, react-monorepo | Node 24, Yarn 4 |
+| node-worker | Node 24, Yarn 4; the API's Postgres and Redis |
+| py-worker | Python 3.14; the API's Postgres and Redis |
+
+Generation runs `yarn install` (or creates a Python virtualenv) for you. If a
+tool is missing, generation still finishes: the install step warns and you run
+it yourself afterwards. See [Your first project](../first-project/).

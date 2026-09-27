@@ -1,0 +1,80 @@
+---
+title: How stacks works
+description: Subtractive templates, features, markers, and what stack new does step by step.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+## Templates are subtractive
+
+Each template is a **complete, runnable app with every feature switched on**.
+Generating a project copies it and *removes* what you didn't ask for. Nothing is
+assembled from fragments.
+
+That choice is deliberate. An app built from additive snippets can only be
+tested once every combination is assembled, so combinations nobody generates
+rot silently. A subtractive template is installed, built and tested as a whole
+(CI does exactly that for every template), and removing a feature is a
+mechanical, checkable operation. The files also hold real identifiers
+(`acme`, `Acme Corp`) rather than `__PLACEHOLDER__` tokens, so the template
+itself compiles.
+
+## Features
+
+A template's `template.json` declares its **features**. Each is one of:
+
+| Kind | Meaning | Flag |
+|---|---|---|
+| **Core** | Always included; the template doesn't work without it | cannot be removed |
+| **Default** | Included unless you drop it | `--without <feature>` |
+| **Opt-in** | Left out unless you ask for it | `--with <feature>`, or `--all` |
+
+A feature can **require** others: `--with realtime` on nest-api also brings in
+`cache` and `auth`. Dropping a feature that something you kept still needs is an
+error that tells you which feature to drop too; stacks never silently removes
+something you didn't name.
+
+Each template page lists its features, generated from its manifest (see the
+[nest-api features](../../templates/nest-api/features/) for example).
+
+## What `stack new` does
+
+<Diagram name="stack-new" title="stack new, from command to running project" height={560} />
+
+1. **Resolve features.** Start from the core and default features (or all of
+   them with `--all`), add `--with`, remove `--without`, then pull in every
+   requirement. Unknown feature names and impossible combinations are errors.
+2. **Drop files.** Every file owned by a disabled feature (its `files` globs,
+   including its tests) is left out.
+3. **Strip markers.** Code shared between features carries
+   [`@feature` markers](../../reference/markers/); blocks for disabled features
+   are removed, and the markers themselves are removed from what's kept.
+4. **Rename.** The template's working names (`acme`, `Acme Corp`,
+   `@acme/…`, the default port) become your project's name, scope and port.
+5. **Prune dependencies.** Packages that belong to disabled features are
+   removed from `package.json` (and `requirements.txt` for py-worker), so you
+   don't install what you don't use.
+6. **Record.** `stack.json` at the project root notes the template, its
+   version, the stacks version and the features you chose.
+7. **Run hooks.** Seed `.env` from `.env.example`, install dependencies, run the
+   formatter (stripping leaves valid but unformatted code), generate the Prisma
+   client, and make the first git commit.
+8. **Print next steps** specific to the template.
+
+<Aside title="Hooks never block you">
+Every hook in every template is optional: if Yarn or Python is missing, the hook
+warns and generation carries on. Run the step yourself afterwards. Pass
+`--strict` to make any failure fatal (CI does), or `--no-hooks` to skip them.
+</Aside>
+
+## Afterwards
+
+The project is yours. It has no dependency on stacks, and nothing regenerates
+over it. There is **no `stack add`**: to add a feature to an existing project,
+generate a throwaway copy with that feature into a temporary directory and move
+the parts across. The feature's entry in the manifest (its files and packages)
+is the checklist.
+
+`stack.json` records what produced the project, which is useful when you later
+compare it against a newer template.

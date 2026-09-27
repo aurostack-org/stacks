@@ -1,0 +1,103 @@
+---
+title: OpenObserve
+description: Connect a project's back ends and front ends to its OpenObserve organization.
+---
+
+import { Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+Every template sends telemetry to [OpenObserve](https://openobserve.ai) when
+connected, and nothing at all until then (the SDKs aren't even loaded).
+Everything here is on by default; drop it with `--without observability`
+(nest-api) or `--without telemetry` (the rest).
+
+| Template | Sends |
+|---|---|
+| nest-api | Traces (HTTP, GraphQL, Prisma, PostgreSQL, Redis, BullMQ jobs), logs with trace ids, runtime, HTTP and queue metrics |
+| node-worker | Job traces, Prisma and Redis spans, logs, metrics |
+| py-worker | One trace per job, Redis spans, logs, metrics; with Temporal, a span per workflow and activity |
+| react-app, react-monorepo | Page views, errors, slow resources, user actions, the signed-in user id, console errors as logs; `traceparent` on API calls |
+
+<Internal id="openobserve" />
+
+## Connect a project
+
+<Steps>
+
+1. **Create an organization** for the project in OpenObserve. Its identifier
+   (in the URL and organization settings) is the `ORG` everywhere below.
+
+2. **Back ends** take the organization's **ingestion token**
+   (IAM → Ingestion Tokens, `o2oi_…`):
+
+   ```ini
+   OPENOBSERVE_URL=https://<your-openobserve>
+   OPENOBSERVE_ORG=<org>
+   OPENOBSERVE_TOKEN=o2oi_…
+   OTEL_SERVICE_NAME=shop-api      # one per service: shop-api, shop-worker, …
+   ```
+
+   Each service writes to its own stream, named after `OTEL_SERVICE_NAME`
+   (override with `OPENOBSERVE_STREAM`).
+
+3. **Front ends** take a **RUM token** instead (Ingestion → RUM). It's
+   write-only and built to ship in a browser bundle; the ingestion token must
+   never go there.
+
+   ```ini
+   VITE_OPENOBSERVE_URL=https://<your-openobserve>
+   VITE_OPENOBSERVE_ORG=<org>
+   VITE_OPENOBSERVE_CLIENT_TOKEN=rumo…
+   ```
+
+   In images, pass all three as build arguments.
+
+4. **Allow every front-end origin** on the OpenObserve instance: add them to
+   `ZO_CORS_ALLOWED_ORIGINS` (comma-separated), or the browser blocks every RUM
+   request. Include `http://localhost:3000` (and friends) if you send telemetry
+   from development.
+
+</Steps>
+
+## How the back ends connect
+
+In order of precedence:
+
+1. `OTEL_SDK_DISABLED=true`: off, whatever else is set.
+2. `OTEL_EXPORTER_OTLP_ENDPOINT` set: the standard OpenTelemetry variables
+   (`OTEL_EXPORTER_OTLP_HEADERS` and friends) are used as-is, for **any** OTLP
+   backend.
+3. `OPENOBSERVE_URL`, `_ORG` and `_TOKEN` all set: OTLP over HTTP to
+   `<URL>/api/<ORG>/v1/{traces,logs,metrics}`, authenticated as `<org>:<token>`.
+4. Otherwise: off.
+
+`APP_ENV` becomes the `deployment.environment.name` of every span, log and
+metric, so one organization can hold development, staging and production
+apart.
+
+## Linking browser clicks to backend traces
+
+Front ends add a W3C `traceparent` header to requests for `VITE_APP_API_URL`,
+so a click, its API request and every span below it share one trace. For that
+to work:
+
+- the API's CORS must allow the `traceparent` and `tracestate` headers (the
+  templates do);
+- a trace starts once the RUM SDK has finished initialising: the first request
+  or two of a page load (usually the session check) go out without the header.
+
+## Browser details
+
+- Session replay is off (`sessionReplaySampleRate: 0` in `initTelemetry`); turn
+  it on per project if you need it. Input is masked either way.
+- `reportError()` sends handled errors; the error boundary uses it.
+- The signed-in user's id (only the id) is attached to the session.
+- Readable stack traces from minified bundles need source-map upload, an
+  OpenObserve Enterprise feature.
+
+<Aside title="Trying it locally">
+`docker run -p 5080:5080 -e ZO_ROOT_USER_EMAIL=root@example.com -e
+ZO_ROOT_USER_PASSWORD=Complexpass#123 -e
+ZO_CORS_ALLOWED_ORIGINS=http://localhost:3000 openobserve/openobserve`, then use
+`http://localhost:5080` as the URL and the `default` organization's tokens.
+</Aside>

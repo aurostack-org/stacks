@@ -1,0 +1,69 @@
+---
+title: Deploying
+description: Images, CI, registries and the order of a release across a project's services.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+Every template builds a Docker image and ships a Forgejo Actions workflow that
+builds and pushes it on every push to `main`.
+
+| Template | Image | Serves |
+|---|---|---|
+| nest-api | Node, `node dist/src/main` | the API on its `PORT` |
+| react-app | nginx | the static bundle on port 80, `/healthz` |
+| react-monorepo | nginx, one image per app | each app on port 80, `/healthz` |
+| node-worker | Node (Debian with Temporal), PM2 or plain Node | no port |
+| py-worker | Python, `python worker.py` | no port |
+
+## Registry and CI secrets
+
+Every `build-and-push.yml` logs in to a registry and tags
+`<REGISTRY>/<owner>/<repo>:latest` and `:<yy_mm_dd>_<random>`. Set, on each
+repository:
+
+| Secret | Value |
+|---|---|
+| `REGISTRY_URL` | The registry host to log in to |
+| `REGISTRY` | The image prefix |
+| `DK_USER`, `DK_ACCESS_TOKEN` | A registry user and a token that can push |
+
+Front ends also need their build values as secrets (`VITE_APP_API_URL` and the
+rest), because they're compiled into the image. The API's test workflows need
+`INFISICAL_TOKEN` and `INFISICAL_PROJECT_ID` ([Secrets](../../setup/secrets/)).
+
+## Configuration
+
+No image contains a `.env`: every `.dockerignore` excludes them. Give back ends
+their variables at runtime (compose `environment:`, your platform's secrets, or
+`infisical run`). Front ends are the exception: their values are build
+arguments, so build one image per environment.
+
+## Release order
+
+<Steps>
+
+1. **Migrate** the database from CI or the API's build stage
+   (`yarn db:migrate:prod`), with migrations that the running version can live
+   with (add columns before code uses them; drop them after code stops).
+2. **Deploy the API.**
+3. **Regenerate and deploy workers** if the schema changed, so they compile
+   against it.
+4. **Deploy front ends** built against the new API types.
+
+</Steps>
+
+## Behind a reverse proxy
+
+- Terminate TLS and send HSTS at the proxy.
+- Forward `X-Forwarded-For` (and set the API's `RATE_LIMIT_IP_HEADERS` to it),
+  or every client shares one rate-limit bucket.
+- Forward WebSocket upgrades on `/realtime` if the API has realtime.
+- For large session cookies behind nginx-based proxies, raise
+  `proxy_buffer_size` (see the Temporal UI setup for an example).
+
+<Aside type="caution" title="Stop timeouts">
+Workers finish their active jobs on SIGTERM before exiting. Give their
+containers a stop timeout at least as long as your longest job, or they're
+killed mid-job and the job is retried after its lock expires.
+</Aside>

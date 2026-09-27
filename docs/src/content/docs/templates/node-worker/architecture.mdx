@@ -1,0 +1,84 @@
+---
+title: node-worker architecture
+description: How the worker starts, consumes jobs, runs workflows and shuts down.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+
+<Diagram name="node-worker" title="node-worker: processes, queues and the services it shares with the API" height={600} />
+
+## Startup
+
+1. **`src/instrumentation.ts`** is preloaded with `node --import` (and
+   `tsx --import` in development) by every start path: the `dev` and `start`
+   scripts, `ecosystem.config.cjs` and the Dockerfile. ESM links the whole
+   import graph before running any of it, so OpenTelemetry has to patch modules
+   before `src/index.ts` is even parsed. It loads `.env` itself
+   (`process.loadEnvFile()`, never overriding variables already set) and starts
+   the SDK only if [telemetry is connected](../../../services/openobserve/);
+   otherwise it never loads the SDK at all.
+2. **`src/index.ts`** logs `Worker started`, starts each BullMQ consumer, and
+   with Temporal, connects and runs the Temporal worker.
+
+## BullMQ consumers
+
+`createWorker(name, processor)` in `src/utils/worker.ts` wraps BullMQ's
+`Worker` with the Redis connection from config, `concurrency: 1`, and
+`autorun: false`: workers are created at import time but only start consuming
+when `src/index.ts` calls `.run()`, so nothing consumes while the process is
+still wiring itself up. `bullmq-otel` gives every job a span and queue metrics
+(a no-op without the SDK).
+
+Queue names live in `src/workers/constants.ts` and must match the producer's.
+Throwing from a processor marks the job failed, and BullMQ retries it according
+to the **producer's** `attempts` and `backoff`; returning normally marks it done.
+
+To add a worker: create `src/workers/<name>/index.ts` with `createWorker`,
+export it from `src/workers/index.ts`, and add it to `queueWorkers` in
+`src/index.ts`.
+
+## Database
+
+The worker reads and writes the **API's** database directly rather than over
+HTTP, so it needs the API's Prisma models. `prisma/schema/base.prisma` holds the
+datasource, the generator and one placeholder `User` model (a schema with no
+models generates no client). Copy the API's `prisma/schema/*.prisma` beside it,
+or better, share one schema through a git submodule, so a migration on one side
+can't leave the other compiling against columns that no longer exist. CI checks
+out submodules for exactly this.
+
+`src/db.ts` exports a `PrismaClient` singleton (`DB.getInstance()`) using the
+`pg` adapter, extended with `exists`, `paginate`, and `user.findById` /
+`findByEmail`. The worker runs no migrations: the API owns them. When the API's
+schema changes, regenerate the client (`yarn db:generate`) and redeploy.
+
+## Temporal (opt-in)
+
+`src/temporal/worker.ts` installs Temporal's runtime with its logs routed
+through pino, connects (mTLS when certificates are set), and creates a worker
+for `TEMPORAL_TASK_QUEUE` from `src/temporal/workflows` and
+`src/temporal/activities`. Workflows run in a sandbox from their own bundle,
+built from `workflows/index.ts` when the worker starts (`.ts` under tsx, `.js`
+from `dist`). Every exported workflow function is a workflow type the API can
+start by name. See [Temporal](../../../services/temporal/).
+
+## Logging
+
+pino, at `LOG_LEVEL`. With `APP_ENV=production` it writes JSON to stdout;
+otherwise it pretty-prints, if the pretty printer is installed (it's a dev
+dependency, so the production image always logs JSON). It always also writes to
+`logs/<name>.log`. With
+telemetry on, logs also go to OpenObserve with their trace ids.
+
+## Shutdown
+
+On SIGTERM or SIGINT, `src/index.ts` closes every BullMQ consumer (each stops
+fetching and waits for its active job), waits for the Temporal worker to drain
+(Temporal handles the signal itself: it stops polling and lets running tasks
+finish), then exits. With telemetry connected, buffered spans, logs and metrics
+are flushed too.
+
+Add every new BullMQ worker to the `queueWorkers` list in `src/index.ts`: that's
+what starts it, and what closes it on shutdown.

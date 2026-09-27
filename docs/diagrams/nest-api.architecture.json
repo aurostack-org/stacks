@@ -1,0 +1,232 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "nest-api",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "client",
+			"type": "frontend",
+			"label": "Front ends",
+			"sublabel": "cookie session",
+			"pos": [
+				40,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "http",
+			"type": "security",
+			"label": "HTTP pipeline",
+			"sublabel": "limit · auth · Zod",
+			"pos": [
+				270,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "auth",
+			"type": "security",
+			"label": "better-auth",
+			"sublabel": "/auth · roles",
+			"pos": [
+				500,
+				60
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "modules",
+			"type": "backend",
+			"label": "Feature modules",
+			"sublabel": "users · media · …",
+			"pos": [
+				500,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "queues",
+			"type": "messagebus",
+			"label": "BullMQ",
+			"sublabel": "mail · media",
+			"pos": [
+				500,
+				320
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "pg",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "Prisma",
+			"pos": [
+				740,
+				120
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "redis",
+			"type": "database",
+			"label": "Redis",
+			"sublabel": "cache · limits",
+			"pos": [
+				740,
+				260
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "smtp",
+			"type": "external",
+			"label": "SMTP",
+			"sublabel": "React Email",
+			"pos": [
+				740,
+				400
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "s3",
+			"type": "external",
+			"label": "S3",
+			"sublabel": "uploads",
+			"pos": [
+				980,
+				190
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "otel",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "OTLP",
+			"pos": [
+				270,
+				330
+			],
+			"size": [
+				150,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "client",
+			"to": "http",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "http",
+			"to": "auth",
+			"variant": "security"
+		},
+		{
+			"from": "http",
+			"to": "modules",
+			"variant": "emphasis"
+		},
+		{
+			"from": "auth",
+			"to": "pg",
+			"label": "sessions"
+		},
+		{
+			"from": "modules",
+			"to": "pg"
+		},
+		{
+			"from": "modules",
+			"to": "queues",
+			"label": "enqueue",
+			"labelDy": 28
+		},
+		{
+			"from": "queues",
+			"to": "redis"
+		},
+		{
+			"from": "queues",
+			"to": "smtp",
+			"label": "send"
+		},
+		{
+			"from": "modules",
+			"to": "s3"
+		},
+		{
+			"from": "http",
+			"to": "otel",
+			"label": "telemetry",
+			"variant": "dashed",
+			"labelDy": 28
+		}
+	],
+	"cards": [
+		{
+			"dot": "rose",
+			"title": "Every request",
+			"items": [
+				"Rate limit, then session, then validation",
+				"@AllowAnonymous() opts a route out",
+				"Responses are shaped by their schemas"
+			]
+		},
+		{
+			"dot": "cyan",
+			"title": "State",
+			"items": [
+				"Sessions and data in PostgreSQL",
+				"Cache, rate limits and queues in Redis",
+				"No migrations ship: create the first"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Operator views",
+			"items": [
+				"/docs and /openapi behind basic auth",
+				"/dashboard for the queues",
+				"/health for orchestrators"
+			]
+		}
+	]
+}

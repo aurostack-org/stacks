@@ -1,0 +1,118 @@
+---
+title: Temporal
+description: Connect the API and workers to Temporal, locally and in production with mTLS.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+import Internal from '../../../components/Internal.astro';
+
+With `--with temporal`, nest-api gets a Temporal client and node-worker and
+py-worker get Temporal workers. See [BullMQ or
+Temporal](../../guides/background-work/) for when to use it.
+
+<Diagram name="temporal-workflow" title="Starting a workflow from the API, run by a worker" height={560} />
+
+## Settings
+
+Every template reads the same variables:
+
+| Variable | Value |
+|---|---|
+| `TEMPORAL_ADDRESS` | `host:port` of the Temporal frontend (`localhost:7233` locally) |
+| `TEMPORAL_NAMESPACE` | The project's namespace (`default` locally) |
+| `TEMPORAL_TASK_QUEUE` | API: where workflows are started. Worker: the queue it polls. Defaults: `main` (API, node-worker), `python` (py-worker) |
+| `TEMPORAL_TLS_CA`, `TEMPORAL_TLS_CERT`, `TEMPORAL_TLS_KEY` | PEM for mTLS; all empty for plaintext. Cert and key must be set together |
+
+PEM values can be written on one line with literal `\n`, which suits `.env`
+files and secret stores:
+
+```ini
+TEMPORAL_TLS_CERT='-----BEGIN CERTIFICATE-----\nMIIB…\n-----END CERTIFICATE-----'
+```
+
+<Aside type="caution" title="Task queues must match, silently">
+A workflow started on a queue no worker polls just waits, with no error. Each
+language gets its own queue: a workflow task handed to a worker that doesn't
+know the type fails and retries.
+</Aside>
+
+<Internal id="temporal" />
+
+## Locally
+
+nest-api's `compose.yml` includes Temporal's development server (not started
+by `yarn dc:up`):
+
+```sh
+docker compose up -d temporal
+```
+
+gRPC on `localhost:7233`, the Web UI on [http://localhost:8233](http://localhost:8233),
+state kept in the `temporal` volume. Every template's defaults already point
+there, without TLS. Try a worker without the API:
+
+```sh
+temporal workflow execute --type example --task-queue main \
+  --workflow-id try-1 --input '{"name":"dev"}'
+```
+
+## Production
+
+<Steps>
+
+1. **A namespace per project.**
+   `temporal operator namespace create -n shop --retention 7d`, with the
+   admin flags for your cluster. Retention is how long closed workflow
+   histories are kept.
+
+2. **A client certificate per project,** signed by the CA your Temporal
+   gateway trusts (see [Self-hosting Temporal](../../self-hosting/temporal/)).
+
+3. **Set, on the API and every worker:**
+
+   ```ini
+   TEMPORAL_ADDRESS=temporal-grpc.example.com:7233
+   TEMPORAL_NAMESPACE=shop
+   TEMPORAL_TLS_CA='-----BEGIN CERTIFICATE-----\n…'   # the server's CA
+   TEMPORAL_TLS_CERT='-----BEGIN CERTIFICATE-----\n…'
+   TEMPORAL_TLS_KEY='-----BEGIN PRIVATE KEY-----\n…'
+   ```
+
+   Leave `TEMPORAL_TLS_CA` empty when the server's certificate is publicly
+   trusted.
+
+4. **Match task queues:** the API's `TEMPORAL_TASK_QUEUE` (or the queue passed
+   to `workflow.start`) must be a queue a worker polls.
+
+</Steps>
+
+## Using it from the API
+
+```ts
+constructor(private readonly temporal: TemporalService) {}
+
+async startOnboarding(user: User) {
+	const handle = await this.temporal.client.workflow.start('example', {
+		taskQueue: this.temporal.taskQueue,
+		workflowId: `onboarding-${user.id}`, // one run per id: a natural dedupe key
+		args: [{ name: user.name }]
+	});
+	return handle.workflowId; // or: await handle.result()
+}
+```
+
+The connection is lazy: the API boots and serves everything else while Temporal
+is unreachable, and fails only the calls that need it.
+
+## Workers
+
+- **node-worker:** export workflow functions from `src/temporal/workflows` and
+  activities from `src/temporal/activities`. Its Docker image runs on Debian
+  (Temporal's native core needs glibc).
+- **py-worker:** add classes to `temporal/workflows.py` and functions to
+  `temporal/activities.py`, and register both in `utils/temporal.py`.
+
+Workflow code is replayed from history, so it must be deterministic: no I/O,
+no clock or randomness of its own. Put all real work in activities, and make
+activities safe to retry.

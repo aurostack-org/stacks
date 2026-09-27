@@ -1,0 +1,22 @@
+---
+title: Infisical
+description: Using a self-hosted Infisical with the templates' secrets scripts and CI.
+---
+
+import Internal from '../../../components/Internal.astro';
+
+The templates' `yarn secrets` works with Infisical Cloud or your own instance.
+For a self-hosted one:
+
+- **CLI:** log in with `infisical login --domain https://<your-infisical>`, or
+  set `INFISICAL_API_URL` for non-interactive use.
+- **CI:** the nest-api workflows set `INFISICAL_API_URL` (change it to your
+  instance) and read `INFISICAL_TOKEN` from repository secrets. Create a machine
+  identity with read access to the project's `test` environment for it.
+- **Projects:** one per stacks project, with environments `dev`, `test`,
+  `staging` and `prod`. react-monorepo reads per-workspace folders
+  (`/frontend/client`, `/frontend/types`, …); the other templates read `/`.
+
+See [Secrets with Infisical](../../setup/secrets/) for the day-to-day workflow.
+
+<Internal id="infisical-instance" />

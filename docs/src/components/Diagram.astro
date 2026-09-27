@@ -1,0 +1,20 @@
+---
+// An archify diagram (docs/diagrams/<name>.json, rendered to
+// public/diagrams/<name>.html), embedded with pan/zoom, search and tracing
+// intact.
+interface Props {
+	name: string;
+	title: string;
+	/** Frame height in px; archify layouts are wide, so ~560 suits most. */
+	height?: number;
+}
+const { name, title, height = 600 } = Astro.props;
+const src = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/diagrams/${name}.html`;
+---
+
+<figure class="diagram">
+	<iframe src={src} title={title} loading="lazy" style={`height:${height}px`}></iframe>
+	<figcaption>
+		{title} · <a href={src} target="_blank" rel="noopener">Open full screen ↗</a>
+	</figcaption>
+</figure>

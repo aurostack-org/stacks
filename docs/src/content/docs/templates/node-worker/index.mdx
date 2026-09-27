@@ -1,0 +1,47 @@
+---
+title: node-worker
+description: A standalone TypeScript worker for BullMQ jobs and Temporal workflows, sharing the API's database.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+A TypeScript process for background work that shouldn't share a process with
+the HTTP server: scrapers, schedulers, long-running imports, anything slow or
+heavy. It consumes the same Redis queues your API produces to and reads and
+writes the same database through Prisma.
+
+```sh
+stack new node-worker ./worker --name shop-worker
+```
+
+**Stack:** Node 24, TypeScript (ESM, strict), BullMQ, Prisma 7 with the
+`pg` adapter, pino, PM2, Docker. Optional: Temporal workflows, Puppeteer.
+
+## At a glance
+
+| | |
+|---|---|
+| Entry point | `src/index.ts`, with `src/instrumentation.ts` preloaded through `node --import` |
+| Queues | One example consumer on the `example` queue (`src/workers/`) |
+| Database | The API's schema, copied or shared as a submodule; this worker owns no migrations |
+| Telemetry | OpenTelemetry to OpenObserve: job spans, Prisma and Redis spans, logs, metrics |
+| Temporal | `--with temporal`: a worker on task queue `main` with an example workflow and activity |
+| Runs as | `yarn start`, PM2 (`ecosystem.config.cjs`), or the Docker image |
+
+## Pairs with
+
+A worker is never alone: it needs the API's **Redis** (to receive jobs) and
+**database** (to act on them), and with Temporal, the API's **Temporal
+server**. Their settings must match exactly, and a mismatch is silent: the
+worker starts, connects, and never receives anything. See [A full-stack
+project](../../guides/full-stack/).
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

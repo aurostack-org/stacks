@@ -1,0 +1,99 @@
+---
+title: Developing a nest-api
+description: From a fresh nest-api to a running, seeded, tested API.
+sidebar:
+  label: Development
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## After generating
+
+Generation already copied `.env.example` to `.env` (and `.env.test`), ran
+`yarn install`, formatted the code, generated the Prisma client and made the
+first commit.
+
+<Steps>
+
+1. **Finish `.env`.** Set `SMTP_USER` and `SMTP_PASSWORD` (see
+   [SMTP](../../../services/smtp/) for a local mail catcher) and a real
+   `BETTER_AUTH_SECRET` (`openssl rand -base64 32`). Or pull the whole file:
+   `yarn secrets`.
+
+2. **Start PostgreSQL and Redis:**
+
+   ```sh
+   yarn dc:up
+   yarn dc:wait   # blocks until both accept connections
+   ```
+
+   With `--with temporal`, also `docker compose up -d temporal` (the Temporal UI
+   is then at [http://localhost:8233](http://localhost:8233)).
+
+3. **Create the schema:** `yarn db:migrate` creates and applies the first
+   migration (it asks for a name).
+
+4. **Seed the superuser:** `yarn db:seed`. Run it once: a second run fails on
+   the existing email.
+
+5. **Run it:** `yarn start` (Nest in watch mode), then open
+   `http://localhost:5000/docs` and sign in with `BASIC_AUTH_USER` and
+   `BASIC_AUTH_PASS`.
+
+</Steps>
+
+<Aside title="Cookies on localhost">
+`BETTER_AUTH_COOKIE_DOMAIN` is empty by default, so the session cookie belongs
+to `localhost` and every front end on `localhost` (any port) shares it. To mirror
+production subdomains locally instead, set it to `.lvh.me` and browse through
+`*.lvh.me` hosts (every one resolves to `127.0.0.1`), with `SERVER_HOST`,
+`FRONTEND_HOST` and the front ends' URLs to match. A cookie domain that doesn't
+cover the host the browser talks to is silently dropped: sign-in returns 200 and
+the next request is signed out. See [Auth, cookies and
+CORS](../../../services/auth-domains/).
+</Aside>
+
+## Scripts
+
+| Script | Does |
+|---|---|
+| `yarn start` | Nest in watch mode (`--no-watch`, `--debug`) |
+| `yarn build`, `yarn start:prod` | Compile to `dist/`, run it |
+| `yarn lint`, `yarn format` | ESLint (with fixes), Prettier |
+| `yarn db:generate` | Generate the Prisma client |
+| `yarn db:migrate`, `yarn db:migrate:create` | Create and apply migrations (`:create` writes without applying) |
+| `yarn db:migrate:prod` | Apply migrations in production (`prisma migrate deploy`) |
+| `yarn db:push` | Push the schema without a migration (prototyping) |
+| `yarn db:seed`, `yarn db:reset`, `yarn db:studio` | Seed; reset the dev database; Prisma Studio on port 5025 |
+| `yarn dc:up`, `dc:wait`, `dc:down`, `dc:recreate` | The development PostgreSQL and Redis |
+| `yarn dc:reinstall` | Recreate, generate, migrate and seed in one go |
+| `yarn email:dev` | Preview the email templates on port 5003 |
+| `yarn secrets [-e env]` | Pull `.env` files from Infisical |
+
+## Tests
+
+```sh
+yarn test                                # unit tests
+yarn test:dc:reinstall && yarn test:e2e  # e2e: a separate PostgreSQL and Redis
+```
+
+The **e2e** suite boots the real `AppModule` against the test stack (PostgreSQL
+5499, Redis 6399, from `compose.test.yml`), with mail, media and feature flags
+replaced by fakes. Specs run strictly one at a time: they share one database,
+truncated and reseeded between specs. `test/factory` has the fixtures and a
+`signIn()` helper that returns a session cookie.
+
+## Adding things
+
+- **A module:** `yarn gen module <name>` (Nest schematics), then register it in
+  `AppModule`. Controllers opt into versioning with `version: '1'`.
+- **A route that's public:** `@AllowAnonymous()`. Everything else requires a
+  session.
+- **Validation:** pass a Zod schema, `@Body({ schema })`, and declare the
+  response with `@Returns(schema)`.
+- **A queue:** `QueueModule.register('<name>')` in the module that produces to
+  it; the dashboard picks it up.
+- **An email:** a React Email template in `emails/`, a job name in
+  `src/common/types/email.ts`, and a method on `MailService`.
+- **A config variable:** interface, schema and `getVariables` in
+  `config.service.ts`, a line in `.env.example`, and a note in the docs.

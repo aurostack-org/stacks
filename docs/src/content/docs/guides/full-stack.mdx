@@ -1,0 +1,109 @@
+---
+title: A full-stack project
+description: Wire an API, a front end and workers together, and keep every link between them in step.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+A typical project: `shop-api` (nest-api), `shop-web` (react-app), `shop-worker`
+(node-worker), and maybe `shop-py` (py-worker). Each is its own repository, and
+the defaults already agree on the local ports and services.
+
+<Diagram name="full-stack" title="The pieces of a project and what connects them" height={640} />
+
+## Generate
+
+```sh
+stack new nest-api    ~/code/shop/api    --name shop-api
+stack new react-app   ~/code/shop/web    --name shop-web
+stack new node-worker ~/code/shop/worker --name shop-worker
+```
+
+Add `--with temporal` to the API and the worker if you need durable workflows.
+
+## The links, one by one
+
+### Front end → API
+
+| Front end | API |
+|---|---|
+| `VITE_APP_API_URL=http://localhost:5000` | listens on `PORT=5000` |
+| its origin, `http://localhost:3000` | `FRONTEND_HOST=http://localhost:3000` |
+| calls `/auth/*` for sessions | better-auth at `/auth` |
+| `yarn gen` reads `/openapi-json` with `API_DOC_USER`/`_PASSWORD` | `BASIC_AUTH_USER`/`BASIC_AUTH_PASS` |
+
+Regenerate the front end's types whenever the API's endpoints change, and commit
+them: they're the contract, and a stale one fails at compile time rather than
+at runtime.
+
+### API ↔ worker: jobs
+
+The API produces jobs; the worker consumes them. Both sides need **the same
+Redis** and **the same queue name**.
+
+```ts
+// API: produce (in any module)
+@InjectQueue('reports') private readonly reports: Queue
+await this.reports.add('monthly', { accountId }, { attempts: 5, backoff: { type: 'exponential', delay: 10_000 } });
+
+// API: register the queue in that module's imports
+QueueModule.register('reports')
+```
+
+```ts
+// worker: src/workers/constants.ts
+export const REPORTS_QUEUE = 'reports';
+// worker: src/workers/reports/index.ts
+export const reports = createWorker<{ accountId: string }>(REPORTS_QUEUE, async (job) => { … });
+// worker: src/index.ts
+const queueWorkers = [Workers.example, Workers.reports];
+```
+
+Retries and backoff are set by the **producer** (`attempts`, `backoff`); the
+worker throws to fail a job.
+
+<Diagram name="queue-job" title="A job from the API to a worker, through Redis" height={520} />
+
+### API ↔ worker: data
+
+The worker uses the API's database directly. It needs the API's schema:
+
+- **node-worker:** copy the API's `prisma/schema/*.prisma` into the worker's
+  `prisma/schema/` (replacing the placeholder `User`), or better, make the
+  API's `prisma/schema` a git submodule of the worker. Run `yarn db:generate`
+  after every schema change, and redeploy.
+- **py-worker:** hand-write SQLAlchemy models matching the tables it uses.
+
+Only the API runs migrations.
+
+### API → Temporal → worker
+
+The API starts workflows by name on a task queue; a worker polling that queue
+runs them. Same `TEMPORAL_ADDRESS` and `TEMPORAL_NAMESPACE` everywhere, and the
+API's `TEMPORAL_TASK_QUEUE` must be one a worker polls. See
+[Temporal](../../services/temporal/).
+
+### Everything → OpenObserve
+
+One organization per project; each service a distinct `OTEL_SERVICE_NAME`
+(`shop-api`, `shop-worker`, `shop-web`), so each has its own stream and a trace
+can cross all of them. See [Observability end to end](../observability/).
+
+## Run it all locally
+
+<Steps>
+
+1. API: `yarn dc:up && yarn dc:wait`, `yarn db:migrate`, `yarn db:seed`,
+   `yarn start`.
+2. Worker: `yarn db:generate && yarn dev`.
+3. Web: `yarn dev`, then open `http://localhost:3000` and sign in.
+
+</Steps>
+
+<Aside title="Silent mismatches">
+Almost every broken link fails silently: a worker on the wrong Redis or queue
+waits forever; a workflow on an unpolled task queue waits forever; a front end on
+an untrusted origin signs in and bounces. When something "just doesn't happen",
+check the matching setting on both sides first.
+</Aside>

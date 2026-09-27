@@ -1,0 +1,51 @@
+---
+title: Observability end to end
+description: Follow one click from the browser through the API and a worker in OpenObserve.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+With a project [connected to OpenObserve](../../services/openobserve/), a single
+user action is one trace, from the browser to the API to the job it enqueued.
+
+<Diagram name="telemetry" title="How telemetry leaves each part of a project" height={600} />
+
+## What arrives where
+
+| Signal | From | In OpenObserve |
+|---|---|---|
+| Page views, errors, resources, actions | front ends (RUM) | RUM: sessions, errors, performance |
+| Browser logs | console errors | the org's logs |
+| Traces | API, workers | Traces, one stream per `OTEL_SERVICE_NAME` |
+| Logs | API, workers | Logs, with `trace_id` and `span_id` on each line |
+| Metrics | API, workers | Metrics: Node runtime, HTTP, queues |
+
+## Following a request
+
+<Steps>
+
+1. A user clicks; the front end calls the API with a `traceparent` header.
+2. The API continues that trace: the HTTP handler, its Prisma queries, Redis
+   calls, and the BullMQ job it adds.
+3. `bullmq-otel` carries the trace into the job, so node-worker's spans for it
+   join the same trace. (py-worker starts a new trace per job, tagged with the
+   queue and job id.)
+4. Every log line written during any of those spans carries the trace id.
+
+</Steps>
+
+In OpenObserve, open the RUM session, pick the request, and jump to its trace;
+from a span, open its logs.
+
+## Tuning
+
+- **Noise:** file-system, DNS and raw socket spans are off; Express middleware
+  layers aren't traced individually (one span per handler).
+- **Metrics interval:** `OTEL_METRIC_EXPORT_INTERVAL` (ms, default 60000).
+- **Environments:** `APP_ENV` is stamped on everything as
+  `deployment.environment.name`; filter by it rather than using one org per
+  environment.
+- **Off switch:** `OTEL_SDK_DISABLED=true`, without removing the settings.
+- **Health:** nest-api's `/health` is excluded from request logs and from
+  rate limits, since orchestrators call it constantly.

@@ -1,0 +1,111 @@
+---
+title: CLI
+description: Every stack command, option and error.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+```text
+stack <command> [options]
+```
+
+| Command | Does |
+|---|---|
+| [`stack list`](#stack-list) | List the templates |
+| [`stack info <template>`](#stack-info) | Show a template's features and defaults |
+| [`stack new <template> <dir>`](#stack-new) | Generate a project |
+| [`stack extract <template>`](#stack-extract) | Refresh a template from its source repo (maintainers) |
+| [`stack doctor [template]`](#stack-doctor) | Validate templates against their manifests |
+| `stack version`, `--version`, `-v` | Print the stacks version |
+| `stack help`, `--help`, `-h`, no command | Print usage |
+
+Errors print in red to stderr and exit with status **1**. Colour is used only
+when stdout is a terminal and `NO_COLOR` is unset.
+
+<Aside type="caution" title="Unknown options are ignored">
+Options are parsed leniently: a misspelt flag (`--withh temporal`) is silently
+ignored rather than rejected. Check the `features` line in the output of
+`stack new` (or use `--dry-run` first) to confirm what you got.
+</Aside>
+
+## stack list
+
+Prints every template with its title, description and feature count, and marks
+any template whose `files/` hasn't been extracted yet.
+
+## stack info
+
+```sh
+stack info nest-api
+```
+
+Groups the template's features into **Always included** (core), **On by
+default** (drop with `--without`) and **Opt-in** (add with `--with`), then lists
+which features require which.
+
+## stack new
+
+```sh
+stack new <template> <dir> [options]
+```
+
+| Option | Default | Effect |
+|---|---|---|
+| `--name <name>` | the basename of `<dir>` | Project name, always kebab-cased (`My App` and `myApp` both become `my-app`) |
+| `--scope <scope>` | the name | npm scope, without `@`; used for `@scope/…` package names in the monorepo |
+| `--description <text>` | `"<Name> service"` | Package description |
+| `--port <n>` | the template's default | Default listen port: nest-api 5000, react-app and react-monorepo 3000. Not validated: a non-number ends up as `NaN` |
+| `--author <text>` | empty | Author field (not shown in `--help`) |
+| `--with a,b` | | Add opt-in features. Comma lists and repeats both work |
+| `--without a,b` | | Drop default features |
+| `--all` | | Every feature; `--without` still applies after it |
+| `--dry-run` | | Do everything in memory and print the report; write nothing, run no hooks |
+| `--force` | | Write into a non-empty directory. Overwrites files at the same paths; deletes nothing |
+| `--no-hooks` | | Skip install, format, Prisma generate and the first commit |
+| `--strict` | | Make any hook failure fatal (for CI) |
+
+The report shows what you got:
+
+```text
+  NestJS API → /home/you/shop/api
+  name      shop-api
+  scope     @shop-api
+  features  auth, cache, ci, config, docker, http-client, mail, media, …
+  omitted   feature-flags, graphql, notifications, realtime, temporal
+  files     134 written, 61 dropped, 13 package keys pruned
+```
+
+Then the hooks run, and the template's next steps are printed.
+
+**Errors:**
+
+| Message | Cause |
+|---|---|
+| `Target … is not empty. Pass --force to write into it anyway.` | `<dir>` exists and has files (not checked with `--dry-run`) |
+| `Unknown feature "x" for template "t". Known: …` | A `--with`/`--without` name the template doesn't declare |
+| `Feature "x" is core to template "t" and cannot be removed.` | `--without` on a core feature |
+| `Cannot disable "b": feature "a" requires it. Drop "a" too, or keep "b".` | You dropped a requirement of a feature you kept |
+| `Hook failed: <label> (exit N)` | Only with `--strict`: a hook failed. The files are already written |
+| `Template "t" has no files/ directory yet. Run: stack extract t` | A template that was never extracted |
+
+## stack extract
+
+```sh
+stack extract <template> [--source <dir>] [--overwrite] [--prune] [--dry-run]
+```
+
+For maintainers: copies a template's files from the live source repo it was
+built from. Runs only from a git checkout. See [Refreshing
+templates](../../maintaining/extract/).
+
+## stack doctor
+
+```sh
+stack doctor            # versions + every template
+stack doctor nest-api   # one template, no version check
+```
+
+Checks that every template is internally consistent: marker names are
+declared, feature globs match files, and every selection of features still
+produces balanced code, valid JSON and resolvable imports. See [Checks: doctor
+and CI](../../maintaining/checks/). Exits 1 on any problem.

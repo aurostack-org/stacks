@@ -1,0 +1,57 @@
+---
+title: Object storage (S3)
+description: Uploads for nest-api's media feature, on S3 or any S3-compatible store.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+nest-api's `media` feature stores uploads (avatars and other files) in a bucket.
+
+| Variable | Value |
+|---|---|
+| `S3_ENDPOINT` | The endpoint URL. Also the prefix of every stored file URL |
+| `S3_REGION` | e.g. `us-east-1` |
+| `S3_BUCKET_NAME` | The bucket |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Credentials with `PutObject`, `GetObject`, `DeleteObject` and `PutObjectAcl` on the bucket |
+
+## How files are stored
+
+- Keys are `<folder>/<random id><ext>`, e.g. `avatars/ck3….png`.
+- Folders listed as private (`private`) get a `private` ACL; everything else is
+  **`public-read`**, so the bucket must allow ACLs. Adding a folder that should
+  be private means adding it to the private list, or it's world-readable.
+- The URL saved on a record is `S3_ENDPOINT/S3_BUCKET_NAME/<key>`
+  (path-style addressing is always on).
+- Replacing a file enqueues the old one's deletion on the `media` queue.
+
+## Locally with MinIO
+
+```sh
+docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+  -e MINIO_ROOT_USER=minio -e MINIO_ROOT_PASSWORD=minio12345 \
+  minio/minio server /data --console-address :9001
+```
+
+Create the bucket in the console at `http://localhost:9001`, then:
+
+```ini
+S3_ENDPOINT=http://localhost:9000
+S3_BUCKET_NAME=shop-api
+S3_ACCESS_KEY_ID=minio
+S3_SECRET_ACCESS_KEY=minio12345
+```
+
+## Production
+
+<Aside type="caution" title="Set S3_ENDPOINT on AWS too">
+The example says to leave it empty for AWS, which works for uploading, but the
+endpoint is also the prefix of stored URLs: empty, they're relative
+(`/bucket/avatars/x.png`) and a browser can't load them. Set it explicitly, e.g.
+`https://s3.us-east-1.amazonaws.com`.
+</Aside>
+
+For any S3-compatible store (MinIO, Cloudflare R2, Backblaze B2, Garage), use
+its endpoint, and check it supports object ACLs.
+
+<Internal id="s3" />

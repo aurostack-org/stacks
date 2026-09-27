@@ -1,0 +1,19 @@
+{
+	"name": "@aurostack/stacks-docs",
+	"type": "module",
+	"version": "0.0.0",
+	"scripts": {
+		"sync": "node scripts/sync-templates.mjs",
+		"dev": "node scripts/sync-templates.mjs && astro dev",
+		"build": "node scripts/sync-templates.mjs --check && astro build && node scripts/check-links.mjs",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"@astrojs/starlight": "^0.42.4",
+		"astro": "^7.2.10",
+		"sharp": "^0.35.3",
+		"starlight-links-validator": "^0.26.0"
+	},
+	"private": true
+}

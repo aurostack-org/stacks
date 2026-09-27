@@ -1,0 +1,58 @@
+---
+// Every env variable across every template, with the templates that use it,
+// linking to each template's environment page.
+import data from '../data/generated/templates.json';
+import notesData from '../data/env-notes.json';
+import { marked } from '../lib/markdown';
+
+type Note = { production?: string; source?: string; notes?: string };
+const notes = notesData as Record<string, Note>;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const index = new Map<string, Set<string>>();
+for (const t of Object.values(data.templates)) {
+	for (const f of t.env) {
+		for (const v of f.vars) {
+			if (!index.has(v.name)) index.set(v.name, new Set());
+			index.get(v.name)!.add(t.name);
+		}
+	}
+}
+const rows = [...index.entries()].sort(([a], [b]) => a.localeCompare(b));
+const summary = (name: string) => {
+	const n = notes[name] ?? {};
+	return n.production ?? n.notes ?? '';
+};
+---
+
+<table class="env-table">
+	<thead>
+		<tr>
+			<th>Variable</th>
+			<th>Templates</th>
+			<th>In production</th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			rows.map(([name, templates]) => (
+				<tr id={`env-${name}`}>
+					<td>
+						<code class="env-name">{name}</code>
+					</td>
+					<td>
+						{[...templates].map((t, i) => (
+							<>
+								{i > 0 && ', '}
+								<a href={`${base}/templates/${t}/environment/#env-${name}`}>{t}</a>
+							</>
+						))}
+					</td>
+					<td>
+						<Fragment set:html={marked(summary(name))} />
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>

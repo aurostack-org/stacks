@@ -1,0 +1,41 @@
+---
+title: Redis
+description: Cache, rate limits, queues and realtime presence, shared by the API and workers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+| Used for | By |
+|---|---|
+| Cache (`CacheService`) | nest-api `cache` |
+| Rate-limit buckets (app routes and `/auth`) | nest-api `rate-limit` |
+| BullMQ queues | nest-api `queue`, node-worker, py-worker |
+| Socket.IO fan-out and presence | nest-api `realtime` |
+
+Every template reads `REDIS_HOST`, `REDIS_PORT`, `REDIS_USER` and
+`REDIS_PASSWORD`.
+
+## Locally
+
+`yarn dc:up` in the API starts Redis 7 on 6379 (no password, no persistence).
+Tests use a separate one on **6399**.
+
+## Production
+
+- **Persistence on** (AOF or RDB): queued jobs live in Redis. A restart without
+  persistence loses every waiting job.
+- **`maxmemory-policy noeviction`**, which BullMQ requires: an evicted key can
+  corrupt a queue.
+- **One Redis for the API and its workers**, with identical `REDIS_*`
+  everywhere. A worker on a different Redis connects fine and never receives a
+  job.
+- An ACL user: set `REDIS_USER` and `REDIS_PASSWORD` (both are honoured by
+  every template).
+
+<Aside type="danger" title="Don't point tests at a shared Redis">
+The e2e suite runs `FLUSHALL` between specs. `.env.test` must point at the test
+stack, never at a Redis anything else uses.
+</Aside>
+
+<Internal id="redis" />

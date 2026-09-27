@@ -1,0 +1,20 @@
+---
+title: py-worker features
+description: Every py-worker feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/py-worker/template.json`. Features that remove Python
+packages list their `requirements.txt` entries under "Packages".
+
+<FeatureTable template="py-worker" />
+
+## Notes
+
+- **`temporal`** works on the default Python image; its wheels include musl and
+  glibc builds.
+- **`telemetry`** off removes every OpenTelemetry package; the job wrapper and
+  `setup_telemetry()` calls go with it.

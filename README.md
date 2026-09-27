@@ -2,6 +2,10 @@
 
 House project templates, and the generator that stamps them out.
 
+**Documentation: [aurostack-org.github.io/stacks](https://aurostack-org.github.io/stacks/)**:
+every template, feature and environment variable, how to set up and connect a
+generated project, and architecture diagrams. Sources in [`docs/`](docs/).
+
 ```
 stack list                              # what's available
 stack info nest-api                     # its features and defaults

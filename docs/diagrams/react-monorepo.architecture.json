@@ -1,0 +1,208 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "react-monorepo",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "browser",
+			"type": "external",
+			"label": "Browser",
+			"sublabel": "subdomains",
+			"pos": [
+				40,
+				200
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "landing",
+			"type": "frontend",
+			"label": "landing",
+			"sublabel": "example.com",
+			"pos": [
+				280,
+				40
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "authapp",
+			"type": "frontend",
+			"label": "auth",
+			"sublabel": "auth.example.com",
+			"pos": [
+				280,
+				150
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "client",
+			"type": "frontend",
+			"label": "client",
+			"sublabel": "app.example.com",
+			"pos": [
+				280,
+				260
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "admin",
+			"type": "frontend",
+			"label": "admin",
+			"sublabel": "admin.example.com",
+			"pos": [
+				280,
+				370
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "pkgs",
+			"type": "backend",
+			"label": "Shared packages",
+			"sublabel": "ui · api · auth · types",
+			"pos": [
+				540,
+				205
+			],
+			"size": [
+				180,
+				64
+			]
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "cookie on .example.com",
+			"pos": [
+				800,
+				205
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "RUM per app",
+			"pos": [
+				800,
+				370
+			],
+			"size": [
+				170,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "browser",
+			"to": "client",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "browser",
+			"to": "authapp",
+			"label": "login",
+			"variant": "security"
+		},
+		{
+			"from": "landing",
+			"to": "pkgs"
+		},
+		{
+			"from": "authapp",
+			"to": "pkgs"
+		},
+		{
+			"from": "client",
+			"to": "pkgs",
+			"variant": "emphasis"
+		},
+		{
+			"from": "admin",
+			"to": "pkgs"
+		},
+		{
+			"from": "pkgs",
+			"to": "api",
+			"label": "JSON + cookie",
+			"variant": "emphasis"
+		},
+		{
+			"from": "pkgs",
+			"to": "o2",
+			"label": "RUM",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "rose",
+			"title": "One session",
+			"items": [
+				"The auth app signs in; the cookie covers every subdomain",
+				"The API trusts and allows every app's origin",
+				"Redirects only go to trusted siblings"
+			]
+		},
+		{
+			"dot": "cyan",
+			"title": "Shared code",
+			"items": [
+				"Packages are consumed as TypeScript source",
+				"One baseApi and one auth client for every app",
+				"Turborepo builds only what changed"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Deploy",
+			"items": [
+				"One image per app per environment",
+				"One shared tag, so a matching set deploys together",
+				"Admin is gated to admin and superuser"
+			]
+		}
+	],
+	"boundaries": [
+		{
+			"kind": "region",
+			"label": "Turborepo workspace",
+			"wraps": [
+				"landing",
+				"authapp",
+				"client",
+				"admin",
+				"pkgs"
+			],
+			"pad": 20
+		}
+	]
+}

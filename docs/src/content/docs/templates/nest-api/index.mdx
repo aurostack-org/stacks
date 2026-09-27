@@ -1,0 +1,48 @@
+---
+title: nest-api
+description: A NestJS 12 API with Prisma, Redis, BullMQ, better-auth, OpenAPI, tests, Docker and CI.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The backend of a stacks project: a NestJS 12 API on PostgreSQL through Prisma,
+with Redis for caching, rate limits and BullMQ queues, better-auth for sessions
+and roles, a Scalar API reference, unit and end-to-end tests against real
+services, Docker and Forgejo CI.
+
+```sh
+stack new nest-api ./api --name shop-api
+```
+
+**Stack:** NestJS 12 on Express 5, Prisma 7 (`pg` adapter) on PostgreSQL 15,
+ioredis, BullMQ 6, better-auth 1.7, Zod 4 for request validation and response
+serialisation, pino, OpenTelemetry, Vitest 4. Node 24, Yarn 4.
+
+## At a glance
+
+| | |
+|---|---|
+| Dev server | `yarn start` on port 5000 (`--port` to change) |
+| API reference | `/docs` (Scalar) and `/openapi` (Swagger UI), behind basic auth |
+| Queue dashboard | `/dashboard` (Bull Board), behind basic auth |
+| Health | `/health`: HTTP, database, memory and disk checks |
+| Auth | better-auth at `/auth/*`; every route requires a session unless marked `@AllowAnonymous()` |
+| Local services | `compose.yml`: PostgreSQL 5432, Redis 6379 (and Temporal 7233 with `--with temporal`) |
+| Tests | Vitest unit tests, and e2e tests booting the real app against PostgreSQL 5499 and Redis 6399 |
+| Config | Every variable validated with Zod at boot: a missing one stops the process |
+
+## Optional extras
+
+Beyond the defaults: `realtime` (Socket.IO with Redis presence), `notifications`,
+`feature-flags` (GrowthBook), `graphql` (Apollo), `temporal` (a Temporal client).
+See [Features](features/).
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

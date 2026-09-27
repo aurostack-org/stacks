@@ -1,0 +1,60 @@
+---
+title: Introduction
+description: What stacks is, what it generates, and when to reach for it.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+**stacks** turns five production-tested templates into new projects with one
+command. Each generated project is a normal repository: no runtime dependency on
+stacks, no generator to keep around, nothing hidden. It runs on day one because
+the template it came from is itself a complete, running app.
+
+```sh
+npx @aurostack/stacks new nest-api ./api --name shop-api
+```
+
+## The templates
+
+| Template | What you get |
+|---|---|
+| [`nest-api`](../../templates/nest-api/) | NestJS 12 API: Prisma on PostgreSQL, Redis, BullMQ queues, better-auth, Vitest, Docker Compose, a Scalar API reference at `/docs`, OpenTelemetry, optional Temporal |
+| [`react-app`](../../templates/react-app/) | One Vite + React 19 app: RTK Query, better-auth sessions, a shadcn-style UI kit with light/dark themes, auth screens as routes, optional marketing site and admin console |
+| [`react-monorepo`](../../templates/react-monorepo/) | The same stack as separate apps (landing, auth, client, admin) over shared packages, with Yarn workspaces and Turborepo, sharing one session across subdomains |
+| [`node-worker`](../../templates/node-worker/) | A TypeScript worker: BullMQ consumers, Prisma against the API's database, pino, PM2, Docker, optional Temporal and Puppeteer |
+| [`py-worker`](../../templates/py-worker/) | A Python worker on the same queues, SQLAlchemy on the same database, optional Temporal |
+
+They are designed to be combined: an API, a web front end and one or more
+workers make up a typical project, and the defaults already agree on ports,
+queue names, cookie settings and telemetry.
+
+<Diagram name="ecosystem" title="How stacks, the templates, generated projects and services relate" height={620} />
+
+## What "production-ready" means here
+
+Every template ships with the parts a real project needs on day one and usually
+bolts on in week six:
+
+- **Configuration** validated at startup, so a missing variable fails the boot,
+  not a request.
+- **Auth** (better-auth) with sessions, cookies and an admin superuser.
+- **Background work** on BullMQ, and [Temporal](../../guides/background-work/)
+  when work must survive crashes and deploys.
+- **Observability** through OpenTelemetry and OpenObserve, [on by
+  default](../../guides/observability/) and silent until connected.
+- **Secrets** pulled from Infisical, **Docker images** and **Forgejo CI**.
+- **Tests** that run: unit and end-to-end for the API, typecheck, lint and
+  format checks everywhere.
+
+Every feature can be dropped (`--without`) or added (`--with`) at generation
+time. See [how stacks works](../how-it-works/).
+
+## Where to go next
+
+<CardGrid>
+	<LinkCard title="Install stacks" href="../installation/" description="npm, the Claude Code plugin, or a clone." />
+	<LinkCard title="Your first project" href="../first-project/" description="Generate, configure and run an API in ten minutes." />
+	<LinkCard title="After you generate" href="../../setup/checklist/" description="Every setting a new project needs before it goes live." />
+	<LinkCard title="Choosing templates" href="../../templates/" description="Which templates to combine, and monolith or monorepo." />
+</CardGrid>

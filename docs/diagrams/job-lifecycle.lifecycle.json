@@ -1,0 +1,130 @@
+{
+	"schema_version": 1,
+	"diagram_type": "lifecycle",
+	"meta": {
+		"title": "A BullMQ job's life",
+		"quality_profile": "showcase"
+	},
+	"lanes": [
+		{
+			"id": "main",
+			"label": "Normal path"
+		},
+		{
+			"id": "retry",
+			"label": "Retry"
+		},
+		{
+			"id": "terminal",
+			"label": "Out of attempts"
+		}
+	],
+	"states": [
+		{
+			"id": "added",
+			"type": "start",
+			"label": "Added",
+			"sublabel": "queue.add",
+			"lane": "main",
+			"col": 0,
+			"step": "01"
+		},
+		{
+			"id": "waiting",
+			"type": "active",
+			"label": "Waiting",
+			"sublabel": "in the queue",
+			"lane": "main",
+			"col": 1,
+			"step": "02"
+		},
+		{
+			"id": "active",
+			"type": "active",
+			"label": "Active",
+			"sublabel": "locked to a worker",
+			"lane": "main",
+			"col": 2,
+			"step": "03"
+		},
+		{
+			"id": "completed",
+			"type": "success",
+			"label": "Completed",
+			"sublabel": "then removed",
+			"lane": "main",
+			"col": 4,
+			"step": "04"
+		},
+		{
+			"id": "retrying",
+			"type": "failure",
+			"label": "Retrying",
+			"sublabel": "attempts left",
+			"lane": "retry",
+			"col": 0
+		},
+		{
+			"id": "failed",
+			"type": "failure",
+			"label": "Failed",
+			"sublabel": "kept for review",
+			"lane": "terminal",
+			"col": 1
+		}
+	],
+	"transitions": [
+		{
+			"id": "enqueue",
+			"from": "added",
+			"to": "waiting"
+		},
+		{
+			"id": "take",
+			"from": "waiting",
+			"to": "active",
+			"variant": "emphasis",
+			"route": "straight",
+			"fromSide": "right",
+			"toSide": "left"
+		},
+		{
+			"id": "finish",
+			"from": "active",
+			"to": "completed",
+			"label": "returns",
+			"variant": "emphasis",
+			"route": "straight",
+			"fromSide": "right",
+			"toSide": "left"
+		},
+		{
+			"id": "throw",
+			"from": "active",
+			"to": "retrying",
+			"label": "throws",
+			"variant": "security",
+			"labelAt": [
+				440,
+				232
+			]
+		},
+		{
+			"id": "requeue",
+			"from": "retrying",
+			"to": "waiting",
+			"label": "after backoff"
+		},
+		{
+			"id": "exhaust",
+			"from": "active",
+			"to": "failed",
+			"label": "no attempts left",
+			"variant": "security",
+			"labelAt": [
+				590,
+				300
+			]
+		}
+	]
+}

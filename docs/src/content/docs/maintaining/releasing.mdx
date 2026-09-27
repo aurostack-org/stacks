@@ -1,0 +1,50 @@
+---
+title: Releasing
+description: Version, tag, stage on npm, approve.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+
+Releases go to npm as **staged** versions: CI builds and stages them, and they go
+live only when a maintainer approves them with two-factor authentication. The
+Claude Code plugin updates from the same commit.
+
+<Diagram name="release" title="From npm version to a published release" height={520} />
+
+<Steps>
+
+1. Bump the version. `npm version` updates `package.json`, runs
+   `scripts/sync-version.mjs` to copy the version into both plugin manifests,
+   and commits and tags `vX.Y.Z` in one go:
+
+   ```sh
+   npm version minor   # or patch / major
+   git push --follow-tags
+   ```
+
+2. The tag starts `.github/workflows/release.yml`. It runs the full CI, checks
+   that the tag matches `package.json`, runs `stack doctor`, then
+   `npm stage publish` and creates the GitHub release with generated notes.
+
+3. Approve the staged version:
+
+   ```sh
+   npm stage list @aurostack/stacks
+   npm stage approve <stage-id>
+   ```
+
+   Or on npmjs.com: the package → Staged Packages.
+
+</Steps>
+
+## How CI publishes without a token
+
+npm trusts the workflow directly (a **trusted publisher**): repository
+`aurostack-org/stacks`, workflow `release.yml`, environment `npm`, allowed to
+stage only. The `npm` GitHub environment accepts only `v*` tags, so nothing but a
+release tag can publish, and nothing goes live without a maintainer's approval.
+
+Choose the bump by what changed for users: a new template or feature is minor, a
+fix is a patch, and a change that breaks existing flags or generated layouts is
+major.

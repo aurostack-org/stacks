@@ -1,0 +1,155 @@
+{
+	"schema_version": 1,
+	"diagram_type": "sequence",
+	"meta": {
+		"title": "A background job, from the API to a worker",
+		"quality_profile": "showcase",
+		"viewBox": [
+			1080,
+			560
+		]
+	},
+	"participants": [
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "producer"
+		},
+		{
+			"id": "redis",
+			"type": "messagebus",
+			"label": "Redis",
+			"sublabel": "BullMQ queue"
+		},
+		{
+			"id": "worker",
+			"type": "backend",
+			"label": "node-worker",
+			"sublabel": "consumer"
+		},
+		{
+			"id": "db",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "the API's schema"
+		}
+	],
+	"segments": [
+		{
+			"from": 150,
+			"to": 228,
+			"label": "Enqueue"
+		},
+		{
+			"from": 236,
+			"to": 398,
+			"label": "Process"
+		},
+		{
+			"from": 404,
+			"to": 477,
+			"label": "Finish"
+		}
+	],
+	"messages": [
+		{
+			"id": "add",
+			"from": "api",
+			"to": "redis",
+			"y": 180,
+			"label": "add(job, { attempts, backoff })",
+			"variant": "emphasis"
+		},
+		{
+			"id": "id",
+			"from": "redis",
+			"to": "api",
+			"y": 214,
+			"label": "job id",
+			"variant": "return"
+		},
+		{
+			"id": "fetch",
+			"from": "worker",
+			"to": "redis",
+			"y": 248,
+			"label": "take the next job",
+			"variant": "default"
+		},
+		{
+			"id": "job",
+			"from": "redis",
+			"to": "worker",
+			"y": 282,
+			"label": "job, locked to this worker",
+			"variant": "return"
+		},
+		{
+			"id": "work",
+			"from": "worker",
+			"to": "db",
+			"y": 316,
+			"label": "do the work",
+			"variant": "emphasis"
+		},
+		{
+			"id": "rows",
+			"from": "db",
+			"to": "worker",
+			"y": 350,
+			"label": "rows",
+			"variant": "return"
+		},
+		{
+			"id": "progress",
+			"from": "worker",
+			"to": "redis",
+			"y": 384,
+			"label": "updateProgress",
+			"variant": "dashed"
+		},
+		{
+			"id": "done",
+			"from": "worker",
+			"to": "redis",
+			"y": 418,
+			"label": "completed, or failed → retry after backoff",
+			"variant": "emphasis"
+		},
+		{
+			"id": "events",
+			"from": "redis",
+			"to": "api",
+			"y": 452,
+			"label": "job events (optional)",
+			"variant": "dashed"
+		}
+	],
+	"activations": [
+		{
+			"participant": "redis",
+			"from": 180,
+			"to": 219,
+			"type": "messagebus"
+		},
+		{
+			"participant": "worker",
+			"from": 248,
+			"to": 422,
+			"type": "backend"
+		},
+		{
+			"participant": "db",
+			"from": 316,
+			"to": 355,
+			"type": "database"
+		},
+		{
+			"participant": "redis",
+			"from": 248,
+			"to": 286,
+			"type": "messagebus"
+		}
+	]
+}

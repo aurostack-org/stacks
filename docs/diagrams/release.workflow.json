@@ -1,0 +1,121 @@
+{
+	"schema_version": 2,
+	"diagram_type": "workflow",
+	"meta": {
+		"title": "Releasing stacks",
+		"quality_profile": "showcase"
+	},
+	"lanes": [
+		{
+			"id": "maint",
+			"label": "Maintainer"
+		},
+		{
+			"id": "gha",
+			"label": "GitHub Actions"
+		},
+		{
+			"id": "npm",
+			"label": "npm"
+		}
+	],
+	"mainPath": [
+		"bump",
+		"push",
+		"ci",
+		"checks",
+		"stage",
+		"approve",
+		"live"
+	],
+	"nodes": [
+		{
+			"id": "bump",
+			"lane": "maint",
+			"col": 0,
+			"type": "frontend",
+			"label": "npm version",
+			"sublabel": "bump, sync, tag"
+		},
+		{
+			"id": "push",
+			"lane": "maint",
+			"col": 1,
+			"type": "frontend",
+			"label": "git push",
+			"sublabel": "--follow-tags"
+		},
+		{
+			"id": "ci",
+			"lane": "gha",
+			"col": 2,
+			"type": "backend",
+			"label": "Full CI",
+			"sublabel": "every template"
+		},
+		{
+			"id": "checks",
+			"lane": "gha",
+			"col": 3,
+			"type": "security",
+			"label": "Release checks",
+			"sublabel": "tag, doctor"
+		},
+		{
+			"id": "stage",
+			"lane": "npm",
+			"col": 4,
+			"type": "cloud",
+			"label": "Staged",
+			"sublabel": "trusted publisher"
+		},
+		{
+			"id": "approve",
+			"lane": "maint",
+			"col": 5,
+			"type": "security",
+			"label": "Approve",
+			"sublabel": "npm stage approve",
+			"width": 132
+		},
+		{
+			"id": "live",
+			"lane": "npm",
+			"col": 5,
+			"type": "cloud",
+			"label": "Published",
+			"sublabel": "latest + plugin"
+		}
+	],
+	"edges": [
+		{
+			"from": "bump",
+			"to": "push"
+		},
+		{
+			"from": "push",
+			"to": "ci",
+			"variant": "emphasis"
+		},
+		{
+			"from": "ci",
+			"to": "checks",
+			"variant": "emphasis"
+		},
+		{
+			"from": "checks",
+			"to": "stage",
+			"variant": "emphasis"
+		},
+		{
+			"from": "stage",
+			"to": "approve",
+			"variant": "security"
+		},
+		{
+			"from": "approve",
+			"to": "live",
+			"variant": "emphasis"
+		}
+	]
+}

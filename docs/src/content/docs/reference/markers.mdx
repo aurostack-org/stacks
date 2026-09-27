@@ -1,0 +1,84 @@
+---
+title: Feature markers
+description: The @feature marker syntax that keeps shared code tied to features.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Files owned wholly by one feature are listed in the manifest and dropped whole.
+Code *shared* between features (a module that imports five optional services,
+an `.env.example`, a Dockerfile) instead carries **markers** that `stack new`
+evaluates line by line.
+
+## Syntax
+
+Markers work inside any comment syntax, because they're found anywhere on a
+line:
+
+```ts
+import { CacheService } from './services'; // @feature cache
+
+// @feature:start mail
+MailService,
+MailProcessor,
+// @feature:end
+```
+
+```dockerfile
+# @feature:start temporal
+FROM node:24-bookworm-slim AS build
+# @feature:else
+FROM aurostack.dev/wesnetech/nodejs:24 AS build
+# @feature:end
+```
+
+| Marker | Keeps |
+|---|---|
+| `<code> // @feature x` | That one line, if `x` is on. The marker comment is removed from the kept line |
+| `@feature:start x` … `@feature:end` | The block, if `x` is on |
+| `@feature:else` | Flips the current block: what follows is kept if `x` is **off** |
+
+Expressions:
+
+| Expression | True when |
+|---|---|
+| `x` | `x` is on |
+| `!x` | `x` is off |
+| `a, b` | `a` **or** `b` is on |
+
+There is no AND. To require two features, **nest** blocks: an inner block is
+kept only if every enclosing block is kept.
+
+```dockerfile
+# @feature:start browser
+# @feature:start temporal
+RUN apt-get install -y chromium
+# @feature:else
+RUN apk add chromium
+# @feature:end
+# @feature:end
+```
+
+`<!-- @feature:start x -->` and `/* @feature x */` work too: a trailing `-->`
+or `*/` is ignored.
+
+## Rules that keep templates compiling
+
+<Aside type="caution" title="Never put an inline marker on the closing line of a multi-line construct">
+Removing `}); // @feature x` leaves the opening half behind. Wrap the whole
+construct in `@feature:start` / `@feature:end` instead. `stack doctor` checks
+bracket balance in `.ts` files for every feature selection and reports this.
+</Aside>
+
+- **Avoid `:else` in TypeScript.** Both branches are present in the template
+  itself, and two definitions of the same thing won't compile. Use it in
+  Dockerfiles, YAML, `.env` and Markdown.
+- **Keep list elements removable.** A list that would become empty when every
+  optional entry is removed needs one permanent element.
+- **Don't hand-format around markers.** Generation runs the formatter
+  afterwards; blank-line runs left by removed blocks collapse to one.
+- **Strict JSON can't carry markers.** `package.json` dependencies are removed
+  through the manifest's `packageJson` instead. JSONC files like
+  `tsconfig.json` can use comment markers.
+- **A misspelt feature name deletes code.** `stack doctor` fails on any marker
+  naming an undeclared feature.

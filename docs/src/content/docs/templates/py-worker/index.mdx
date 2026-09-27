@@ -1,0 +1,41 @@
+---
+title: py-worker
+description: A Python worker on the API's BullMQ queues and database, for work that belongs in Python.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+A Python process for work that belongs in Python (data processing, ML,
+scientific libraries) that still takes its jobs from the API's BullMQ queues
+and reads the API's database with SQLAlchemy. Node's BullMQ and Python's
+`bullmq` package share the same Redis protocol, so the API enqueues a job
+without knowing which language runs it.
+
+```sh
+stack new py-worker ./py --name shop-py
+```
+
+**Stack:** Python 3.14, `bullmq` for Python, SQLAlchemy 2 on PostgreSQL,
+rotating file logs, OpenTelemetry, Docker. Optional: Temporal workflows.
+
+## At a glance
+
+| | |
+|---|---|
+| Entry point | `worker.py` (asyncio) |
+| Queues | One example consumer on the `hello` queue (`workers/hello/`) |
+| Database | Hand-written SQLAlchemy models mirroring the API's Prisma schema |
+| Logs | Files under `$HOME_PATH/logs`, and OpenObserve when telemetry is connected |
+| Telemetry | One trace per job, Redis spans, logs, metrics |
+| Temporal | `--with temporal`: a worker on task queue `python`, with tracing |
+| Runs as | `python worker.py`, or the Docker image |
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

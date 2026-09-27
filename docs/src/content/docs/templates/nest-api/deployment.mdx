@@ -1,0 +1,75 @@
+---
+title: Deploying a nest-api
+description: The Docker image, migrations, CI workflows and a production checklist.
+sidebar:
+  label: Deployment
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Docker image
+
+Two stages on the house Node image (`aurostack.dev/wesnetech/nodejs:24`):
+
+1. **Build:** `corepack enable`, `yarn install --immutable` from the committed
+   `yarn.lock`, `yarn db:generate`, `yarn build`, then drop dev dependencies.
+2. **Runtime:** `node_modules`, `dist`, `public` and `prisma`, started with
+   `node dist/src/main`, exposing the port.
+
+The image has no `.env` (excluded on purpose): configure it with real
+environment variables. Logs are JSON on stdout.
+
+## Migrations
+
+The runtime image doesn't include the Prisma CLI (a dev dependency), so run
+migrations from somewhere that does, before the new version starts:
+
+- a CI step or a one-off job using the **build** stage
+  (`docker build --target build`), running `yarn db:migrate:prod`; or
+- a machine with the repository and the production `DATABASE_URL`.
+
+Never `db:push` against production: it applies the schema without a migration
+history.
+
+## CI workflows
+
+| Workflow | When | Does |
+|---|---|---|
+| `test.yml` | Push to any branch except `main` and `development` | Install, pull `.env.test` from Infisical, unit tests, build |
+| `test-e2e.yml` | Pull request into `development` | PostgreSQL and Redis service containers, `.env.test` from Infisical rewritten to point at them, schema push, seed, e2e tests |
+| `build-and-push.yml` | Push to `main` | Build and push the image, tagged `latest` and `<yy_mm_dd>_<random>` |
+
+Secrets and variables to set on the repository:
+
+| Name | For |
+|---|---|
+| `INFISICAL_TOKEN` | Machine identity token for the Infisical CLI |
+| `INFISICAL_PROJECT_ID` | The project's Infisical id. Not in the workflows by design: add it to the runner environment or the workflow `env` |
+| `REGISTRY_URL`, `REGISTRY`, `DK_USER`, `DK_ACCESS_TOKEN` | Registry login and image prefix |
+
+`INFISICAL_API_URL` in the workflows points at the Infisical instance; change it
+if yours is elsewhere.
+
+<Aside type="caution">
+If `INFISICAL_PROJECT_ID` is missing, `yarn secrets` fails the job, so the tests
+never run against an empty `.env.test`.
+</Aside>
+
+## Production checklist
+
+- `APP_ENV=production`, a strong `BETTER_AUTH_SECRET`, new `BASIC_AUTH_*`.
+- `SERVER_HOST` and `BETTER_AUTH_URL`: the API's public URL. The `/health` HTTP
+  check calls `SERVER_HOST` from inside the container, so it must resolve there.
+- `FRONTEND_HOST`, plus `MISC_CORS_ORIGINS` for any other front-end origins:
+  together they're what auth trusts and CORS allows.
+- `BETTER_AUTH_COOKIE_DOMAIN`: empty for a single front-end origin, or your apex
+  with a leading dot (`.example.com`) to share one login across subdomains.
+- `RATE_LIMIT_IP_HEADERS`: the header your reverse proxy sets. Behind a proxy
+  without it, every client shares the proxy's rate-limit bucket; exposed
+  directly with it, clients can spoof it.
+- `S3_ENDPOINT` set even on AWS (e.g. `https://s3.us-east-1.amazonaws.com`):
+  it's also the prefix of stored file URLs, which are relative when it's empty.
+- `HEALTH_*` sized to the container's real memory and disk.
+- Migrations applied before the new version starts.
+- WebSocket upgrades forwarded on `/realtime`, with realtime on.
+- Telemetry and Temporal settings from their [service pages](../../../services/).

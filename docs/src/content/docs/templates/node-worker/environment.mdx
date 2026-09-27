@@ -1,0 +1,30 @@
+---
+title: node-worker environment
+description: Every variable in node-worker's .env, and what to set in production.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Generation copies `.env.example` to `.env`. `src/config.ts` reads it through
+`dotenv`; `src/instrumentation.ts` reads it earlier for the telemetry settings.
+Variables already set in the environment always win over `.env`.
+
+<Aside type="caution" title="Match the API exactly">
+`DATABASE_URL` and `REDIS_*` must point at the **API's** database and Redis.
+A wrong Redis is silent: the worker connects fine and never receives a job.
+</Aside>
+
+<EnvTable template="node-worker" />
+
+## Not in `.env.example`
+
+| Variable | Used by | Effect |
+|---|---|---|
+| `OPENOBSERVE_STREAM` | telemetry | Stream name in OpenObserve; defaults to `OTEL_SERVICE_NAME` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | telemetry | Send to any OTLP backend instead of OpenObserve; takes precedence |
+| `OTEL_SDK_DISABLED=true` | telemetry | Turns telemetry off even when connected |
+| `OTEL_METRIC_EXPORT_INTERVAL` | telemetry | Metrics export interval in ms (default 60000) |
+| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH` | `yarn secrets` | See [Secrets with Infisical](../../../setup/secrets/) |

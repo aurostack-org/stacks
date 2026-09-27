@@ -1,0 +1,31 @@
+---
+title: nest-api features
+description: Every nest-api feature, its default, what it requires and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/nest-api/template.json`. With no flags you get every
+feature marked On; `--all` adds the opt-ins.
+
+<FeatureTable template="nest-api" />
+
+## Notes
+
+- **`openapi`** is core: `@ApiTags` and `@ApiProperty` run through every
+  controller and entity, so removing Swagger would mean rewriting hundreds of
+  lines.
+- **`mail`** makes email verification mandatory: new email and password users
+  can't sign in until they click the link, so SMTP must work in development too.
+- **`media`** needs `queue` (file deletions are jobs). Uploads to folders not
+  listed as private are `public-read`: the bucket must allow ACLs.
+- **`notifications`** stores notifications either way, and pushes each one to
+  the recipient's sockets when `realtime` is also on.
+- **`realtime`** needs WebSocket upgrades forwarded on `/realtime` by your
+  reverse proxy.
+- **`feature-flags`** polls GrowthBook every 60 seconds (hence `scheduler`).
+- **`temporal`** adds a client only; pair it with a worker built
+  `--with temporal`.
+- **`testing`** off also removes the test Docker stack and `.env.test`.

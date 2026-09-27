@@ -1,0 +1,31 @@
+---
+title: OpenObserve
+description: What an OpenObserve instance needs for stacks projects to report to it.
+---
+
+import Internal from '../../../components/Internal.astro';
+
+Any OpenObserve instance works; these are the settings stacks projects depend on.
+
+| Instance setting | Why |
+|---|---|
+| `ZO_CORS_ALLOWED_ORIGINS` | Every front-end origin (comma-separated). Browsers' RUM requests are blocked otherwise |
+| An organization per project | Keeps each project's streams, dashboards and tokens apart |
+| HTTPS | Browsers post RUM from HTTPS pages; the SDK only uses plain HTTP when the URL says `http://` |
+
+Per project, create the organization, then hand out two tokens:
+
+- the **ingestion token** (IAM → Ingestion Tokens) to back ends, as
+  `OPENOBSERVE_TOKEN`;
+- a **RUM token** (Ingestion → RUM) to front ends, as
+  `VITE_OPENOBSERVE_CLIENT_TOKEN`.
+
+Back ends send OTLP over HTTP to `/api/<org>/v1/{traces,logs,metrics}`; front
+ends send to the RUM intake. Each back-end service writes to the stream named
+after its `OTEL_SERVICE_NAME`.
+
+Source-map upload (readable browser stack traces) needs OpenObserve Enterprise.
+
+See [OpenObserve](../../services/openobserve/) for connecting a project.
+
+<Internal id="openobserve-instance" />

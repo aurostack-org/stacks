@@ -1,0 +1,35 @@
+---
+title: Google sign-in
+description: Create a Google OAuth client and connect it to nest-api's better-auth.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Internal from '../../../components/Internal.astro';
+
+The API always registers Google as a sign-in provider; it works once
+`OAUTH_GOOGLE_CLIENT_ID` and `OAUTH_GOOGLE_CLIENT_SECRET` are set. The auth
+screens in both front-end templates already have the button.
+
+<Steps>
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials),
+   configure the OAuth consent screen (app name, support email, your domains).
+
+2. **Create credentials → OAuth client ID**, type **Web application**:
+
+   - **Authorised JavaScript origins:** each front end's origin
+     (`https://app.example.com`; `http://localhost:3000` for development).
+   - **Authorised redirect URIs:** `<BETTER_AUTH_URL>/auth/callback/google`,
+     e.g. `https://api.example.com/auth/callback/google` and
+     `http://localhost:5000/auth/callback/google`.
+
+3. Copy the client id and secret into the API's `OAUTH_GOOGLE_CLIENT_ID` and
+   `OAUTH_GOOGLE_CLIENT_SECRET`.
+
+</Steps>
+
+The API asks for `email` and `profile`, with offline access. After Google, the
+browser returns to the `callbackURL` the front end passed, which must be one of
+the API's trusted origins.
+
+<Internal id="google-oauth" />

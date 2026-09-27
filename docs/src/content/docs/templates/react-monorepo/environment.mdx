@@ -1,0 +1,37 @@
+---
+title: react-monorepo environment
+description: Every variable in each app's .env, and the values the API must mirror.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Each app has its own `.env` (generation copies each `apps/*/.env.example`). The
+four files are the same apart from `PORT`, and landing adds two variables.
+
+<Aside type="caution" title="VITE_ values are public and fixed at build time">
+Every `VITE_*` value is inlined into the bundle at build time: never put a
+secret there, and build one image per environment. See
+[react-app](../../react-app/environment/) for the details, which apply here too.
+</Aside>
+
+<EnvTable template="react-monorepo" />
+
+## Not in any `.env.example`
+
+| Variable | Where | Effect |
+|---|---|---|
+| `VITE_APP_ALLOWED_HOSTS` | any `apps/*/.env` | Comma-separated hostnames the dev server answers beyond `localhost` (a tunnel, `*.lvh.me`) |
+| `API_DOC_URL`, `API_DOC_USER`, `API_DOC_PASSWORD` | `packages/types/.env` | Where `yarn workspace @scope/types gen` fetches the OpenAPI document; create this file by hand (or with its `secrets` script) |
+| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH_PREFIX` | shell | `yarn secrets`: each workspace pulls from `<prefix>/<app>` (default prefix `/frontend`) |
+
+## What the API must mirror
+
+| API setting | Must include |
+|---|---|
+| `BETTER_AUTH_COOKIE_DOMAIN` | a parent domain of every app's host (`.example.com`) |
+| `FRONTEND_HOST`, `MISC_CORS_ORIGINS` | every app's origin (trusted origins and CORS) |
+| `SMTP_SUPPORT_EMAIL` | the same address as landing's `VITE_APP_SUPPORT_EMAIL` |
+| better-auth at `/auth` | `VITE_APP_API_URL` + `/auth` |

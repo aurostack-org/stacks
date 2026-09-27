@@ -1,0 +1,191 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "node-worker",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "instr",
+			"type": "security",
+			"label": "instrumentation.ts",
+			"sublabel": "preloaded",
+			"pos": [
+				40,
+				60
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "index",
+			"type": "backend",
+			"label": "src/index.ts",
+			"sublabel": "start · stop",
+			"pos": [
+				40,
+				220
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "bull",
+			"type": "backend",
+			"label": "BullMQ workers",
+			"sublabel": "src/workers",
+			"pos": [
+				290,
+				140
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "tw",
+			"type": "backend",
+			"label": "Temporal worker",
+			"sublabel": "src/temporal",
+			"pos": [
+				290,
+				300
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "redis",
+			"type": "messagebus",
+			"label": "Redis",
+			"sublabel": "the API's queues",
+			"pos": [
+				540,
+				40
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "prisma",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "via Prisma",
+			"pos": [
+				540,
+				220
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "temporal",
+			"type": "messagebus",
+			"label": "Temporal",
+			"sublabel": "task queue main",
+			"pos": [
+				540,
+				380
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "OTLP",
+			"pos": [
+				790,
+				40
+			],
+			"size": [
+				170,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "instr",
+			"to": "index"
+		},
+		{
+			"from": "index",
+			"to": "bull",
+			"variant": "emphasis"
+		},
+		{
+			"from": "index",
+			"to": "tw"
+		},
+		{
+			"from": "bull",
+			"to": "redis",
+			"label": "jobs",
+			"variant": "emphasis"
+		},
+		{
+			"from": "bull",
+			"to": "prisma"
+		},
+		{
+			"from": "tw",
+			"to": "prisma"
+		},
+		{
+			"from": "tw",
+			"to": "temporal",
+			"variant": "dashed"
+		},
+		{
+			"from": "redis",
+			"to": "o2",
+			"label": "spans",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "cyan",
+			"title": "Startup",
+			"items": [
+				"Telemetry is preloaded with node --import",
+				"Workers start only once wiring is done",
+				"Temporal bundles its workflows at start"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Shutdown",
+			"items": [
+				"SIGTERM closes every BullMQ worker",
+				"Active jobs finish before exit",
+				"Temporal drains its tasks first"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "Shared with the API",
+			"items": [
+				"Its Redis and queue names",
+				"Its database and Prisma schema",
+				"Its Temporal namespace and task queue"
+			]
+		}
+	]
+}

@@ -1,0 +1,191 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "py-worker",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "main",
+			"type": "backend",
+			"label": "worker.py",
+			"sublabel": "asyncio · signals",
+			"pos": [
+				40,
+				200
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "bull",
+			"type": "backend",
+			"label": "BullMQ consumers",
+			"sublabel": "workers/",
+			"pos": [
+				290,
+				110
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "tw",
+			"type": "backend",
+			"label": "Temporal worker",
+			"sublabel": "temporal/",
+			"pos": [
+				290,
+				290
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "redis",
+			"type": "messagebus",
+			"label": "Redis",
+			"sublabel": "the API's queues",
+			"pos": [
+				540,
+				40
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "pg",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "SQLAlchemy",
+			"pos": [
+				540,
+				200
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "temporal",
+			"type": "messagebus",
+			"label": "Temporal",
+			"sublabel": "task queue python",
+			"pos": [
+				540,
+				360
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "logs",
+			"type": "external",
+			"label": "Logs",
+			"sublabel": "stdout · files",
+			"pos": [
+				790,
+				120
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "OTLP",
+			"pos": [
+				790,
+				280
+			],
+			"size": [
+				170,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "main",
+			"to": "bull",
+			"variant": "emphasis"
+		},
+		{
+			"from": "main",
+			"to": "tw"
+		},
+		{
+			"from": "bull",
+			"to": "redis",
+			"label": "jobs",
+			"variant": "emphasis"
+		},
+		{
+			"from": "bull",
+			"to": "pg"
+		},
+		{
+			"from": "tw",
+			"to": "pg"
+		},
+		{
+			"from": "tw",
+			"to": "temporal",
+			"variant": "dashed"
+		},
+		{
+			"from": "pg",
+			"to": "logs",
+			"variant": "dashed"
+		},
+		{
+			"from": "pg",
+			"to": "o2",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "cyan",
+			"title": "Same queues, other language",
+			"items": [
+				"Python bullmq speaks the same Redis protocol",
+				"The API needn't know which worker runs a job",
+				"Queue names must match the producer"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Data",
+			"items": [
+				"Hand-written models mirror the API's schema",
+				"Enums bind to the API's existing types",
+				"The API owns every migration"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "Settings",
+			"items": [
+				"HOME_PATH is required and absolute",
+				"DB_* and REDIS_* match the API",
+				"Its own Temporal task queue: python"
+			]
+		}
+	]
+}

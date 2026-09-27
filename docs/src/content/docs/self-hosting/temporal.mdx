@@ -1,0 +1,213 @@
+---
+title: Self-hosting Temporal
+description: A single-node production Temporal with PostgreSQL, an mTLS gateway, the Web UI behind SSO, and per-project certificates.
+---
+
+import { Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
+import Internal from '../../../components/Internal.astro';
+
+This is a single-node Temporal suited to running many small projects: one server
+process with all four roles, PostgreSQL for persistence and search, the Web UI,
+and an **mTLS gateway** that only admits clients holding a certificate you
+issued. It's a Docker Compose stack of six services.
+
+<Diagram name="self-hosted-temporal" title="Self-hosted Temporal" height={620} />
+
+<Internal id="temporal-stack" />
+
+## The pieces
+
+| Service | Image | Role |
+|---|---|---|
+| `postgresql` | `postgres:16` | Persistence and SQL visibility (no Elasticsearch needed). Never published |
+| `temporal-setup` | `temporalio/admin-tools` | Runs before every start: creates both databases once, then applies any pending schema migrations |
+| `temporal` | `temporalio/server` | All four roles in one process. Never published |
+| `temporal-namespaces` | `temporalio/admin-tools` | Registers any missing namespace from a list, then exits |
+| `temporal-ui` | `temporalio/ui` | The Web UI, bound to a private address for your reverse proxy |
+| `temporal-gateway` | `caddy` | Publishes `:7233` with mTLS, proxies gRPC to the server over h2c |
+
+Why a gateway: Temporal's server has no login of its own, and its docs say it
+shouldn't be reachable from the public internet. The gateway lets workers
+connect from anywhere, but only with a client certificate from your private CA,
+and it doesn't need ports 80/443 (your reverse proxy keeps those).
+
+## Deploy
+
+<Steps>
+
+1. **DNS:** a name for the UI (`temporal.example.com`, via your reverse proxy)
+   and one for gRPC (`temporal-grpc.example.com`) pointing straight at the host.
+   The gRPC name must not go through a proxying CDN: the gateway does its own TLS.
+
+2. **Firewall:** open `7233/tcp`.
+
+3. **Settings** (`.env`): a generated `POSTGRES_PASSWORD`, the namespaces
+   (one per project), and `NUM_HISTORY_SHARDS`.
+
+   <Aside type="caution" title="History shards are forever">
+   `NUM_HISTORY_SHARDS` can't change after the first start. 512 (the Helm
+   chart's default) suits a single node; only plan higher for a multi-node
+   cluster at thousands of actions per second.
+   </Aside>
+
+4. **Certificates:** a private CA, and the gateway's certificate for the gRPC
+   hostname (EC P-256 with `openssl`; keep the CA key offline).
+
+5. **Start:** `docker compose up -d`. The very first run logs one expected
+   `relation "schema_version" does not exist` per database before initialising
+   it, and a burst of `shard status unknown` errors in the first second while
+   the server acquires its shards.
+
+6. **The UI** behind your reverse proxy, with SSO (below).
+
+</Steps>
+
+Check it from any machine with a client certificate:
+
+```sh
+temporal operator namespace list \
+  --address temporal-grpc.example.com:7233 \
+  --tls-ca-path ca.crt --tls-cert-path ops.crt --tls-key-path ops.key
+```
+
+## The gateway
+
+```text
+{
+	auto_https off
+	admin off
+	servers {
+		protocols h2
+	}
+}
+
+:7233 {
+	tls /certs/server.crt /certs/server.key {
+		protocols tls1.2 tls1.3
+		client_auth {
+			mode require_and_verify
+			trust_pool file /certs/ca.crt
+		}
+	}
+	reverse_proxy h2c://temporal:7233 {
+		flush_interval -1
+		transport http {
+			versions h2c
+			read_timeout 0
+			write_timeout 0
+		}
+	}
+}
+```
+
+The unlimited timeouts matter: workers long-poll for tasks for about 70 seconds
+at a time. Any client without a certificate from the CA fails the TLS
+handshake; plaintext is refused.
+
+## The UI behind a reverse proxy
+
+<Tabs>
+<TabItem label="Nginx Proxy Manager">
+
+A proxy host for the UI's hostname:
+
+- **Details:** scheme `http`, forward to the UI (`temporal-ui:8080` if the proxy
+  shares the Docker network; otherwise the UI host's private IP and published
+  port), Block Common Exploits and Websockets Support on.
+- **SSL:** a Let's Encrypt certificate, Force SSL, HTTP/2, HSTS.
+- **Advanced:**
+
+  ```nginx
+  proxy_buffer_size 32k;
+  proxy_buffers 8 32k;
+  proxy_busy_buffers_size 64k;
+  large_client_header_buffers 4 32k;
+  ```
+
+  The UI stores the SSO session in cookies (about 5 KB of response headers),
+  more than nginx's default buffer: without these lines the login callback
+  fails with **502 "upstream sent too big header"**.
+
+The gRPC hostname gets **no** proxy host.
+
+</TabItem>
+<TabItem label="Proxy on another server">
+
+When the reverse proxy runs on a different machine, bind the UI to the Temporal
+host's **private** address (a WireGuard, Tailscale or NetBird IP) and forward
+the proxy there. Avoid the public IP: Docker publishes ports around host
+firewalls like ufw, and the hop carries session cookies unencrypted.
+
+</TabItem>
+</Tabs>
+
+## SSO for the UI (Keycloak)
+
+The UI has no local accounts; it signs people in over OIDC.
+
+<Steps>
+
+1. **Client** (realm → Clients → Create client): OpenID Connect, client id
+   `temporal-ui`, **Client authentication on**, only **Standard flow**.
+   **Leave PKCE empty**: the UI doesn't send a code challenge, so a PKCE-required
+   client fails with `Missing parameter: code_challenge_method`.
+   Redirect URI `https://temporal.example.com/auth/sso/callback`; web origin and
+   root URL `https://temporal.example.com`. Copy the client secret.
+
+2. **Restrict it to a role.** By default every realm user can sign in to every
+   client. Create a client role `access`, assign it to people (or a group), and
+   bind a browser flow to the client:
+
+   | Step | Requirement |
+   |---|---|
+   | Sub-flow `authenticate` | Required |
+   | &nbsp;&nbsp;↳ Cookie | Alternative |
+   | &nbsp;&nbsp;↳ Sub-flow `forms` | Alternative |
+   | &nbsp;&nbsp;&nbsp;&nbsp;↳ Username Password Form (and your OTP steps) | Required |
+   | Sub-flow `access` | Conditional |
+   | &nbsp;&nbsp;↳ Condition - user role: `temporal-ui access`, **negate on** | Required |
+   | &nbsp;&nbsp;↳ Deny access | Required |
+
+   The role check sits outside `authenticate`, so it also stops someone arriving
+   with an existing Keycloak session. Set it as the client's Browser Flow
+   override (Advanced → Authentication flow overrides).
+
+3. **Connect** the UI: `TEMPORAL_AUTH_ENABLED=true`, the provider URL
+   (`https://<keycloak>/realms/<realm>`), client id and secret, and scopes
+   `openid,profile,email,offline_access`. The UI fetches the provider's discovery
+   document at startup and exits if it can't reach it, so the UI container needs
+   a route to the provider's public URL.
+
+</Steps>
+
+Sessions follow the provider's access-token lifespan (5 minutes by default in
+Keycloak). With redirect-to-provider on, the renewal is a quick bounce through
+Keycloak; lengthen the client's Access Token Lifespan if it's intrusive.
+
+## Per project
+
+- **A namespace:** add it to the namespaces list and `docker compose up -d`, or
+  `temporal operator namespace create -n <project> --retention 7d` from a
+  machine with a certificate. The self-hosted UI lists namespaces but doesn't
+  create them.
+- **A client certificate** signed by the CA, stored with the project's secrets,
+  and given to the API and workers as `TEMPORAL_TLS_*` (see
+  [Temporal](../../services/temporal/#production)).
+
+A certificate authenticates, it doesn't authorise: any valid certificate reaches
+every namespace. There's no per-certificate revocation at the gateway; to cut
+access, issue a new CA and re-issue the certificates. Short-lived client
+certificates limit the exposure.
+
+## Operating it
+
+- **Upgrades:** bump the server version one minor at a time and read its release
+  notes; setup migrates the schema before the new server starts.
+- **Backups:** everything is in PostgreSQL (`pg_dump` both databases).
+- **Dynamic config:** re-read every 60 seconds, no restart.
+- **Metrics:** Prometheus format on the server's port 8000, inside the Docker
+  network.
+- **Resources:** about 450 MB of memory idle. It's one node with no high
+  availability; beyond that, run the roles as separate services or use the Helm
+  chart.

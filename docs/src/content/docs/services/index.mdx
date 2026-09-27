@@ -1,0 +1,30 @@
+---
+title: 'Overview: local vs production'
+description: Every service a stacks project talks to, what runs it locally, and what production needs.
+---
+
+import Internal from '../../../components/Internal.astro';
+
+| Service | Used by | Locally | In production |
+|---|---|---|---|
+| [PostgreSQL](postgres/) | nest-api, workers | `compose.yml` (5432); tests on 5499 | a managed or self-hosted PostgreSQL 15+ |
+| [Redis](redis/) | nest-api (cache, rate limits, queues, realtime), workers | `compose.yml` (6379); tests on 6399 | a persistent Redis 7 |
+| [Object storage](s3/) | nest-api `media` | MinIO, or a real bucket | S3 or any S3-compatible store |
+| [SMTP](smtp/) | nest-api `mail` | a catcher such as Mailpit | a transactional mail provider |
+| [Google sign-in](google-oauth/) | nest-api `auth` | optional | a Google OAuth client |
+| [GrowthBook](growthbook/) | nest-api `feature-flags` | GrowthBook Cloud or self-hosted | the same |
+| [OpenObserve](openobserve/) | every template | a local container, or off | one org per project |
+| [Temporal](temporal/) | `--with temporal` | the dev server in `compose.yml` (7233, UI 8233) | a Temporal cluster, mTLS |
+| [Infisical](../setup/secrets/) | `yarn secrets` | optional | the secret store for every environment |
+
+Each service page covers the variables, a local setup, production values and
+the mistakes that fail silently.
+
+## The rule of thumb
+
+**Back ends connect with credentials from `.env`; front ends only ever hold
+public values.** A `VITE_*` variable is compiled into JavaScript that every
+visitor downloads. The only tokens that belong there are write-only ones built
+to be public (the OpenObserve RUM token).
+
+<Internal id="services" />

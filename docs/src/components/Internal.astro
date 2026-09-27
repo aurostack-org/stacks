@@ -1,0 +1,21 @@
+---
+// Extension point for the private build. `@internal` resolves to an empty
+// directory in the public build, so this renders nothing; stackbook points it
+// at its own notes, and <Internal id="x" /> shows @internal/x.mdx if present.
+interface Props {
+	id: string;
+}
+const { id } = Astro.props;
+const notes = import.meta.glob<{ default: any }>('@internal/*.mdx', { eager: true });
+const entry = Object.entries(notes).find(([file]) => file.endsWith(`/${id}.mdx`));
+const Note = entry?.[1].default;
+---
+
+{
+	Note && (
+		<aside class="internal-note">
+			<p class="internal-label">Internal: our setup</p>
+			<Note />
+		</aside>
+	)
+}

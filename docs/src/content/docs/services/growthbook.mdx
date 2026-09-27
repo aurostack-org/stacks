@@ -1,0 +1,37 @@
+---
+title: Feature flags (GrowthBook)
+description: Gate API routes on GrowthBook flags with nest-api's feature-flags feature.
+---
+
+import Internal from '../../../components/Internal.astro';
+
+With `--with feature-flags`, nest-api evaluates [GrowthBook](https://www.growthbook.io)
+flags on the server.
+
+| Variable | Value |
+|---|---|
+| `GROWTHBOOK_API_HOST` | `https://cdn.growthbook.io` (Cloud) or your GrowthBook's API host |
+| `GROWTHBOOK_CLIENT_KEY` | An SDK connection's client key (`sdk-…`) |
+
+Both are required once the feature is on, and they ship empty.
+
+## Using it
+
+Declare each flag in the `AppFeatures` interface in
+`src/common/services/feature-flag.service.ts`, so keys are type-checked and a
+renamed flag fails to compile instead of silently evaluating to its default.
+
+```ts
+@RequireFeature('new-checkout')
+@Post('checkout')
+checkout() { … }
+```
+
+`@RequireFeature` evaluates with the signed-in user's id and role (or globally
+for anonymous requests) and answers 403 when the flag is off. In code,
+`FeatureFlagService` offers `isOn`, `getValue` and `forUser(attributes)`.
+
+Features load at startup (2-second timeout) and refresh every 60 seconds. If
+GrowthBook is unreachable, flags use their defaults and the API keeps running.
+
+<Internal id="growthbook" />

@@ -1,0 +1,119 @@
+{
+	"schema_version": 2,
+	"diagram_type": "workflow",
+	"meta": {
+		"title": "What stack new does",
+		"quality_profile": "showcase"
+	},
+	"lanes": [
+		{
+			"id": "you",
+			"label": "You"
+		},
+		{
+			"id": "gen",
+			"label": "Generator"
+		},
+		{
+			"id": "hooks",
+			"label": "Hooks"
+		}
+	],
+	"mainPath": [
+		"cmd",
+		"resolve",
+		"files",
+		"rename",
+		"record",
+		"hooks",
+		"done"
+	],
+	"nodes": [
+		{
+			"id": "cmd",
+			"lane": "you",
+			"col": 0,
+			"type": "external",
+			"label": "stack new",
+			"sublabel": "template + flags"
+		},
+		{
+			"id": "resolve",
+			"lane": "gen",
+			"col": 1,
+			"type": "backend",
+			"label": "Resolve features",
+			"sublabel": "defaults, --with",
+			"width": 132
+		},
+		{
+			"id": "files",
+			"lane": "gen",
+			"col": 2,
+			"type": "backend",
+			"label": "Copy + strip",
+			"sublabel": "drop files, markers"
+		},
+		{
+			"id": "rename",
+			"lane": "gen",
+			"col": 3,
+			"type": "backend",
+			"label": "Rename + prune",
+			"sublabel": "names, dependencies"
+		},
+		{
+			"id": "record",
+			"lane": "gen",
+			"col": 4,
+			"type": "database",
+			"label": "stack.json",
+			"sublabel": "what produced it"
+		},
+		{
+			"id": "hooks",
+			"lane": "hooks",
+			"col": 5,
+			"type": "messagebus",
+			"label": "Run hooks",
+			"sublabel": ".env, install, commit"
+		},
+		{
+			"id": "done",
+			"lane": "you",
+			"col": 5,
+			"type": "frontend",
+			"label": "Next steps",
+			"sublabel": "printed per template"
+		}
+	],
+	"edges": [
+		{
+			"from": "cmd",
+			"to": "resolve"
+		},
+		{
+			"from": "resolve",
+			"to": "files",
+			"variant": "emphasis"
+		},
+		{
+			"from": "files",
+			"to": "rename",
+			"variant": "emphasis"
+		},
+		{
+			"from": "rename",
+			"to": "record"
+		},
+		{
+			"from": "record",
+			"to": "hooks"
+		},
+		{
+			"from": "hooks",
+			"to": "done",
+			"variant": "emphasis"
+		}
+	]
+}

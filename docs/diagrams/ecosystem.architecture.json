@@ -1,0 +1,222 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "stacks, templates and projects",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "you",
+			"type": "external",
+			"label": "You",
+			"sublabel": "or Claude Code",
+			"pos": [
+				40,
+				160
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "cli",
+			"type": "backend",
+			"label": "stack CLI",
+			"sublabel": "npm or plugin",
+			"pos": [
+				280,
+				160
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "templates",
+			"type": "database",
+			"label": "Templates",
+			"sublabel": "five runnable apps",
+			"pos": [
+				280,
+				20
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "web",
+			"type": "frontend",
+			"label": "Web app",
+			"sublabel": "react-app / monorepo",
+			"pos": [
+				540,
+				40
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "api",
+			"type": "backend",
+			"label": "API",
+			"sublabel": "nest-api",
+			"pos": [
+				540,
+				160
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "worker",
+			"type": "backend",
+			"label": "Workers",
+			"sublabel": "node / py",
+			"pos": [
+				540,
+				280
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "data",
+			"type": "database",
+			"label": "PostgreSQL + Redis",
+			"sublabel": "the API's",
+			"pos": [
+				820,
+				100
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "temporal",
+			"type": "messagebus",
+			"label": "Temporal",
+			"sublabel": "optional",
+			"pos": [
+				820,
+				220
+			],
+			"size": [
+				170,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "one org per project",
+			"pos": [
+				820,
+				340
+			],
+			"size": [
+				170,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "you",
+			"to": "cli",
+			"label": "stack new",
+			"variant": "emphasis"
+		},
+		{
+			"from": "templates",
+			"to": "cli",
+			"label": "read",
+			"labelDy": 28
+		},
+		{
+			"from": "cli",
+			"to": "api",
+			"label": "generate",
+			"variant": "emphasis"
+		},
+		{
+			"from": "web",
+			"to": "api",
+			"label": "HTTPS",
+			"labelDy": 28
+		},
+		{
+			"from": "api",
+			"to": "data"
+		},
+		{
+			"from": "worker",
+			"to": "data"
+		},
+		{
+			"from": "worker",
+			"to": "temporal",
+			"variant": "dashed"
+		},
+		{
+			"from": "worker",
+			"to": "o2",
+			"label": "telemetry",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "cyan",
+			"title": "One command",
+			"items": [
+				"Each template is a complete, tested app",
+				"Generation drops what you didn't choose",
+				"The project has no runtime tie to stacks"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Designed to combine",
+			"items": [
+				"Defaults agree on ports, queues and cookies",
+				"Workers share the API's database and Redis",
+				"Every service reports to one OpenObserve org"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "You still provide",
+			"items": [
+				"Per-project secrets, in Infisical",
+				"Hosted services for production",
+				"DNS, TLS and a reverse proxy"
+			]
+		}
+	],
+	"boundaries": [
+		{
+			"kind": "region",
+			"label": "Generated projects",
+			"wraps": [
+				"web",
+				"api",
+				"worker"
+			],
+			"pad": 20
+		}
+	]
+}
