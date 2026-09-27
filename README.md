@@ -151,6 +151,29 @@ page load go out before the RUM SDK has started, so they carry no trace header.
 Source-map upload for readable browser stack traces needs OpenObserve
 Enterprise.
 
+### Background work: BullMQ or Temporal
+
+BullMQ is built in. Temporal is opt-in (`--with temporal`) for the backend
+templates, alongside the queues rather than instead of them:
+
+- **BullMQ** for fire-and-forget jobs: send an email, resize an image, a
+  cron-style sweep.
+- **Temporal** for work that spans many steps, waits (minutes to months, or
+  for a signal), or must resume exactly where it stopped after a crash or
+  deploy: onboarding sequences, payments and refunds, multi-service sagas.
+
+| Template | `--with temporal` adds |
+|---|---|
+| `nest-api` | `TemporalService` (a lazily-connected client for starting and querying workflows) and Temporal's dev server in `compose.yml` (UI on `:8233`) |
+| `node-worker` | A Temporal worker next to the BullMQ consumers, with an example workflow and activity in `src/temporal`. Its image switches to Debian: Temporal's native core doesn't run on Alpine |
+| `py-worker` | The same in Python (`temporal/`), with a span per workflow and activity when telemetry is on |
+
+Every template reads the same settings: `TEMPORAL_ADDRESS`,
+`TEMPORAL_NAMESPACE`, `TEMPORAL_TASK_QUEUE`, and for production mTLS the
+`TEMPORAL_TLS_CA`, `TEMPORAL_TLS_CERT` and `TEMPORAL_TLS_KEY` PEMs. Locally
+they default to the dev server with no TLS. The API starts workflows on the
+task queue a worker polls: `main` for node-worker, `python` for py-worker.
+
 ## How it works
 
 Templates are **subtractive**. `templates/<name>/files` is a complete, runnable

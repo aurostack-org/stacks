@@ -8,3 +8,4 @@ export * from './mail.service'; // @feature mail
 export * from './throttler-storage.service'; // @feature rate-limit
 export * from './auth-rate-limit.storage'; // @feature rate-limit
 export * from './feature-flag.service'; // @feature feature-flags
+export * from './temporal.service'; // @feature temporal

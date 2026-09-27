@@ -1,5 +1,11 @@
 # Stage 1: Build
+# @feature:start temporal
+# Temporal's native core ships glibc builds only (it fails to load on Alpine,
+# even with gcompat), so a Temporal worker builds and runs on Debian.
+FROM node:24-bookworm-slim AS build
+# @feature:else
 FROM aurostack.dev/wesnetech/nodejs:24 AS build
+# @feature:end
 
 # @feature:start browser
 # Chromium comes from apk in the runtime stage; don't download a second copy.
@@ -31,10 +37,25 @@ RUN yarn build
 RUN yarn workspaces focus --all --production
 
 # Stage 2: Production
+# @feature:start temporal
+FROM node:24-bookworm-slim
+# @feature:else
 FROM aurostack.dev/wesnetech/nodejs:24
+# @feature:end
 WORKDIR /app
 
 # @feature:start browser
+# @feature:start temporal
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		chromium \
+		ca-certificates \
+		fonts-freefont-ttf \
+	&& rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+	PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# @feature:else
 RUN apk add --no-cache \
 	chromium \
 	nss \
@@ -47,6 +68,7 @@ RUN apk add --no-cache \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 	PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 # @feature:end
+# @feature:end
 
 COPY package.json ./
 # @feature:start pm2
@@ -56,7 +78,8 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 # @feature:start pm2
-# pm2-runtime ships in the base image.
+# pm2-runtime ships in the house base image; Debian's needs it installed.
+RUN npm install -g pm2@7 # @feature temporal
 CMD [ "pm2-runtime", "start", "ecosystem.config.cjs" ]
 # @feature:else
 CMD [ "node", "--import", "./dist/src/instrumentation.js", "dist/src/index.js" ]

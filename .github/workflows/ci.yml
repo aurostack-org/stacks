@@ -142,9 +142,17 @@ jobs:
       - run: yarn build
 
   py-worker:
-    name: py-worker
+    name: py-worker (${{ matrix.variant }})
     needs: cli
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: default
+            args: ''
+          - variant: with temporal
+            args: --with temporal
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -154,7 +162,7 @@ jobs:
         with:
           python-version: '3.14'
       - name: Generate (creates the virtualenv and installs requirements)
-        run: node cli/stack.mjs new py-worker "$APP" --name ci-py --strict
+        run: node cli/stack.mjs new py-worker "$APP" --name ci-py ${{ matrix.args }} --strict
       - name: Compile every module
         working-directory: /tmp/stack-ci/app
         run: .venv/bin/python -m compileall -q -x '/\.venv/' .
@@ -191,13 +199,19 @@ jobs:
       - run: yarn build
 
   docker:
-    name: Docker image (${{ matrix.template }})
+    name: Docker image (${{ matrix.template }}${{ matrix.args && format(', {0}', matrix.args) || '' }})
     needs: cli
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         template: [nest-api, node-worker]
+        args: ['']
+        include:
+          # Temporal's native core needs glibc, so this variant builds on Debian
+          # instead of the Alpine house image.
+          - template: node-worker
+            args: --with temporal
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -206,6 +220,6 @@ jobs:
       - run: corepack enable
       # The Dockerfiles install from the lockfile, which the yarn install hook writes.
       - name: Generate
-        run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-image --strict
+        run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-image ${{ matrix.args }} --strict
       - name: Build
         run: docker build -t ci-image "$APP"

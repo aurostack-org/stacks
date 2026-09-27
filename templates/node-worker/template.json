@@ -53,6 +53,20 @@
 				]
 			}
 		},
+		"temporal": {
+			"title": "Temporal worker",
+			"description": "Runs durable workflows and activities from src/temporal (an example of each included) on TEMPORAL_TASK_QUEUE, next to the BullMQ consumers. Pair with the API's temporal feature, which starts them.",
+			"files": [
+				"src/temporal/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@temporalio/activity",
+					"@temporalio/worker",
+					"@temporalio/workflow"
+				]
+			}
+		},
 		"telemetry": {
 			"title": "OpenTelemetry → OpenObserve",
 			"description": "Traces, logs and metrics pushed over OTLP (set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend). Off at runtime until connected.",

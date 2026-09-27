@@ -30,11 +30,30 @@ class Redis:
     password: str | None
 
 
+# @feature:start temporal
+@dataclass
+class TemporalTLS:
+    # PEM; all empty means plaintext (the local dev server).
+    ca: str
+    cert: str
+    key: str
+
+
+@dataclass
+class Temporal:
+    address: str
+    namespace: str
+    task_queue: str
+    tls: TemporalTLS
+# @feature:end
+
+
 @dataclass
 class Env:
     path: ProjectPath
     db: DB
     redis: Redis
+    temporal: Temporal  # @feature temporal
 
 
 class Config:
@@ -67,7 +86,19 @@ class Config:
                     port=int(os.getenv('REDIS_PORT', 0)),
                     user=os.getenv('REDIS_USER'),
                     password=os.getenv('REDIS_PASSWORD')
-                )
+                ),
+                # @feature:start temporal
+                temporal=Temporal(
+                    address=os.getenv('TEMPORAL_ADDRESS') or 'localhost:7233',
+                    namespace=os.getenv('TEMPORAL_NAMESPACE') or 'default',
+                    task_queue=os.getenv('TEMPORAL_TASK_QUEUE') or 'python',
+                    tls=TemporalTLS(
+                        ca=os.getenv('TEMPORAL_TLS_CA', ''),
+                        cert=os.getenv('TEMPORAL_TLS_CERT', ''),
+                        key=os.getenv('TEMPORAL_TLS_KEY', '')
+                    )
+                ),
+                # @feature:end
             )
 
             cls._instance = instance

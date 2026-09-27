@@ -15,6 +15,7 @@ import { CacheService } from './services'; // @feature cache
 import { MailService } from './services'; // @feature mail
 import { RedisThrottlerStorage } from './services'; // @feature rate-limit
 import { FeatureFlagService } from './services'; // @feature feature-flags
+import { TemporalService } from './services'; // @feature temporal
 import { HealthController } from './controllers'; // @feature observability
 import { MailProcessor } from './processors'; // @feature mail
 import { FeatureFlagGuard } from './guards'; // @feature feature-flags
@@ -54,6 +55,7 @@ import Config from './services/config.service';
 		RedisThrottlerStorage, // @feature rate-limit
 		FeatureFlagService, // @feature feature-flags
 		FeatureFlagGuard, // @feature feature-flags
+		TemporalService, // @feature temporal
 		PrismaHealthIndicator // @feature observability
 	],
 	exports: [
@@ -64,7 +66,8 @@ import Config from './services/config.service';
 		CacheService, // @feature cache
 		MailService, // @feature mail
 		RedisThrottlerStorage, // @feature rate-limit
-		FeatureFlagService // @feature feature-flags
+		FeatureFlagService, // @feature feature-flags
+		TemporalService // @feature temporal
 	]
 })
 export class CommonModule {}

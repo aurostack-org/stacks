@@ -34,6 +34,22 @@ services:
     ports:
       - 6379:6379
   # @feature:end
+  # @feature:start temporal
+  # Temporal's development server (the CLI's `server start-dev`): gRPC on 7233,
+  # Web UI on http://localhost:8233, state kept in the temporal volume.
+  temporal:
+    container_name: acme-temporal
+    image: temporalio/temporal:1.9.1
+    restart: always
+    command: server start-dev --ip 0.0.0.0 --db-filename /home/temporal/temporal.db
+    ports:
+      - 7233:7233
+      - 8233:8233
+    volumes:
+      # The image runs as `temporal`; mounting its home keeps the volume writable.
+      - temporal:/home/temporal
+  # @feature:end
 
 volumes:
   database:
+  temporal: # @feature temporal

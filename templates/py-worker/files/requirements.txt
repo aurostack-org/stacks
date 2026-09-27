@@ -8,6 +8,7 @@ googleapis-common-protos==1.75.4
 greenlet==3.5.1
 idna==3.18
 msgpack==1.1.2
+nexus-rpc==1.4.0
 opentelemetry-api==1.45.0
 opentelemetry-exporter-http-transport==0.66b0
 opentelemetry-exporter-otlp-common==0.66b0
@@ -25,6 +26,8 @@ redis==6.4.0
 requests==2.34.2
 semver==3.0.4
 SQLAlchemy==2.0.50
+temporalio==1.33.0
+types-protobuf==7.35.1.20260906
 typing_extensions==4.15.0
 urllib3==2.7.0
 websockets==16.0

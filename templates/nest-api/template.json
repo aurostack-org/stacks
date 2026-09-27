@@ -303,6 +303,19 @@
 				]
 			}
 		},
+		"temporal": {
+			"title": "Temporal client",
+			"description": "A TemporalService for starting and querying durable workflows (multi-step, long-waiting or crash-resumable work; BullMQ stays for fire-and-forget jobs), plus Temporal's dev server in compose.yml. Pair it with node-worker or py-worker built --with temporal to run the workflows. Connects lazily, so the API runs while Temporal is down.",
+			"files": [
+				"src/common/services/temporal.service.ts",
+				"src/common/__tests__/temporal.service.spec.ts"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@temporalio/client"
+				]
+			}
+		},
 		"graphql": {
 			"title": "GraphQL endpoint",
 			"description": "Code-first GraphQL via Apollo, registered alongside the REST controllers. Resolvers in any feature module are picked up automatically.",

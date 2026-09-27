@@ -114,6 +114,17 @@ namespace Config {
 	}
 	// @feature:end
 
+	// @feature:start temporal
+	export interface Temporal {
+		address: string;
+		namespace: string;
+		/** Where workflows started from here are queued (the worker polls it). */
+		taskQueue: string;
+		/** PEM; all empty means plaintext (the local dev server). */
+		tls: { ca: string; cert: string; key: string };
+	}
+	// @feature:end
+
 	export interface OAuthGoogle {
 		clientId: string;
 		clientSecret: string;
@@ -136,6 +147,7 @@ namespace Config {
 		smtp: SMTP; // @feature mail
 		s3: S3; // @feature media
 		rateLimit: RateLimit; // @feature rate-limit
+		temporal: Temporal; // @feature temporal
 		oauth: OAuth;
 	}
 
@@ -206,6 +218,14 @@ namespace Config {
 		RATE_LIMIT_AUTH_WINDOW: num().default(10),
 		RATE_LIMIT_AUTH_MAX: num().default(100),
 		RATE_LIMIT_IP_HEADERS: str().default('x-forwarded-for'),
+		// @feature:end
+		// @feature:start temporal
+		TEMPORAL_ADDRESS: str().default('localhost:7233'),
+		TEMPORAL_NAMESPACE: str().default('default'),
+		TEMPORAL_TASK_QUEUE: str().default('main'),
+		TEMPORAL_TLS_CA: z.string().default(''),
+		TEMPORAL_TLS_CERT: z.string().default(''),
+		TEMPORAL_TLS_KEY: z.string().default(''),
 		// @feature:end
 		// @feature:start feature-flags
 		GROWTHBOOK_API_HOST: str(),
@@ -305,6 +325,18 @@ namespace Config {
 				.filter(Boolean)
 		},
 		// @feature:end
+		// @feature:start temporal
+		temporal: {
+			address: env.TEMPORAL_ADDRESS || 'localhost:7233',
+			namespace: env.TEMPORAL_NAMESPACE || 'default',
+			taskQueue: env.TEMPORAL_TASK_QUEUE || 'main',
+			tls: {
+				ca: env.TEMPORAL_TLS_CA || '',
+				cert: env.TEMPORAL_TLS_CERT || '',
+				key: env.TEMPORAL_TLS_KEY || ''
+			}
+		},
+		// @feature:end
 		oauth: {
 			google: {
 				clientId: env.OAUTH_GOOGLE_CLIENT_ID || '',
@@ -377,6 +409,12 @@ export class CustomConfigService {
 	// @feature:start rate-limit
 	get rateLimit() {
 		return this.config.get('rateLimit', { infer: true });
+	}
+	// @feature:end
+
+	// @feature:start temporal
+	get temporal() {
+		return this.config.get('temporal', { infer: true });
 	}
 	// @feature:end
 

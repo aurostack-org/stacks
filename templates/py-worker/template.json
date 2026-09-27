@@ -78,6 +78,19 @@
 				"protobuf",
 				"wrapt"
 			]
+		},
+		"temporal": {
+			"title": "Temporal worker",
+			"description": "Runs durable workflows and activities from temporal/ (an example of each included) on its own TEMPORAL_TASK_QUEUE, next to the BullMQ consumers, with a span per workflow and activity when telemetry is on. Pair with the API's temporal feature, which starts them.",
+			"files": [
+				"utils/temporal.py",
+				"temporal/**"
+			],
+			"requirements": [
+				"nexus-rpc",
+				"temporalio",
+				"types-protobuf"
+			]
 		}
 	},
 	"hooks": [

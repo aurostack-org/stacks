@@ -16,6 +16,16 @@ interface Redis {
 	password?: string | undefined;
 }
 
+// @feature:start temporal
+interface Temporal {
+	address: string;
+	namespace: string;
+	taskQueue: string;
+	/** PEM; all empty means plaintext (the local dev server). */
+	tls: { ca: string; cert: string; key: string };
+}
+// @feature:end
+
 // @feature:start browser
 interface Puppeteer {
 	executablePath: string;
@@ -26,6 +36,7 @@ interface Config {
 	app: App;
 	database: Database;
 	redis: Redis;
+	temporal: Temporal; // @feature temporal
 	puppeteer: Puppeteer; // @feature browser
 }
 
@@ -43,6 +54,18 @@ const config: Config = {
 		user: process.env.REDIS_USER,
 		password: process.env.REDIS_PASSWORD
 	},
+	// @feature:start temporal
+	temporal: {
+		address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
+		namespace: process.env.TEMPORAL_NAMESPACE || 'default',
+		taskQueue: process.env.TEMPORAL_TASK_QUEUE || 'main',
+		tls: {
+			ca: process.env.TEMPORAL_TLS_CA ?? '',
+			cert: process.env.TEMPORAL_TLS_CERT ?? '',
+			key: process.env.TEMPORAL_TLS_KEY ?? ''
+		}
+	},
+	// @feature:end
 	// @feature:start browser
 	// Empty means "let Puppeteer use its bundled Chromium". In a slim container
 	// image you install Chromium separately and point this at it.
