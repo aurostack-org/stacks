@@ -208,7 +208,7 @@
 		},
 		{
 			"title": "yarn install",
-			"run": "yarn install",
+			"run": "yarn install --no-immutable",
 			"optional": true
 		},
 		{
