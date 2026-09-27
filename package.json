@@ -1,6 +1,6 @@
 {
 	"name": "@aurostack/stacks",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Scaffold new projects from house templates: a NestJS API, React app or Turborepo monorepo, and Node or Python workers. Subtractive templates plus a zero-dependency generator.",
 	"license": "MIT",
 	"author": "Aurostack (https://github.com/aurostack-org)",
