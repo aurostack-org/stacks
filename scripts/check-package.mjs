@@ -6,9 +6,11 @@
  */
 import { execSync } from 'node:child_process';
 
-const [pkg] = JSON.parse(
+// Older npm prints an array of packages, newer npm an object keyed by name.
+const output = JSON.parse(
 	execSync('npm pack --dry-run --json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
 );
+const [pkg] = Array.isArray(output) ? output : Object.values(output);
 const packed = new Set(pkg.files.map((f) => f.path));
 const tracked = execSync('git ls-files templates', { encoding: 'utf8' }).trim().split('\n');
 
