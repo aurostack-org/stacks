@@ -10,6 +10,7 @@ generated project, and architecture diagrams. Sources in [`docs/`](docs/).
 stack list                              # what's available
 stack info nest-api                     # its features and defaults
 stack new nest-api ~/Projects/acme/api --with realtime --without media
+stack add notifications --dir ~/Projects/acme/api   # later
 ```
 
 The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
@@ -23,8 +24,9 @@ The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
 /plugin install stacks@aurostack
 ```
 
-This adds four skills: `/stacks:stack-new` scaffolds a project (or just ask
-for "a new API"), `/stacks:stack-from-design` reads a finished claude.ai design,
+This adds five skills: `/stacks:stack-new` scaffolds a project (or just ask
+for "a new API"), `/stacks:stack-add` adds a feature to one later,
+`/stacks:stack-from-design` reads a finished claude.ai design,
 plans the services it needs, scaffolds them all and applies its design system
 to the UI kit theme, `/stacks:stack-tasks` turns that plan into a Linear
 backlog, and `/stacks:stack-sync` folds improvements back into the templates. The plugin carries the CLI and templates with it.

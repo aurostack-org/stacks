@@ -91,11 +91,9 @@ The generated project records what produced it in `stack.json`.
 
 ## Adding to a project after the fact
 
-There is no `stack add`. To bring in a feature later, generate a throwaway
-project with `--dry-run` off into a temp directory and copy the parts across, or
-just install the dependency and wire it by hand — the manifest's feature entry
-(`${CLAUDE_PLUGIN_ROOT}/templates/<t>/template.json`) lists exactly which files and
-package keys that feature owns, which is the checklist to follow.
+Use the `stack-add` skill: `stack add <feature>` merges exactly what a feature
+changes into an existing generated project, keeping the project's own edits.
+Choosing a feature now does not lock anything in.
 
 ## When a template does not fit
 
