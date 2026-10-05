@@ -571,6 +571,23 @@ function doctorOne(name) {
 		}
 	}
 
+	// An HTML-comment marker must end its line. The stripper treats the whole
+	// line as the marker's: an inline one deletes the line, a block one is
+	// removed with it, so text after `-->` silently disappears or survives the
+	// wrong selection. Markdown and HTML are where prose makes this easy to do.
+	for (const rel of files) {
+		if (!isTextFile(rel)) continue;
+		const lines = readText(path.join(m.__filesDir, rel)).split('\n');
+		lines.forEach((line, i) => {
+			if (/<!--\s*@feature[^>]*-->\s*\S/.test(line)) {
+				problems.push(
+					`${name}: ${rel}:${i + 1} has text after a <!-- @feature … --> marker; ` +
+						'a marker owns its whole line, so put it on a line of its own (or at the very end)'
+				);
+			}
+		});
+	}
+
 	// A feature whose file globs match nothing is almost always a stale path.
 	for (const [fname, def] of Object.entries(m.features)) {
 		if (!def.files?.length) continue;
