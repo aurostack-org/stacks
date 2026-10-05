@@ -71,10 +71,17 @@ warns and generation carries on. Run the step yourself afterwards. Pass
 ## Afterwards
 
 The project is yours. It has no dependency on stacks, and nothing regenerates
-over it. There is **no `stack add`**: to add a feature to an existing project,
-generate a throwaway copy with that feature into a temporary directory and move
-the parts across. The feature's entry in the manifest (its files and packages)
-is the checklist.
+over it. To bring in a feature later, [`stack add`](../../reference/cli/#stack-add)
+merges exactly what that feature changes into the project, keeping your own
+edits; to take the templates' improvements since it was generated,
+[`stack upgrade`](../../reference/cli/#stack-upgrade) does the same across
+versions.
 
-`stack.json` records what produced the project, which is useful when you later
-compare it against a newer template.
+Each project also ships its own guidance for Claude Code: a `CLAUDE.md` with
+its commands, layout and the rules the template relies on, and task skills in
+`.claude/skills/` (adding a resource, a model, a job, a screen, a component, a
+worker…). Both are stripped like the code, so they only describe the features
+the project has, and `stack add` brings a feature's guidance with it.
+
+`stack.json` records what produced the project (template, version, name,
+scope, port and features), which is what `stack add` regenerates from.

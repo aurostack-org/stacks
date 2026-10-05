@@ -147,14 +147,16 @@
 			"title": "Admin console",
 			"description": "Internal console over the same data layer, gated to the admin and superuser roles in the UI. The API must enforce the role on every endpoint it calls.",
 			"files": [
-				"apps/admin/**"
+				"apps/admin/**",
+				".claude/skills/add-admin-page/**"
 			]
 		},
 		"app-landing": {
 			"title": "Marketing site",
 			"description": "Public marketing site: a home page, an SEO route table, and build-time robots.txt, sitemap.xml and security.txt.",
 			"files": [
-				"apps/landing/**"
+				"apps/landing/**",
+				".claude/skills/add-marketing-page/**"
 			]
 		},
 		"realtime": {
@@ -162,7 +164,8 @@
 			"description": "socket.io-client wired to the backend's /realtime path, with room helpers and shared event-name constants. Pairs with the nest-api realtime feature.",
 			"files": [
 				"packages/api/src/socket.ts",
-				"packages/api/src/realtime-events.ts"
+				"packages/api/src/realtime-events.ts",
+				".claude/skills/add-realtime-listener/**"
 			],
 			"packageJson": {
 				"file": "packages/api/package.json",

@@ -60,6 +60,7 @@ export const sidebar = [
 	{
 		label: 'Guides',
 		items: [
+			{ label: 'Building with Claude Code', slug: 'guides/claude-code' },
 			{ label: 'A full-stack project', slug: 'guides/full-stack' },
 			{ label: 'Background work: BullMQ or Temporal', slug: 'guides/background-work' },
 			{ label: 'Observability end to end', slug: 'guides/observability' },

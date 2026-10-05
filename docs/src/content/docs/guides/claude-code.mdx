@@ -1,0 +1,166 @@
+---
+title: Building with Claude Code
+description: From a finished design to scaffolded, themed projects, a Linear backlog, and building in each project with its own skills.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+The stacks plugin for Claude Code (see [Installation](../../start/installation/))
+covers a product from its design to its first features. Each step is a skill;
+you can start at any of them.
+
+| Step | Skill | Starts from | Leaves you with |
+|---|---|---|---|
+| Plan and scaffold | `/stacks:stack-from-design` | a finished design | a project per service, the design system in the UI theme, `BUILD-PLAN.md` |
+| Get it running | `/stacks:stack-setup` | generated projects | every service running locally and verified, `SETUP.md` |
+| Plan the work | `/stacks:stack-tasks` | `BUILD-PLAN.md` | a Linear project with every task, `TASKS.md` |
+| Build | the project's own skills | a generated project | code written the template's way |
+| Add a feature later | `/stacks:stack-add` | a generated project | the feature merged in, your edits kept |
+| Keep up with the templates | `/stacks:stack-upgrade` | a generated project | the templates' changes since it was generated, merged in |
+| One project, no design | `/stacks:stack-new` | a conversation | one generated project |
+
+You can also just ask ("set this design up as projects", "put the plan in
+Linear", "add realtime to the API"); the skills trigger on what you say.
+
+## From a design to projects
+
+`stack-from-design` reads a finished design and its design system, works out
+what has to be built, and generates the projects for it. Give it a claude.ai
+Design artifact link, or a project from claude.ai/design. Other sources
+(screenshots, Figma) are out of scope.
+
+<Steps>
+
+1. **It reads every screen** and inventories them: the surfaces (landing,
+   auth, app, admin), the entities the screens show, the actions that change
+   something, and the interface elements that imply infrastructure (a
+   notification bell, file pickers, live counters, dashboards).
+
+2. **It proposes the services**: which templates, with which features, and
+   any workers, citing the screens behind each choice. What no template
+   provides (payments, search, a native app, a CLI) is listed as a **gap**,
+   marked hand-built, a service to choose, or a template candidate, and never
+   forced into a template.
+
+3. **You agree the plan and the layout**: it asks only what the design
+   doesn't answer, then the root folder, product name and npm scope, the
+   service directories (`api/`, `web/`, `worker/`) and ports.
+
+4. **It generates every project** with the CLI, API first, after a dry run of
+   all of them. It sets only the non-secret values that link the services;
+   credentials stay for you to fill in.
+
+5. **It applies the design system to the frontend's theme**: colours mapped
+   by role onto the UI kit's tokens, fonts self-hosted, the brand name, both
+   themes or one. Components are not restyled; that is build work. It checks
+   contrast and records failures rather than changing the designer's colours,
+   and the frontend's format, lint and build must pass.
+
+6. **It writes `BUILD-PLAN.md`** at the root: services and why, every screen
+   with its route, endpoints and entities, a first entity sketch, background
+   jobs, the design-system mapping, the gaps, open questions, and the setup
+   steps left.
+
+</Steps>
+
+It stops there: nothing is built beyond the scaffold and the theme.
+
+## Getting it running
+
+`stack-setup` takes the generated projects from "installed" to "running and
+verified locally", one project or a whole product root (API, then workers,
+then the frontend). It works from the [setup checklist](../../setup/checklist/):
+
+- **Env values**: links between services set to agree on both ends,
+  local-only secrets generated in place, a local mail catcher for SMTP.
+  Credentials only you have (SMTP, S3, OAuth, API keys) you fill in yourself:
+  it names the keys and the file, then checks they are set. It never asks for
+  a secret in chat or prints one; a small helper reports each key as missing,
+  empty, still the example, or set.
+- **Infisical first**: if `INFISICAL_PROJECT_ID` is set it pulls the dev
+  environment (`yarn secrets`), before anything else writes `.env`.
+- **Verified, not assumed**: the API is migrated, seeded and answering on
+  `/health`; the worker has the API's schema and connects; the frontend's
+  types are generated from the running API and you sign in once in the
+  browser.
+- **`SETUP.md`** records what runs, how to start it again, and everything
+  left before production as unticked boxes linked to the docs.
+
+## From the plan to a backlog
+
+`stack-tasks` turns `BUILD-PLAN.md` into PR-sized tasks, backend to frontend,
+and creates them in Linear through the claude.ai Linear connector. It needs a
+plan written by `stack-from-design`; it does not plan from code alone.
+
+- **One Linear project**, a milestone per phase in build order: Decisions,
+  Foundations, Data model, API, Background jobs, Frontend foundation,
+  Screens, Gaps, Launch. Labels per service (`api`, `web`, `worker`, `cli`,
+  `decision`).
+- **Every task** has a description with the paths it touches and the template
+  feature it builds on, testable acceptance criteria (screens link their
+  artboard), an estimate on the team's scale, a priority, and "blocked by"
+  links where the order is real. Decisions and Foundations go into a cycle.
+- **You review it first.** It writes a draft `TASKS.md` with the whole list
+  and three sample issue bodies, and reports the counts, the critical paths
+  (to the first working screen, and end to end) and what blocks the most.
+  Nothing is created in Linear until you say so, and it confirms the
+  workspace and team every run.
+- **Re-running is safe.** Each issue ends with a stable key
+  (`stack-key: api/feed`), so a run after the plan changes shows the
+  difference and updates the same issues. It never deletes an issue or
+  touches its state, assignee or comments.
+
+<Aside>
+Without Linear access, or when you only want the list, the draft `TASKS.md`
+is the result: estimates stay provisional until the team's scale is read.
+</Aside>
+
+## Building in a project
+
+Every generated project carries its own guidance, stripped to the features it
+has: a `CLAUDE.md` with its commands, layout and the rules the template relies
+on, and task skills in `.claude/skills/` for the work done again and again.
+
+| Template | Task skills |
+|---|---|
+| nest-api | [add-resource, add-model, add-config, add-job, add-email, add-realtime-event, add-notification](../../templates/nest-api/development/#building-with-claude-code) |
+| react-app | [add-screen, add-component, add-admin-page, add-marketing-page, add-realtime-listener](../../templates/react-app/development/#building-with-claude-code) |
+| react-monorepo | [the same, across its apps and packages](../../templates/react-monorepo/development/#building-with-claude-code) |
+| node-worker | [add-worker, add-workflow](../../templates/node-worker/development/#building-with-claude-code) |
+| py-worker | [add-worker, add-model, add-workflow](../../templates/py-worker/development/#building-with-claude-code) |
+
+Each template's Development page lists which skills come with which feature.
+They are plain files in the project's repository, so they reach everyone who
+opens it, with or without the plugin, and they are yours to change.
+
+## Adding a feature later
+
+`stack-add` runs [`stack add`](../../reference/cli/#stack-add), which merges
+exactly what a feature changes into the project and keeps your own edits;
+overlapping changes come back as conflict markers. The skill adds what the
+command can't decide: features that come in pairs across services (`realtime`
+on the API and the frontend, `temporal` on the API and a worker), resolving
+conflicts, running the project's checks, and listing what is left by hand
+(env values, migrations, regenerated API types). The project must have a
+clean git tree, so the addition is one diff to review or undo.
+
+## Keeping up with the templates
+
+`stack-upgrade` runs [`stack upgrade`](../../reference/cli/#stack-upgrade):
+the templates' changes between the release a project records and now (fixes,
+improvements, and new guidance such as `CLAUDE.md` and task skills) merged
+into the project, your edits kept. It reads the release notes in between,
+shows the dry run grouped by what it touches (guidance, app code, config,
+infrastructure, env), lets you exclude any of it by path, resolves conflicts,
+runs the project's checks, and lists what is left to do by hand: changed env
+defaults, a migration, a runtime version bump.
+
+## The files these leave behind
+
+| File | Where | Written by | Read by |
+|---|---|---|---|
+| `BUILD-PLAN.md` | product root | `stack-from-design` | `stack-tasks`, you |
+| `TASKS.md` | product root | `stack-tasks` | `stack-tasks` on a re-run |
+| `SETUP.md` | product root | `stack-setup` | you, before production |
+| `stack.json` | each project | `stack new`, `stack add`, `stack upgrade` | `stack add`, `stack upgrade` |
+| `CLAUDE.md`, `.claude/skills/` | each project | `stack new`, `stack add` | Claude Code in that project |

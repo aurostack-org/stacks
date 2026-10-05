@@ -8,6 +8,8 @@
  *   stack list
  *   stack info <template>
  *   stack new <template> <dir> [--with a,b] [--without c] [--all]
+ *   stack add <feature...> [--dir <project>]
+ *   stack upgrade [--dir <project>] [--exclude glob]
  *   stack extract <template> [--source dir] [--overwrite] [--prune]
  *   stack doctor [template]
  */
@@ -25,6 +27,8 @@ import {
 	sourceConfig
 } from './src/manifest.mjs';
 import { generate } from './src/generate.mjs';
+import { addFeatures } from './src/add.mjs';
+import { upgradeProject, sourceCommit } from './src/upgrade.mjs';
 import { extract } from './src/extract.mjs';
 import { runHooks } from './src/hooks.mjs';
 import {
@@ -33,7 +37,7 @@ import {
 	bracketBalance
 } from './src/strip.mjs';
 import { walk, matcher, isTextFile, readText, DEFAULT_SKIP_DIRS } from './src/fsx.mjs';
-import { kebab, interpolate } from './src/tokens.mjs';
+import { kebab, interpolate, buildContext } from './src/tokens.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(
@@ -69,6 +73,8 @@ ${c.bold('Commands')}
   list                              List available templates
   info <template>                   Show a template's features and defaults
   new <template> <dir> [options]    Generate a project
+  add <feature...> [options]        Add features to a generated project
+  upgrade [options]                 Bring a generated project up to the current templates
   extract <template> [options]      Refresh a template from its source repo
   doctor [template]                 Validate templates against their manifests
   version                           Print the stack version (also --version)
@@ -86,6 +92,17 @@ ${c.bold('new options')}
   --force              Write into a non-empty directory
   --dry-run            Print what would happen, write nothing
 
+${c.bold('add options')}
+  --dir <project>      The generated project ${c.dim('(default: current directory)')}
+  --no-hooks           Skip install / format / prisma generate
+  --force              Merge into uncommitted changes
+  --dry-run            Print what would change, write nothing
+
+${c.bold('upgrade options')}
+  --dir <project>      The generated project ${c.dim('(default: current directory)')}
+  --exclude <glob>     Leave matching paths alone (repeatable, comma lists)
+  --no-hooks / --force / --dry-run / --strict   as for add
+
 ${c.bold('extract options')}
   --source <dir>       Override the source path in stacks.local.json
   --overwrite          Replace template files that already differ
@@ -95,6 +112,7 @@ ${c.bold('extract options')}
 ${c.bold('Examples')}
   stack new nest-api ~/Projects/acme/api --with realtime,media
   stack new react-monorepo ~/Projects/acme/web --with app-landing,app-admin
+  stack add realtime notifications --dir ~/Projects/acme/api
   stack extract nest-api --source ~/Projects/acme/web/backend
 `;
 
@@ -171,6 +189,7 @@ function cmdNew(args, values) {
 	const options = {
 		name,
 		toolVersion: VERSION,
+		toolCommit: sourceCommit(ROOT),
 		scope: values.scope,
 		description: values.description,
 		port: values.port ? Number(values.port) : undefined,
@@ -220,6 +239,145 @@ function cmdNew(args, values) {
 		log(c.bold('  Next'));
 		for (const step of manifest.nextSteps) log(`    ${interpolate(step, ctx)}`);
 	}
+	log('');
+}
+
+function cmdAdd(args, values) {
+	const features = csv(args);
+	if (features.length === 0) {
+		log(c.red('Usage: stack add <feature...> [--dir <project>]'));
+		process.exit(1);
+	}
+	const project = path.resolve(expandHome(values.dir || '.'));
+	const stackFile = path.join(project, 'stack.json');
+	if (!fs.existsSync(stackFile)) {
+		throw new Error(
+			`${project} has no stack.json: run stack add inside a project stack generated, or pass --dir.`
+		);
+	}
+	const manifest = loadManifest(ROOT, JSON.parse(fs.readFileSync(stackFile, 'utf8')).template);
+	const dryRun = Boolean(values['dry-run']);
+
+	const report = addFeatures(manifest, project, {
+		features,
+		toolVersion: VERSION,
+		dryRun,
+		force: Boolean(values.force)
+	});
+
+	log('');
+	log(`  ${c.bold(manifest.title || manifest.name)} ← ${c.cyan(project)}`);
+	if (report.already.length) log(`  ${c.dim('already in')}  ${report.already.join(', ')}`);
+	if (report.added.length === 0) {
+		log(c.green('  Nothing to add.'));
+		log('');
+		return;
+	}
+	log(`  ${c.dim('adding')}      ${c.green(report.added.join(', '))}`);
+	printMerge(report);
+
+	if (dryRun) {
+		log(c.yellow('  dry run — nothing written'));
+		log('');
+		return;
+	}
+	rerunHooks(manifest, project, values);
+
+	log(report.conflicts.length ? c.yellow('  Done, with conflicts to resolve.') : c.green('  Done.'));
+	log(c.dim('  Review with git diff; git checkout . && git clean -fd undoes it.'));
+	log('');
+}
+
+/** The merge report shared by add and upgrade. */
+function printMerge(report) {
+	log(
+		`  ${c.dim('files')}       ${report.written.length} new, ` +
+			`${report.merged.length} merged, ${report.removed.length} removed` +
+			(report.excluded.length ? `, ${report.excluded.length} excluded` : '')
+	);
+	if (!report.formatted) {
+		log(
+			c.yellow(
+				"  Could not format the template copies with the project's Prettier (not installed?): expect formatting conflicts."
+			)
+		);
+	}
+	const list = (title, items, tint = (s) => s) => {
+		if (!items.length) return;
+		log(`  ${title}`);
+		for (const item of items) log(`    ${tint(item)}`);
+	};
+	list(c.dim('new'), report.written, c.green);
+	list(c.dim('merged'), report.merged);
+	list(c.dim('removed'), report.removed);
+	list(c.dim('excluded'), report.excluded);
+	list(c.yellow('conflicts'), report.conflicts, c.yellow);
+	list(c.yellow('review'), report.kept, c.yellow);
+	if (report.envKeys.length) {
+		log(`  ${c.dim('.env')}        new keys with placeholder values: ${report.envKeys.join(', ')}`);
+	}
+	if (report.envStale?.length) {
+		log(
+			`  ${c.yellow('.env')}        still the old default (the template's changed; yours left alone): ${report.envStale.join(', ')}`
+		);
+	}
+	log('');
+}
+
+/** Install, format and generate again after a merge; the first commit belongs to `new`. */
+function rerunHooks(manifest, project, values) {
+	const hooks = (manifest.hooks || []).filter((h) => !/^git init/.test(h.run));
+	if (!hooks.length) return;
+	const stack = JSON.parse(fs.readFileSync(path.join(project, 'stack.json'), 'utf8'));
+	log(c.bold('  Post-merge'));
+	runHooks({ ...manifest, hooks }, project, new Set(stack.features), buildContext(stack), {
+		skip: values['no-hooks'],
+		strict: Boolean(values.strict),
+		log
+	});
+	log('');
+}
+
+function cmdUpgrade(values) {
+	const project = path.resolve(expandHome(values.dir || '.'));
+	const stackFile = path.join(project, 'stack.json');
+	if (!fs.existsSync(stackFile)) {
+		throw new Error(
+			`${project} has no stack.json: run stack upgrade inside a project stack generated, or pass --dir.`
+		);
+	}
+	const manifest = loadManifest(ROOT, JSON.parse(fs.readFileSync(stackFile, 'utf8')).template);
+	const dryRun = Boolean(values['dry-run']);
+	const report = upgradeProject(manifest, project, {
+		root: ROOT,
+		toolVersion: VERSION,
+		dryRun,
+		force: Boolean(values.force),
+		exclude: csv(values.exclude)
+	});
+
+	log('');
+	log(`  ${c.bold(manifest.title || manifest.name)} ← ${c.cyan(project)}`);
+	log(`  ${c.dim('from')}        stacks ${report.from} ${c.dim(`(${report.source})`)}`);
+	log(`  ${c.dim('to')}          stacks ${report.to}`);
+	if (report.dropped.length) log(c.yellow(`  no longer in the template: ${report.dropped.join(', ')}`));
+	if (report.arrived.length) log(c.yellow(`  now always on: ${report.arrived.join(', ')}`));
+	const changed = report.written.length + report.merged.length + report.removed.length + report.conflicts.length;
+	if (changed === 0 && report.kept.length === 0) {
+		log(c.green('  Already up to date.'));
+		log('');
+		if (!dryRun) log(c.dim('  stack.json now records the current version.'));
+		return;
+	}
+	printMerge(report);
+	if (dryRun) {
+		log(c.yellow('  dry run — nothing written'));
+		log('');
+		return;
+	}
+	rerunHooks(manifest, project, values);
+	log(report.conflicts.length ? c.yellow('  Done, with conflicts to resolve.') : c.green('  Done.'));
+	log(c.dim('  Review with git diff; git checkout . && git clean -fd undoes it.'));
 	log('');
 }
 
@@ -478,6 +636,23 @@ function doctorOne(name) {
 		}
 	}
 
+	// An HTML-comment marker must end its line. The stripper treats the whole
+	// line as the marker's: an inline one deletes the line, a block one is
+	// removed with it, so text after `-->` silently disappears or survives the
+	// wrong selection. Markdown and HTML are where prose makes this easy to do.
+	for (const rel of files) {
+		if (!isTextFile(rel)) continue;
+		const lines = readText(path.join(m.__filesDir, rel)).split('\n');
+		lines.forEach((line, i) => {
+			if (/<!--\s*@feature[^>]*-->\s*\S/.test(line)) {
+				problems.push(
+					`${name}: ${rel}:${i + 1} has text after a <!-- @feature … --> marker; ` +
+						'a marker owns its whole line, so put it on a line of its own (or at the very end)'
+				);
+			}
+		});
+	}
+
 	// A feature whose file globs match nothing is almost always a stale path.
 	for (const [fname, def] of Object.entries(m.features)) {
 		if (!def.files?.length) continue;
@@ -623,6 +798,8 @@ function main() {
 			with: { type: 'string', multiple: true },
 			without: { type: 'string', multiple: true },
 			source: { type: 'string' },
+			dir: { type: 'string' },
+			exclude: { type: 'string', multiple: true },
 			all: { type: 'boolean' },
 			force: { type: 'boolean' },
 			overwrite: { type: 'boolean' },
@@ -654,6 +831,10 @@ function main() {
 			return cmdInfo(rest[0]);
 		case 'new':
 			return cmdNew(rest, values);
+		case 'add':
+			return cmdAdd(rest, values);
+		case 'upgrade':
+			return cmdUpgrade(values);
 		case 'extract':
 			return cmdExtract(rest, values);
 		case 'doctor':

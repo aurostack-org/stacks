@@ -64,6 +64,12 @@ function stripInlineMarker(line) {
 		if (idx !== -1 && idx > cut) cut = idx;
 	}
 	if (cut === -1) return line;
+	// A shorter leader can sit inside a longer one (`--` in `<!--`): cut at the
+	// start of the longer one, or `text <!-- @feature x -->` keeps a stray `<!`.
+	for (const leader of COMMENT_LEADERS) {
+		const idx = line.lastIndexOf(leader, cut);
+		if (idx !== -1 && idx < cut && idx + leader.length > cut) cut = idx;
+	}
 	const kept = line.slice(0, cut).replace(/\s+$/, '');
 	return kept;
 }

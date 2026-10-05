@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
 
 ## After generating
 
@@ -37,6 +38,8 @@ Generation copied `.env.example` to `.env`, created `.venv`, installed
 
 ## Adding a job type
 
+The project's own [task skills](#building-with-claude-code) carry the full steps for each of these.
+
 1. Create `workers/<name>/process.py` with an `async def <name>_process(job, job_token)`.
 2. Start it in `worker.py`: `create_worker("<queue>", <name>_process)`, and add
    `await <worker>.close()` to the cleanup block.
@@ -62,3 +65,22 @@ and `workflow.random()`, never I/O.
 `requirements.txt` pins every package. Add one with
 `.venv/bin/pip install <pkg>` and pin its version in `requirements.txt`; the
 Docker image installs exactly that file.
+
+## Building with Claude Code
+
+The project ships its own guidance for Claude Code, generated with it and
+stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: the worker's commands, layout and rules (models mirror the API's tables by hand, queue names match the producer, its own Temporal task queue). Claude Code loads it in every session
+  in the project.
+- **Task skills** in `.claude/skills/<name>/SKILL.md`: step-by-step recipes
+  that point at the template's own example code. Ask for the task in plain
+  words ("add an endpoint for invoices") and the matching skill loads.
+
+<SkillTable template="py-worker" />
+
+A skill that belongs to a feature arrives with it: adding the feature later
+with [`stack add`](../../../reference/cli/#stack-add) brings its skill and its
+`CLAUDE.md` sections too. Both are yours to edit as the project grows its own
+conventions. See [Building with Claude Code](../../../guides/claude-code/) for
+the whole workflow, from a design to a backlog.

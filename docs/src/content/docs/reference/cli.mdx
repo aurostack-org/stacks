@@ -14,6 +14,8 @@ stack <command> [options]
 | [`stack list`](#stack-list) | List the templates |
 | [`stack info <template>`](#stack-info) | Show a template's features and defaults |
 | [`stack new <template> <dir>`](#stack-new) | Generate a project |
+| [`stack add <feature…>`](#stack-add) | Add features to a generated project |
+| [`stack upgrade`](#stack-upgrade) | Bring a generated project up to the current templates |
 | [`stack extract <template>`](#stack-extract) | Refresh a template from its source repo (maintainers) |
 | [`stack doctor [template]`](#stack-doctor) | Validate templates against their manifests |
 | `stack version`, `--version`, `-v` | Print the stacks version |
@@ -87,6 +89,113 @@ Then the hooks run, and the template's next steps are printed.
 | `Cannot disable "b": feature "a" requires it. Drop "a" too, or keep "b".` | You dropped a requirement of a feature you kept |
 | `Hook failed: <label> (exit N)` | Only with `--strict`: a hook failed. The files are already written |
 | `Template "t" has no files/ directory yet. Run: stack extract t` | A template that was never extracted |
+
+### stack.json
+
+Every generated project gets a `stack.json` at its root recording what
+produced it. `stack add` regenerates from it, so leave it in the repository.
+
+| Field | Holds |
+|---|---|
+| `template`, `templateVersion` | the template and its manifest version |
+| `stackVersion` | the release the project matches as a whole: set by `stack new`, moved only by `stack upgrade` |
+| `stackCommit` | the exact stacks commit, when it was generated or upgraded from a checkout between releases |
+| `upgradeExcluded` | paths a `stack upgrade --exclude` left out, so the project doesn't fully match `stackVersion` |
+| `generatedAt`, `updatedAt` | when; `updatedAt` appears after a `stack add` or `stack upgrade` |
+| `name`, `scope`, `port`, `description` | the identity it was generated with |
+| `features` | every feature it has, sorted |
+
+## stack add
+
+```sh
+stack add <feature...> [--dir <project>] [options]
+```
+
+Adds optional features to a project `stack new` generated, after the fact. Run
+it inside the project or point `--dir` at it; the project's `stack.json` says
+which template and features it has.
+
+It is a three-way merge with the template as the common base. The template is
+generated twice into a scratch directory, with the project's name, scope and
+port, once with the features the project has and once with the new ones too,
+and both copies are formatted with the project's own Prettier. The difference
+between them is exactly what the features change, and that is what gets
+applied:
+
+- **new files** are written; a file you already have at that path is reported
+  as a conflict and left alone;
+- **changed files** are merged with `git merge-file`, so your edits survive and
+  only hunks that genuinely overlap come back as conflict markers
+  (`<<<<<<< yours` … `>>>>>>> with <feature>`);
+- **`package.json`** is merged by key: the features' dependencies and scripts
+  are added and nothing else is touched;
+- **`.env`** gets the new `.env.example` keys, with their placeholder values,
+  under a `# Added by stack add` comment.
+
+Requirements come along (adding `media` also adds `queue` if the project lacks
+it). `stack.json` is updated, then the template's hooks run again except the
+first commit: install, format, Prisma generate.
+
+| Option | Default | Effect |
+|---|---|---|
+| `--dir <project>` | the current directory | The generated project |
+| `--dry-run` | | Print what would change; write nothing, run no hooks |
+| `--force` | | Merge into uncommitted changes, or into a directory that is not a git repository |
+| `--no-hooks` | | Skip install, format and Prisma generate |
+| `--strict` | | Make any hook failure fatal |
+
+The project must be a git repository with a clean working tree, so the whole
+addition is one diff: review it with `git diff`, undo it with
+`git checkout . && git clean -fd`.
+
+**Errors:**
+
+| Message | Cause |
+|---|---|
+| `… has no stack.json …` | Not a project `stack new` generated, or `--dir` points elsewhere |
+| `… has uncommitted changes …` | Commit or stash first, or pass `--force` |
+| `… is not a git repository …` | `git init` and commit first, or pass `--force` |
+| `Unknown feature "x" for template "t". Known: …` | A name the project's template doesn't declare |
+
+Projects generated before stacks recorded `port` in `stack.json` regenerate
+with the template's default port. If yours used `--port`, add `"port": <n>` to
+`stack.json` first, or expect a conflict on the lines that carry it.
+
+## stack upgrade
+
+```sh
+stack upgrade [--dir <project>] [--exclude <glob>] [options]
+```
+
+Brings a generated project up to the current templates: fixes,
+improvements, and guidance (`CLAUDE.md`, task skills) added since it was
+generated. The same three-way merge as [`stack add`](#stack-add), across
+versions instead of features: the template is generated once with the release
+the project's `stack.json` records (that release's own CLI and templates) and
+once with the current ones, both with the project's features, and the
+difference is merged into the project.
+
+The recorded release comes from this checkout's git history when there is
+one (the exact `stackCommit`, else the `v<stackVersion>` tag), otherwise from
+npm, so upgrade works from the plugin or an npm install too. Upgrade keeps
+the project's features: a feature the template has since made always-on
+comes along and is reported; one it has removed is reported and left alone.
+
+`.env` values are never changed. Keys whose default changed in the template
+while your `.env` still holds the old one are listed by name, and new keys
+are appended with placeholders, as `stack add` does.
+
+| Option | Default | Effect |
+|---|---|---|
+| `--dir <project>` | the current directory | The generated project |
+| `--exclude <glob>` | | Leave matching paths exactly as they are (repeatable, comma lists); recorded in `stack.json` as `upgradeExcluded` |
+| `--dry-run` | | Print what would change; write nothing, run no hooks |
+| `--force` | | Merge into uncommitted changes |
+| `--no-hooks` | | Skip install, format and Prisma generate |
+| `--strict` | | Make any hook failure fatal |
+
+Like `stack add`, it needs a clean git tree, and `git checkout . && git clean
+-fd` undoes it.
 
 ## stack extract
 

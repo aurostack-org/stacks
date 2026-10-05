@@ -211,8 +211,8 @@ import { OriginBuilder } from 'common/misc';
 				// Job spans for producers and workers; a no-op unless the
 				// OpenTelemetry SDK is running (see src/instrumentation.ts).
 				telemetry: new BullMQOtel({
-					tracerName: 'acme-api',
-					meterName: 'acme-api',
+					tracerName: 'acme',
+					meterName: 'acme',
 					enableMetrics: true
 				})
 			})

@@ -102,7 +102,8 @@
 				"cache"
 			],
 			"files": [
-				"src/common/modules/queue.module.ts"
+				"src/common/modules/queue.module.ts",
+				".claude/skills/add-job/**"
 			],
 			"packageJson": {
 				"dependencies": [
@@ -128,7 +129,8 @@
 				"src/common/types/email.ts",
 				"emails/**",
 				"__mocks__/**",
-				"src/common/__tests__/mail.service.spec.ts"
+				"src/common/__tests__/mail.service.spec.ts",
+				".claude/skills/add-email/**"
 			],
 			"packageJson": {
 				"dependencies": [
@@ -273,7 +275,8 @@
 				"auth"
 			],
 			"files": [
-				"src/realtime/**"
+				"src/realtime/**",
+				".claude/skills/add-realtime-event/**"
 			],
 			"packageJson": {
 				"dependencies": [
@@ -293,7 +296,8 @@
 			"files": [
 				"src/notifications/**",
 				"prisma/schema/notification.prisma",
-				"test/notifications.spec.ts"
+				"test/notifications.spec.ts",
+				".claude/skills/add-notification/**"
 			]
 		},
 		"feature-flags": {

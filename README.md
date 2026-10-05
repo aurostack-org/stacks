@@ -10,6 +10,8 @@ generated project, and architecture diagrams. Sources in [`docs/`](docs/).
 stack list                              # what's available
 stack info nest-api                     # its features and defaults
 stack new nest-api ~/Projects/acme/api --with realtime --without media
+stack add notifications --dir ~/Projects/acme/api   # later
+stack upgrade --dir ~/Projects/acme/api             # after a stacks release
 ```
 
 The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
@@ -23,9 +25,14 @@ The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
 /plugin install stacks@aurostack
 ```
 
-This adds two skills: `/stacks:stack-new` scaffolds a project (or just ask for
-"a new API"), and `/stacks:stack-sync` folds improvements back into the
-templates. The plugin carries the CLI and templates with it.
+This adds six skills: `/stacks:stack-new` scaffolds a project (or just ask
+for "a new API"), `/stacks:stack-setup` gets it running locally,
+`/stacks:stack-add` adds a feature to one later, `/stacks:stack-upgrade`
+brings it up to the current templates,
+`/stacks:stack-from-design` reads a finished claude.ai design,
+plans the services it needs, scaffolds them all and applies its design system
+to the UI kit theme, `/stacks:stack-tasks` turns that plan into a Linear
+backlog, and `/stacks:stack-sync` folds improvements back into the templates. The plugin carries the CLI and templates with it.
 
 To have Claude Code offer it to everyone who opens a repository, commit this to
 the repository's `.claude/settings.json`:

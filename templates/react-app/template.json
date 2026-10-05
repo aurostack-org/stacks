@@ -102,14 +102,16 @@
 			"description": "A public landing page at `/`, an SEO route table, and build-time robots.txt / sitemap.xml / security.txt. Including it moves the authenticated app to /app so the landing page can own the root — see src/lib/paths.ts.",
 			"files": [
 				"src/routes/marketing/**",
-				"src/features/seo/**"
+				"src/features/seo/**",
+				".claude/skills/add-marketing-page/**"
 			]
 		},
 		"admin": {
 			"title": "Admin console",
 			"description": "A role-gated /admin branch with its own nav, over the same data layer. The guard decides what renders; the API still has to enforce the role.",
 			"files": [
-				"src/routes/admin/**"
+				"src/routes/admin/**",
+				".claude/skills/add-admin-page/**"
 			]
 		},
 		"realtime": {
@@ -117,7 +119,8 @@
 			"description": "socket.io-client wired to the backend's /realtime path, with room helpers and shared event-name constants. Pairs with the nest-api realtime feature.",
 			"files": [
 				"src/shared/api/socket.ts",
-				"src/shared/api/realtime-events.ts"
+				"src/shared/api/realtime-events.ts",
+				".claude/skills/add-realtime-listener/**"
 			],
 			"packageJson": {
 				"dependencies": [

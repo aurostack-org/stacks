@@ -23,7 +23,7 @@ type Env = Record<string, string | undefined>;
 
 export function resolveTelemetry(
 	env: Env = process.env,
-	defaultServiceName = 'acme-api'
+	defaultServiceName = 'acme'
 ): TelemetryConfig {
 	const serviceName = env.OTEL_SERVICE_NAME || defaultServiceName;
 	const environment = env.APP_ENV || 'development';

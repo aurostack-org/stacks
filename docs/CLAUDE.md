@@ -4,8 +4,9 @@ Astro Starlight site for stacks, deployed to GitHub Pages from `main` at
 https://stacks.aurostack.co.
 
 - `npm run dev` (http://localhost:4321/), `npm run build` (what CI runs).
-- Feature and env tables render from `templates/*/template.json` and
-  `.env*.example` via `scripts/sync-templates.mjs` (writes
+- Feature, env and skill tables render from `templates/*/template.json`,
+  `.env*.example` and `files/.claude/skills/*/SKILL.md` via
+  `scripts/sync-templates.mjs` (writes
   `src/data/generated/`, gitignored). Don't hand-copy those facts into pages.
 - Every env variable needs a note in `src/data/env-notes.json` (key: `NAME` or
   `template:NAME`); the build fails otherwise.

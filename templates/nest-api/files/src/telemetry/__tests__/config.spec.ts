@@ -21,7 +21,7 @@ describe('resolveTelemetry', () => {
 	);
 
 	it('builds the OpenObserve endpoints and org-token auth', () => {
-		const config = resolveTelemetry(openobserve, 'acme-api');
+		const config = resolveTelemetry(openobserve, 'acme');
 
 		expect(config.enabled).toBe(true);
 		expect(config.urls).toEqual({
@@ -31,7 +31,7 @@ describe('resolveTelemetry', () => {
 		});
 		expect(config.headers).toEqual({
 			Authorization: `Basic ${Buffer.from('acme:o2oi_secret').toString('base64')}`,
-			'stream-name': 'acme-api'
+			'stream-name': 'acme'
 		});
 	});
 

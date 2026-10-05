@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
 
 ## After generating
 
@@ -85,6 +86,8 @@ truncated and reseeded between specs. `test/factory` has the fixtures and a
 
 ## Adding things
 
+The project's own [task skills](#building-with-claude-code) carry the full steps for each of these.
+
 - **A module:** `yarn gen module <name>` (Nest schematics), then register it in
   `AppModule`. Controllers opt into versioning with `version: '1'`.
 - **A route that's public:** `@AllowAnonymous()`. Everything else requires a
@@ -97,3 +100,22 @@ truncated and reseeded between specs. `test/factory` has the fixtures and a
   `src/common/types/email.ts`, and a method on `MailService`.
 - **A config variable:** interface, schema and `getVariables` in
   `config.service.ts`, a line in `.env.example`, and a note in the docs.
+
+## Building with Claude Code
+
+The project ships its own guidance for Claude Code, generated with it and
+stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: the API's commands, layout and the rules the template relies on (a session on every route, Zod in and out, 404 rather than 403, config only through `CustomConfigService`), with a short note for each feature the project has. Claude Code loads it in every session
+  in the project.
+- **Task skills** in `.claude/skills/<name>/SKILL.md`: step-by-step recipes
+  that point at the template's own example code. Ask for the task in plain
+  words ("add an endpoint for invoices") and the matching skill loads.
+
+<SkillTable template="nest-api" />
+
+A skill that belongs to a feature arrives with it: adding the feature later
+with [`stack add`](../../../reference/cli/#stack-add) brings its skill and its
+`CLAUDE.md` sections too. Both are yours to edit as the project grows its own
+conventions. See [Building with Claude Code](../../../guides/claude-code/) for
+the whole workflow, from a design to a backlog.

@@ -87,15 +87,19 @@ Print the template's `nextSteps`, then say plainly:
   backend. Vite inlines it at build time, so a built image is pinned to one
   environment — that is a build arg, not runtime config.
 
-The generated project records what produced it in `stack.json`.
+Offer the `stack-setup` skill to do that setup and verify the project boots.
+
+The generated project records what produced it in `stack.json`, and ships its
+own guidance: a `CLAUDE.md` with its commands, layout and rules, and task
+skills in `.claude/skills/` (`add-resource`, `add-screen`, `add-worker`…)
+covering only the features it has. Point at them: they are how the next
+session builds in the project the template's way.
 
 ## Adding to a project after the fact
 
-There is no `stack add`. To bring in a feature later, generate a throwaway
-project with `--dry-run` off into a temp directory and copy the parts across, or
-just install the dependency and wire it by hand — the manifest's feature entry
-(`${CLAUDE_PLUGIN_ROOT}/templates/<t>/template.json`) lists exactly which files and
-package keys that feature owns, which is the checklist to follow.
+Use the `stack-add` skill: `stack add <feature>` merges exactly what a feature
+changes into an existing generated project, keeping the project's own edits.
+Choosing a feature now does not lock anything in.
 
 ## When a template does not fit
 

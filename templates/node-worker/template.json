@@ -43,7 +43,8 @@
 			"default": true,
 			"files": [
 				"src/utils/worker.ts",
-				"src/workers/**"
+				"src/workers/**",
+				".claude/skills/add-worker/**"
 			],
 			"packageJson": {
 				"dependencies": [
@@ -57,7 +58,8 @@
 			"title": "Temporal worker",
 			"description": "Runs durable workflows and activities from src/temporal (an example of each included) on TEMPORAL_TASK_QUEUE, next to the BullMQ consumers. Pair with the API's temporal feature, which starts them.",
 			"files": [
-				"src/temporal/**"
+				"src/temporal/**",
+				".claude/skills/add-workflow/**"
 			],
 			"packageJson": {
 				"dependencies": [
