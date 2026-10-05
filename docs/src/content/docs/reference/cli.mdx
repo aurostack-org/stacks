@@ -15,6 +15,7 @@ stack <command> [options]
 | [`stack info <template>`](#stack-info) | Show a template's features and defaults |
 | [`stack new <template> <dir>`](#stack-new) | Generate a project |
 | [`stack add <feature…>`](#stack-add) | Add features to a generated project |
+| [`stack upgrade`](#stack-upgrade) | Bring a generated project up to the current templates |
 | [`stack extract <template>`](#stack-extract) | Refresh a template from its source repo (maintainers) |
 | [`stack doctor [template]`](#stack-doctor) | Validate templates against their manifests |
 | `stack version`, `--version`, `-v` | Print the stacks version |
@@ -97,8 +98,10 @@ produced it. `stack add` regenerates from it, so leave it in the repository.
 | Field | Holds |
 |---|---|
 | `template`, `templateVersion` | the template and its manifest version |
-| `stackVersion` | the stacks version that generated (or last added to) it |
-| `generatedAt`, `updatedAt` | when; `updatedAt` appears after a `stack add` |
+| `stackVersion` | the release the project matches as a whole: set by `stack new`, moved only by `stack upgrade` |
+| `stackCommit` | the exact stacks commit, when it was generated or upgraded from a checkout between releases |
+| `upgradeExcluded` | paths a `stack upgrade --exclude` left out, so the project doesn't fully match `stackVersion` |
+| `generatedAt`, `updatedAt` | when; `updatedAt` appears after a `stack add` or `stack upgrade` |
 | `name`, `scope`, `port`, `description` | the identity it was generated with |
 | `features` | every feature it has, sorted |
 
@@ -157,6 +160,42 @@ addition is one diff: review it with `git diff`, undo it with
 Projects generated before stacks recorded `port` in `stack.json` regenerate
 with the template's default port. If yours used `--port`, add `"port": <n>` to
 `stack.json` first, or expect a conflict on the lines that carry it.
+
+## stack upgrade
+
+```sh
+stack upgrade [--dir <project>] [--exclude <glob>] [options]
+```
+
+Brings a generated project up to the current templates: fixes,
+improvements, and guidance (`CLAUDE.md`, task skills) added since it was
+generated. The same three-way merge as [`stack add`](#stack-add), across
+versions instead of features: the template is generated once with the release
+the project's `stack.json` records (that release's own CLI and templates) and
+once with the current ones, both with the project's features, and the
+difference is merged into the project.
+
+The recorded release comes from this checkout's git history when there is
+one (the exact `stackCommit`, else the `v<stackVersion>` tag), otherwise from
+npm, so upgrade works from the plugin or an npm install too. Upgrade keeps
+the project's features: a feature the template has since made always-on
+comes along and is reported; one it has removed is reported and left alone.
+
+`.env` values are never changed. Keys whose default changed in the template
+while your `.env` still holds the old one are listed by name, and new keys
+are appended with placeholders, as `stack add` does.
+
+| Option | Default | Effect |
+|---|---|---|
+| `--dir <project>` | the current directory | The generated project |
+| `--exclude <glob>` | | Leave matching paths exactly as they are (repeatable, comma lists); recorded in `stack.json` as `upgradeExcluded` |
+| `--dry-run` | | Print what would change; write nothing, run no hooks |
+| `--force` | | Merge into uncommitted changes |
+| `--no-hooks` | | Skip install, format and Prisma generate |
+| `--strict` | | Make any hook failure fatal |
+
+Like `stack add`, it needs a clean git tree, and `git checkout . && git clean
+-fd` undoes it.
 
 ## stack extract
 

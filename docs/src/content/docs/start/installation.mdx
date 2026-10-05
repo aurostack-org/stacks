@@ -39,7 +39,7 @@ Inside Claude Code:
 /plugin install stacks@aurostack
 ```
 
-The plugin brings the CLI, the templates and six skills:
+The plugin brings the CLI, the templates and seven skills:
 
 - **`/stacks:stack-new`** scaffolds a project. It asks which template and
   features you need, runs the CLI, and walks you through the setup the project
@@ -53,6 +53,9 @@ The plugin brings the CLI, the templates and six skills:
   (realtime, notifications, an admin console…). It runs `stack add`, which
   merges exactly what the feature changes and keeps your edits, then resolves
   any conflicts and lists the steps left (env values, migrations).
+- **`/stacks:stack-upgrade`** brings a generated project up to the current
+  templates with `stack upgrade`: what the templates changed since its release,
+  merged in, your edits kept, with anything you exclude left alone.
 - **`/stacks:stack-from-design`** starts from a finished claude.ai design and its
   design system. It works out what the screens need, from frontend to backend,
   agrees the plan and the folder layout with you, generates every project,

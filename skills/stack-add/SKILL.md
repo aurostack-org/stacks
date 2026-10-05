@@ -120,6 +120,8 @@ undoes it. Offer to commit it as one commit (`feat: add <feature> from the
 
 ## When it does not apply
 
+- **Template improvements since the project was generated** are not a
+  feature: that is `stack-upgrade`.
 - **Removing a feature** is not supported: it would delete code the project
   may have built on. Say so; removal is a hand job guided by the feature's
   `files` in the manifest.

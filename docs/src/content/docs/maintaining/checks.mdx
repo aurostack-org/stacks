@@ -42,6 +42,7 @@ again as the first stage of every release:
 | py-worker | default, `--with temporal` | byte-compile every module |
 | react-app, react-monorepo | default, `--all` | typecheck, lint, build |
 | stack add | nest-api + realtime, react-app + marketing, react-monorepo + app-admin, node-worker + temporal, py-worker + temporal | `scripts/check-add.mjs`: generate with the defaults, `stack add` the feature, and require the result to match `stack new --with` it exactly |
+| stack upgrade | every template | `scripts/check-upgrade.mjs`: generate with the latest published release, `stack upgrade` with this checkout, and require the result to match a fresh `stack new` (`.env` compared by keys) |
 | Docker images | nest-api, node-worker, node-worker `--with temporal` | `docker build` |
 | Docs | | build this site, including the env-coverage and link checks |
 

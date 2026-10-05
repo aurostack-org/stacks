@@ -157,6 +157,16 @@ Run `stack doctor react-app` after every derive.
 
 4. **Run `stack doctor <template>`** and fix what it reports.
 
+## How template changes reach projects
+
+A change to a template reaches projects generated earlier only through
+`stack upgrade` (the `stack-upgrade` skill), which merges what changed between
+the project's recorded release and now. So a template change should be one a
+project can take as a merge: keep files where they are unless moving them is
+the point, and say in the PR what a project has to do beyond the code (a new
+env key, a migration, a runtime bump), because that is what the release notes
+upgrades read will show.
+
 ## Keeping the in-project guidance true
 
 Every template ships guidance for the project it generates: a `CLAUDE.md` at

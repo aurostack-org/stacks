@@ -73,7 +73,9 @@ warns and generation carries on. Run the step yourself afterwards. Pass
 The project is yours. It has no dependency on stacks, and nothing regenerates
 over it. To bring in a feature later, [`stack add`](../../reference/cli/#stack-add)
 merges exactly what that feature changes into the project, keeping your own
-edits.
+edits; to take the templates' improvements since it was generated,
+[`stack upgrade`](../../reference/cli/#stack-upgrade) does the same across
+versions.
 
 Each project also ships its own guidance for Claude Code: a `CLAUDE.md` with
 its commands, layout and the rules the template relies on, and task skills in
