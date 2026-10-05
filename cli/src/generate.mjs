@@ -232,6 +232,8 @@ export function generate(manifest, target, options) {
 					template: manifest.name,
 					templateVersion: manifest.version || '0.1.0',
 					stackVersion: options.toolVersion,
+					// Between releases (a checkout), the exact templates it came from.
+					...(options.toolCommit ? { stackCommit: options.toolCommit } : {}),
 					generatedAt: new Date().toISOString(),
 					name: ctx.name,
 					scope: ctx.scope,

@@ -235,6 +235,28 @@ jobs:
       - name: stack add matches stack new --with
         run: node scripts/check-add.mjs ${{ matrix.template }} ${{ matrix.feature }} /tmp/stack-ci/add
 
+  upgrade:
+    name: stack upgrade (${{ matrix.template }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [nest-api, react-app, react-monorepo, node-worker, py-worker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v5
+        if: matrix.template == 'py-worker'
+        with:
+          python-version: '3.14'
+      - run: corepack enable
+      # From the latest published release: what people actually have.
+      - name: stack upgrade matches stack new
+        run: node scripts/check-upgrade.mjs ${{ matrix.template }} "$(npm view @aurostack/stacks version)" /tmp/stack-ci/upgrade
+
   docker:
     name: Docker image (${{ matrix.template }}${{ matrix.args && format(', {0}', matrix.args) || '' }})
     needs: cli

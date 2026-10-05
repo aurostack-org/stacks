@@ -20,10 +20,10 @@ import { spawnSync } from 'node:child_process';
 
 import { generate } from './generate.mjs';
 import { resolveFeatures } from './manifest.mjs';
-import { walk, isTextFile, readText, writeText, copyBinary, rmrf, DEFAULT_SKIP_DIRS } from './fsx.mjs';
+import { walk, isTextFile, readText, writeText, copyBinary, rmrf, matcher, DEFAULT_SKIP_DIRS } from './fsx.mjs';
 
 /** The features the project has, closed over requirements, plus the new ones. */
-function selection(manifest, have, add) {
+export function selection(manifest, have, add) {
 	const known = new Set(Object.keys(manifest.features));
 	const unknown = add.filter((f) => !known.has(f));
 	if (unknown.length) {
@@ -63,7 +63,7 @@ function git(args, cwd) {
 }
 
 /** Refuse a dirty tree, so the addition is one reviewable diff that `git checkout .` undoes. */
-function assertClean(dir) {
+export function assertClean(dir) {
 	const res = git(['status', '--porcelain'], dir);
 	if (res.error || res.status !== 0) {
 		throw new Error(
@@ -83,7 +83,7 @@ function assertClean(dir) {
  * Format a scratch copy the way the generated project was formatted: its own
  * `format` script, run with the project's Prettier and plugins (linked in).
  */
-function formatLike(project, dir) {
+export function formatLike(project, dir) {
 	const pkgFile = path.join(dir, 'package.json');
 	const modules = path.join(project, 'node_modules');
 	const prettier = path.join(modules, '.bin', 'prettier');
@@ -163,6 +163,114 @@ function envKeys(raw) {
 	return keys;
 }
 
+/**
+ * Merge the change A → B into the project: new files written, changed files
+ * three-way merged with A as the base, package.json merged by key, new
+ * `.env.example` keys appended to `.env`. Paths matching `exclude` are left
+ * alone and listed. `label` names B in conflict markers and the `.env` note.
+ */
+export function mergeTrees(project, dirA, dirB, { dryRun = false, label = 'template', exclude = [] } = {}) {
+	const out = { written: [], merged: [], conflicts: [], removed: [], kept: [], envKeys: [], envStale: [], excluded: [] };
+	const filesA = new Set(walk(dirA, { skipDirs: DEFAULT_SKIP_DIRS }));
+	const filesB = new Set(walk(dirB, { skipDirs: DEFAULT_SKIP_DIRS }));
+	const excluded = matcher(exclude);
+	const all = [...new Set([...filesA, ...filesB])].filter((rel) => rel !== 'stack.json').sort();
+
+	for (const rel of all) {
+		const a = path.join(dirA, rel);
+		const b = path.join(dirB, rel);
+		const p = path.join(project, rel);
+		const inA = filesA.has(rel);
+		const inB = filesB.has(rel);
+		const inP = fs.existsSync(p);
+		const bytes = (f) => fs.readFileSync(f);
+
+		if (inA && inB && bytes(a).equals(bytes(b))) continue;
+		if (exclude.length && excluded(rel)) {
+			out.excluded.push(rel);
+			continue;
+		}
+
+		if (!inA) {
+			// A file the template now brings.
+			if (!inP) {
+				if (!dryRun) isTextFile(rel) ? writeText(p, readText(b)) : copyBinary(b, p);
+				out.written.push(rel);
+			} else if (!bytes(p).equals(bytes(b))) {
+				out.conflicts.push(`${rel} (new from the template, but you already have a different one: yours kept)`);
+			}
+			continue;
+		}
+
+		if (!inB) {
+			// A file the template no longer has (or an @feature:else branch the features replace).
+			if (!inP) continue;
+			if (bytes(p).equals(bytes(a))) {
+				if (!dryRun) fs.rmSync(p);
+				out.removed.push(rel);
+			} else {
+				out.kept.push(`${rel} (the template drops it; you changed it, so it stays)`);
+			}
+			continue;
+		}
+
+		if (!inP) {
+			out.kept.push(`${rel} (changed by the template, but you deleted it: not recreated)`);
+			continue;
+		}
+
+		if (!isTextFile(rel)) {
+			out.conflicts.push(`${rel} (binary, changed by the template: yours kept)`);
+			continue;
+		}
+
+		if (path.basename(rel) === 'package.json') {
+			const merged = mergePackageJson(readText(p), readText(a), readText(b));
+			if (!dryRun) writeText(p, merged.content);
+			out.merged.push(rel);
+			for (const c of merged.conflicts) out.conflicts.push(`${rel}: ${c}`);
+			continue;
+		}
+
+		const res = git(
+			['merge-file', '-p', '-L', 'yours', '-L', 'template', '-L', label, p, a, b],
+			project
+		);
+		if (res.error) throw new Error(`git merge-file failed: ${res.error.message}`);
+		if (res.status < 0 || res.status > 127) {
+			throw new Error(`git merge-file failed on ${rel}: ${res.stderr}`);
+		}
+		if (!dryRun) writeText(p, res.stdout);
+		if (res.status === 0) out.merged.push(rel);
+		else out.conflicts.push(`${rel} (${res.status} conflicting hunk${res.status > 1 ? 's' : ''}, marked in the file)`);
+	}
+
+	// `.env` is not in the template, only `.env.example`: give it the new keys too.
+	for (const rel of all.filter((r) => path.basename(r) === '.env.example' && !out.excluded.includes(r))) {
+		const before = filesA.has(rel) ? envKeys(readText(path.join(dirA, rel))) : new Map();
+		const after = envKeys(readText(path.join(dirB, rel)));
+		const env = path.join(project, path.dirname(rel), '.env');
+		if (!fs.existsSync(env)) continue;
+		const present = envKeys(readText(env));
+		// A default the template changed, which this .env still holds: reported,
+		// never rewritten — .env is the user's.
+		const valueOf = (line) => line.slice(line.indexOf('=') + 1);
+		for (const [key, line] of after) {
+			const old = before.get(key);
+			if (old && valueOf(old) !== valueOf(line) && present.get(key) === old) out.envStale.push(key);
+		}
+		const missing = [...after].filter(([k]) => !before.has(k) && !present.has(k));
+		if (missing.length === 0) continue;
+		out.envKeys.push(...missing.map(([k]) => k));
+		if (!dryRun) {
+			const raw = readText(env);
+			const lines = missing.map(([, line]) => line).join('\n');
+			writeText(env, `${raw.replace(/\n*$/, '\n')}\n# Added by stack ${label}\n${lines}\n`);
+		}
+	}
+	return out;
+}
+
 export function addFeatures(manifest, project, options) {
 	const { features, toolVersion, dryRun = false, force = false } = options;
 
@@ -218,91 +326,7 @@ export function addFeatures(manifest, project, options) {
 		const fb = formatLike(project, dirB);
 		report.formatted = fa && fb;
 
-		const filesA = new Set(walk(dirA, { skipDirs: DEFAULT_SKIP_DIRS }));
-		const filesB = new Set(walk(dirB, { skipDirs: DEFAULT_SKIP_DIRS }));
-		const all = [...new Set([...filesA, ...filesB])].filter((rel) => rel !== 'stack.json').sort();
-
-		for (const rel of all) {
-			const a = path.join(dirA, rel);
-			const b = path.join(dirB, rel);
-			const p = path.join(project, rel);
-			const inA = filesA.has(rel);
-			const inB = filesB.has(rel);
-			const inP = fs.existsSync(p);
-			const bytes = (f) => fs.readFileSync(f);
-
-			if (inA && inB && bytes(a).equals(bytes(b))) continue;
-
-			if (!inA) {
-				// A file the new features bring.
-				if (!inP) {
-					if (!dryRun) isTextFile(rel) ? writeText(p, readText(b)) : copyBinary(b, p);
-					report.written.push(rel);
-				} else if (!bytes(p).equals(bytes(b))) {
-					report.conflicts.push(`${rel} (new from the template, but you already have a different one: yours kept)`);
-				}
-				continue;
-			}
-
-			if (!inB) {
-				// A file only a project without these features has (an @feature:else branch).
-				if (!inP) continue;
-				if (bytes(p).equals(bytes(a))) {
-					if (!dryRun) fs.rmSync(p);
-					report.removed.push(rel);
-				} else {
-					report.kept.push(`${rel} (the template drops it with these features; you changed it, so it stays)`);
-				}
-				continue;
-			}
-
-			if (!inP) {
-				report.kept.push(`${rel} (changed by the features, but you deleted it: not recreated)`);
-				continue;
-			}
-
-			if (!isTextFile(rel)) {
-				report.conflicts.push(`${rel} (binary, changed by the features: yours kept)`);
-				continue;
-			}
-
-			if (path.basename(rel) === 'package.json') {
-				const merged = mergePackageJson(readText(p), readText(a), readText(b));
-				if (!dryRun) writeText(p, merged.content);
-				report.merged.push(rel);
-				for (const c of merged.conflicts) report.conflicts.push(`${rel}: ${c}`);
-				continue;
-			}
-
-			const res = git(
-				['merge-file', '-p', '-L', 'yours', '-L', 'template', '-L', `with ${added.join(', ')}`, p, a, b],
-				project
-			);
-			if (res.error) throw new Error(`git merge-file failed: ${res.error.message}`);
-			if (res.status < 0 || res.status > 127) {
-				throw new Error(`git merge-file failed on ${rel}: ${res.stderr}`);
-			}
-			if (!dryRun) writeText(p, res.stdout);
-			if (res.status === 0) report.merged.push(rel);
-			else report.conflicts.push(`${rel} (${res.status} conflicting hunk${res.status > 1 ? 's' : ''}, marked in the file)`);
-		}
-
-		// `.env` is not in the template, only `.env.example`: give it the new keys too.
-		for (const rel of all.filter((r) => path.basename(r) === '.env.example')) {
-			const before = filesA.has(rel) ? envKeys(readText(path.join(dirA, rel))) : new Map();
-			const after = envKeys(readText(path.join(dirB, rel)));
-			const env = path.join(project, path.dirname(rel), '.env');
-			if (!fs.existsSync(env)) continue;
-			const present = envKeys(readText(env));
-			const missing = [...after].filter(([k]) => !before.has(k) && !present.has(k));
-			if (missing.length === 0) continue;
-			report.envKeys.push(...missing.map(([k]) => k));
-			if (!dryRun) {
-				const raw = readText(env);
-				const lines = missing.map(([, line]) => line).join('\n');
-				writeText(env, `${raw.replace(/\n*$/, '\n')}\n# Added by stack add ${added.join(', ')}\n${lines}\n`);
-			}
-		}
+		Object.assign(report, mergeTrees(project, dirA, dirB, { dryRun, label: `with ${added.join(', ')}` }));
 	} finally {
 		rmrf(scratch);
 	}
@@ -313,9 +337,10 @@ export function addFeatures(manifest, project, options) {
 			stackFile,
 			JSON.stringify(
 				{
+					// stackVersion stays: it says which release the project as a whole
+					// matches, and `add` only brings one feature up to date.
+					// `stack upgrade` moves it.
 					...stack,
-					templateVersion: manifest.version || stack.templateVersion,
-					stackVersion: toolVersion,
 					updatedAt: new Date().toISOString(),
 					features: [...enabled].sort()
 				},
