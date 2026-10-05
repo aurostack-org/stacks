@@ -25,6 +25,12 @@ build run. The feature tables (`<FeatureTable>`) and environment tables
 default, requirements, files and packages, and each variable's default, owning
 feature and comment.
 
+It also reads each template's `files/.claude/skills/*/SKILL.md`: the skill
+tables (`<SkillTable>`) on the Development pages show each skill's name, the
+first sentence of its description, and the feature whose `files` own it. A
+new skill appears there by itself; keep its description's first sentence
+readable on its own.
+
 ## Every variable needs a note
 
 The comment in `.env.example` says what a variable is. What a new project needs

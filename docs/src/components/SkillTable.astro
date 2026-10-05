@@ -1,0 +1,44 @@
+---
+// The Claude Code task skills a template ships in .claude/skills/, straight
+// from their SKILL.md front matter, with the feature that brings each one.
+import data from '../data/generated/templates.json';
+
+interface Props {
+	template: keyof typeof data.templates;
+}
+const { template } = Astro.props;
+const t = data.templates[template];
+---
+
+<table class="feature-table">
+	<thead>
+		<tr>
+			<th>Skill</th>
+			<th>Ships with</th>
+			<th>What it does</th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			t.skills.map((s) => (
+				<tr>
+					<td>
+						<code>{s.name}</code>
+					</td>
+					<td>
+						{s.feature ? (
+							<a href={`../features/#feature-${s.feature}`}>
+								<code>{s.feature}</code>
+							</a>
+						) : (
+							<span class="badge badge-always">Every project</span>
+						)}
+					</td>
+					<td>
+						<p>{s.summary}.</p>
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>

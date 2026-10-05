@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
 
 ## After generating
 
@@ -71,6 +72,8 @@ before the API exists.
 
 ## Adding a page
 
+The project's own [task skills](#building-with-claude-code) carry the full steps for each of these.
+
 Add the route to the app's `src/app/router.tsx`, and to `src/app/nav.tsx` if it
 belongs in the sidebar (the shell builds the sidebar from that list, not from
 the router). Put its data calls in `src/features/<name>/api.ts` with
@@ -83,3 +86,22 @@ Create `packages/<name>` with a `package.json` named `@scope/<name>` whose
 (`"@scope/<name>": "workspace:*"`), and add a line for it to the Dockerfile's
 dependency stage. If it contains Tailwind classes, add it to the `@source` lines
 in the UI kit's `globals.css`.
+
+## Building with Claude Code
+
+The project ships its own guidance for Claude Code, generated with it and
+stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: the monorepo's commands, which app does what, and the rules (shared code is a package, one `baseApi`, sign-in on the auth app's origin, `VITE_*` per app). Claude Code loads it in every session
+  in the project.
+- **Task skills** in `.claude/skills/<name>/SKILL.md`: step-by-step recipes
+  that point at the template's own example code. Ask for the task in plain
+  words ("add an endpoint for invoices") and the matching skill loads.
+
+<SkillTable template="react-monorepo" />
+
+A skill that belongs to a feature arrives with it: adding the feature later
+with [`stack add`](../../../reference/cli/#stack-add) brings its skill and its
+`CLAUDE.md` sections too. Both are yours to edit as the project grows its own
+conventions. See [Building with Claude Code](../../../guides/claude-code/) for
+the whole workflow, from a design to a backlog.

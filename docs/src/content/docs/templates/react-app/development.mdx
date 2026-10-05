@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
 
 ## After generating
 
@@ -53,6 +54,8 @@ empty placeholders, so it typechecks before the API exists.
 
 ## Adding a page
 
+The project's own [task skills](#building-with-claude-code) carry the full steps for each of these.
+
 1. Add the route to `src/app/router.tsx` (lazy-load anything that isn't the
    first screen).
 2. Add it to `NAV_ITEMS` in `src/app/nav.tsx` if it belongs in the sidebar: the
@@ -72,3 +75,22 @@ ESLint rejects `text-xs`/`text-sm` on raw `<input>`, `<textarea>` and
 `<select>`: iOS zooms into a focused field under 16px and never zooms back. Use
 `text-base sm:text-sm`.
 </Aside>
+
+## Building with Claude Code
+
+The project ships its own guidance for Claude Code, generated with it and
+stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: the app's commands, layout and rules (theme tokens instead of literals, one `baseApi`, routes named through `paths.ts`, `VITE_*` inlined at build time). Claude Code loads it in every session
+  in the project.
+- **Task skills** in `.claude/skills/<name>/SKILL.md`: step-by-step recipes
+  that point at the template's own example code. Ask for the task in plain
+  words ("add an endpoint for invoices") and the matching skill loads.
+
+<SkillTable template="react-app" />
+
+A skill that belongs to a feature arrives with it: adding the feature later
+with [`stack add`](../../../reference/cli/#stack-add) brings its skill and its
+`CLAUDE.md` sections too. Both are yours to edit as the project grows its own
+conventions. See [Building with Claude Code](../../../guides/claude-code/) for
+the whole workflow, from a design to a backlog.

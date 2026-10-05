@@ -6,6 +6,7 @@ sidebar:
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
 
 ## After generating
 
@@ -71,3 +72,22 @@ Export a workflow function from `src/temporal/workflows/index.ts` and it becomes
 a workflow type. Keep workflow code deterministic (no I/O, no network, no
 filesystem); put that work in activities in `src/temporal/activities/`.
 </Aside>
+
+## Building with Claude Code
+
+The project ships its own guidance for Claude Code, generated with it and
+stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: the worker's commands, layout and rules (the API owns the schema, queue names match the producer exactly, throw on failure). Claude Code loads it in every session
+  in the project.
+- **Task skills** in `.claude/skills/<name>/SKILL.md`: step-by-step recipes
+  that point at the template's own example code. Ask for the task in plain
+  words ("add an endpoint for invoices") and the matching skill loads.
+
+<SkillTable template="node-worker" />
+
+A skill that belongs to a feature arrives with it: adding the feature later
+with [`stack add`](../../../reference/cli/#stack-add) brings its skill and its
+`CLAUDE.md` sections too. Both are yours to edit as the project grows its own
+conventions. See [Building with Claude Code](../../../guides/claude-code/) for
+the whole workflow, from a design to a backlog.

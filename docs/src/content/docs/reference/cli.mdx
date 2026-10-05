@@ -89,6 +89,19 @@ Then the hooks run, and the template's next steps are printed.
 | `Hook failed: <label> (exit N)` | Only with `--strict`: a hook failed. The files are already written |
 | `Template "t" has no files/ directory yet. Run: stack extract t` | A template that was never extracted |
 
+### stack.json
+
+Every generated project gets a `stack.json` at its root recording what
+produced it. `stack add` regenerates from it, so leave it in the repository.
+
+| Field | Holds |
+|---|---|
+| `template`, `templateVersion` | the template and its manifest version |
+| `stackVersion` | the stacks version that generated (or last added to) it |
+| `generatedAt`, `updatedAt` | when; `updatedAt` appears after a `stack add` |
+| `name`, `scope`, `port`, `description` | the identity it was generated with |
+| `features` | every feature it has, sorted |
+
 ## stack add
 
 ```sh

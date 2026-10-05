@@ -1,6 +1,6 @@
-// Reads every template's manifest and .env examples into one JSON file the
-// docs render from, so feature tables and env references can't drift from the
-// templates. Also enforces that every env variable has a hand-written note in
+// Reads every template's manifest, .env examples and shipped Claude Code
+// skills into one JSON file the docs render from, so feature tables, env
+// references and skill lists can't drift from the templates. Also enforces that every env variable has a hand-written note in
 // src/data/env-notes.json: a new variable fails the docs build until it's
 // documented.
 //
@@ -86,6 +86,46 @@ function parseEnv(text) {
 	return vars;
 }
 
+/** A manifest `files` glob as a RegExp over a project-relative path. */
+function globRegExp(glob) {
+	let re = '';
+	for (let i = 0; i < glob.length; i++) {
+		const ch = glob[i];
+		if (ch === '*' && glob[i + 1] === '*') {
+			re += '.*';
+			i++;
+			if (glob[i + 1] === '/') i++;
+		} else if (ch === '*') re += '[^/]*';
+		else re += ch.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+	}
+	return new RegExp(`^${re}$`);
+}
+
+/**
+ * The task skills a template ships in `.claude/skills/<name>/SKILL.md`, from
+ * their front matter, each with the feature whose `files` own it (null when it
+ * ships with every project).
+ */
+function skillsOf(filesDir, features) {
+	const dir = path.join(filesDir, '.claude', 'skills');
+	if (!fs.existsSync(dir)) return [];
+	return fs
+		.readdirSync(dir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => {
+			const rel = `.claude/skills/${entry.name}/SKILL.md`;
+			const text = fs.readFileSync(path.join(filesDir, rel), 'utf8');
+			const front = text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+			const field = (key) => front.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'))?.[1].trim() ?? '';
+			const owner = features.find((f) => f.files.some((glob) => globRegExp(glob).test(rel)));
+			// The description's first sentence says what it does; the rest is
+			// trigger phrases for the model, not for a reader.
+			const summary = field('description').split(/\.\s+(?=USE|Use)/)[0].replace(/\.$/, '');
+			return { name: field('name') || entry.name, summary, feature: owner?.key ?? null };
+		})
+		.sort((a, b) => Number(a.feature !== null) - Number(b.feature !== null) || a.name.localeCompare(b.name));
+}
+
 const templates = {};
 for (const name of fs.readdirSync(templatesRoot).sort()) {
 	const manifestPath = path.join(templatesRoot, name, 'template.json');
@@ -115,6 +155,8 @@ for (const name of fs.readdirSync(templatesRoot).sort()) {
 			optional: Boolean(h.optional)
 		})),
 		nextSteps: manifest.nextSteps ?? [],
+		claudeMd: fs.existsSync(path.join(filesDir, 'CLAUDE.md')),
+		skills: skillsOf(filesDir, features),
 		env: envFiles(filesDir).map((file) => ({
 			file: file.split(path.sep).join('/'),
 			vars: parseEnv(fs.readFileSync(path.join(filesDir, file), 'utf8'))
