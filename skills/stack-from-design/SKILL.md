@@ -286,4 +286,5 @@ that the frontend's theme now carries the design system. Then:
   filled (config is validated at startup);
 - the first commands: API `yarn dc:up`, then `yarn db:migrate` once the first
   models exist, since the template ships no migrations;
-- that the `stack-tasks` skill turns `BUILD-PLAN.md` into the Linear backlog.
+- that the `stack-setup` skill gets every service running locally, and the
+  `stack-tasks` skill turns `BUILD-PLAN.md` into the Linear backlog.

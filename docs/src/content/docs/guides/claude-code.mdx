@@ -12,6 +12,7 @@ you can start at any of them.
 | Step | Skill | Starts from | Leaves you with |
 |---|---|---|---|
 | Plan and scaffold | `/stacks:stack-from-design` | a finished design | a project per service, the design system in the UI theme, `BUILD-PLAN.md` |
+| Get it running | `/stacks:stack-setup` | generated projects | every service running locally and verified, `SETUP.md` |
 | Plan the work | `/stacks:stack-tasks` | `BUILD-PLAN.md` | a Linear project with every task, `TASKS.md` |
 | Build | the project's own skills | a generated project | code written the template's way |
 | Add a feature later | `/stacks:stack-add` | a generated project | the feature merged in, your edits kept |
@@ -62,6 +63,27 @@ Design artifact link, or a project from claude.ai/design. Other sources
 </Steps>
 
 It stops there: nothing is built beyond the scaffold and the theme.
+
+## Getting it running
+
+`stack-setup` takes the generated projects from "installed" to "running and
+verified locally", one project or a whole product root (API, then workers,
+then the frontend). It works from the [setup checklist](../../setup/checklist/):
+
+- **Env values**: links between services set to agree on both ends,
+  local-only secrets generated in place, a local mail catcher for SMTP.
+  Credentials only you have (SMTP, S3, OAuth, API keys) you fill in yourself:
+  it names the keys and the file, then checks they are set. It never asks for
+  a secret in chat or prints one; a small helper reports each key as missing,
+  empty, still the example, or set.
+- **Infisical first**: if `INFISICAL_PROJECT_ID` is set it pulls the dev
+  environment (`yarn secrets`), before anything else writes `.env`.
+- **Verified, not assumed**: the API is migrated, seeded and answering on
+  `/health`; the worker has the API's schema and connects; the frontend's
+  types are generated from the running API and you sign in once in the
+  browser.
+- **`SETUP.md`** records what runs, how to start it again, and everything
+  left before production as unticked boxes linked to the docs.
 
 ## From the plan to a backlog
 
@@ -127,5 +149,6 @@ clean git tree, so the addition is one diff to review or undo.
 |---|---|---|---|
 | `BUILD-PLAN.md` | product root | `stack-from-design` | `stack-tasks`, you |
 | `TASKS.md` | product root | `stack-tasks` | `stack-tasks` on a re-run |
+| `SETUP.md` | product root | `stack-setup` | you, before production |
 | `stack.json` | each project | `stack new`, `stack add` | `stack add` |
 | `CLAUDE.md`, `.claude/skills/` | each project | `stack new`, `stack add` | Claude Code in that project |

@@ -1,6 +1,6 @@
 {
 	"name": "stacks",
-	"description": "Scaffold new projects from battle-tested house templates. Subtractive templates (a runnable superset app minus the features you didn't pick) plus a zero-dependency generator CLI. Ships five stacks: a NestJS API (Prisma + Redis + BullMQ + better-auth + Vitest), a single-app React frontend, a Turborepo React monorepo, a standalone Node worker, and a Python worker. Five skills: /stack-new to scaffold, /stack-add to add a feature to a generated project later, /stack-from-design to plan and scaffold a whole product from a claude.ai design, /stack-tasks to turn that plan into a Linear backlog, /stack-sync to fold improvements from a live codebase back into the template.",
+	"description": "Scaffold new projects from battle-tested house templates. Subtractive templates (a runnable superset app minus the features you didn't pick) plus a zero-dependency generator CLI. Ships five stacks: a NestJS API (Prisma + Redis + BullMQ + better-auth + Vitest), a single-app React frontend, a Turborepo React monorepo, a standalone Node worker, and a Python worker. Six skills: /stack-new to scaffold, /stack-setup to get projects running locally, /stack-add to add a feature to a generated project later, /stack-from-design to plan and scaffold a whole product from a claude.ai design, /stack-tasks to turn that plan into a Linear backlog, /stack-sync to fold improvements from a live codebase back into the template.",
 	"version": "0.2.3",
 	"author": {
 		"name": "Aurostack",

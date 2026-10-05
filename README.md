@@ -24,8 +24,9 @@ The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
 /plugin install stacks@aurostack
 ```
 
-This adds five skills: `/stacks:stack-new` scaffolds a project (or just ask
-for "a new API"), `/stacks:stack-add` adds a feature to one later,
+This adds six skills: `/stacks:stack-new` scaffolds a project (or just ask
+for "a new API"), `/stacks:stack-setup` gets it running locally,
+`/stacks:stack-add` adds a feature to one later,
 `/stacks:stack-from-design` reads a finished claude.ai design,
 plans the services it needs, scaffolds them all and applies its design system
 to the UI kit theme, `/stacks:stack-tasks` turns that plan into a Linear

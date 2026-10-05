@@ -39,11 +39,16 @@ Inside Claude Code:
 /plugin install stacks@aurostack
 ```
 
-The plugin brings the CLI, the templates and five skills:
+The plugin brings the CLI, the templates and six skills:
 
 - **`/stacks:stack-new`** scaffolds a project. It asks which template and
   features you need, runs the CLI, and walks you through the setup the project
   still needs. It never hand-writes boilerplate the templates already contain.
+- **`/stacks:stack-setup`** takes generated projects from installed to running
+  locally: env values, local services, the first migration, the worker's
+  schema, the frontend's API types, a check of each service. It never asks for
+  credentials in chat, and writes what is left before production to
+  `SETUP.md`.
 - **`/stacks:stack-add`** adds a feature to a project after it was generated
   (realtime, notifications, an admin console…). It runs `stack add`, which
   merges exactly what the feature changes and keeps your edits, then resolves

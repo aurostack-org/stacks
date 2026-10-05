@@ -87,6 +87,8 @@ Print the template's `nextSteps`, then say plainly:
   backend. Vite inlines it at build time, so a built image is pinned to one
   environment — that is a build arg, not runtime config.
 
+Offer the `stack-setup` skill to do that setup and verify the project boots.
+
 The generated project records what produced it in `stack.json`, and ships its
 own guidance: a `CLAUDE.md` with its commands, layout and rules, and task
 skills in `.claude/skills/` (`add-resource`, `add-screen`, `add-worker`…)
