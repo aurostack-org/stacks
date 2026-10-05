@@ -14,7 +14,11 @@ broken projects. It runs in CI and before every release.
    delete code.
 3. **Every feature's `files` globs match something**, and every `requires`
    names a declared feature.
-4. For every **selection** it tries (all features; the defaults; each default
+4. **No text follows an HTML-comment marker** (`<!-- @feature x -->`) on its
+   line. A marker owns its whole line, so text after it is deleted with the
+   line or kept for the wrong selection. Markdown is where this happens: the
+   `CLAUDE.md` and skills every template ships.
+5. For every **selection** it tries (all features; the defaults; each default
    dropped along with everything that needs it; each opt-in added):
    - **brackets still balance** in every `.ts` file that carries markers, which
      is what a marker on the closing line of a multi-line construct breaks;

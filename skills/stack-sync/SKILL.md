@@ -157,6 +157,35 @@ Run `stack doctor react-app` after every derive.
 
 4. **Run `stack doctor <template>`** and fix what it reports.
 
+## Keeping the in-project guidance true
+
+Every template ships guidance for the project it generates: a `CLAUDE.md` at
+the root of `files/` and task skills in `files/.claude/skills/<name>/SKILL.md`
+(`add-resource`, `add-screen`, `add-worker`…). They describe the template's
+code, so **a change to the code is a change to the guidance**: when you rename
+a helper, move a file, change a convention or add a feature, update the
+`CLAUDE.md` section and the skills that mention it in the same commit. A skill
+that points at a function that no longer exists is worse than none.
+
+- Feature-specific guidance is gated like code. A whole skill that belongs to
+  one feature goes in that feature's `files` in `template.json`
+  (`".claude/skills/add-job/**"` under `queue`), so it is dropped without the
+  feature and arrives with `stack add`. Sections inside `CLAUDE.md` or a
+  shared skill use `<!-- @feature:start x -->` / `<!-- @feature:end -->`
+  blocks, or an inline `<!-- @feature x -->` at the very end of a line.
+- **A marker owns its whole line.** Text after `-->` on the same line is
+  deleted with the line (or kept for the wrong selection), so a marker never
+  sits mid-sentence: split the sentence, or move the conditional part to its
+  own line. `doctor` rejects text after an HTML-comment marker.
+- Never write the marker syntax itself in prose ("wrap it in `@feature`
+  markers"): the stripper reads it as a marker. Describe it ("its markers")
+  instead.
+- `react-app`'s `CLAUDE.md` and skills are its own files, not derived:
+  `derive.sh` never touches them. A change to the shared code you make in
+  `react-monorepo` may need the same guidance change in both templates.
+- Check the guidance strips cleanly: generate the `--all` extreme and a
+  minimal selection with `--no-hooks`, and read both `CLAUDE.md` files.
+
 ## What `doctor` actually checks
 
 Across the two extremes of the feature space *and* each optional feature
@@ -168,7 +197,8 @@ flipped on its own (dropping a feature also drops everything that requires it):
 - TypeScript brackets stay balanced after stripping (the multi-line trap above);
 - JSON still parses (tsconfig-style comments and trailing commas are tolerated);
 - **nothing imports a file the selection deleted** — this is the one that
-  catches a barrel re-exporting a module that is no longer there.
+  catches a barrel re-exporting a module that is no longer there;
+- no text follows an HTML-comment marker (`<!-- @feature x -->`) on its line.
 
 ## Judging generic vs domain
 

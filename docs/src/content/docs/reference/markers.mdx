@@ -62,6 +62,11 @@ RUN apk add chromium
 `<!-- @feature:start x -->` and `/* @feature x */` work too: a trailing `-->`
 or `*/` is ignored.
 
+A marker owns its whole line. In Markdown and HTML that means nothing may
+follow the closing `-->`: put an inline marker at the very end of the line it
+gates, and a block marker on a line of its own. Mid-sentence markers don't
+work; split the sentence instead. `stack doctor` reports text after one.
+
 ## Rules that keep templates compiling
 
 <Aside type="caution" title="Never put an inline marker on the closing line of a multi-line construct">

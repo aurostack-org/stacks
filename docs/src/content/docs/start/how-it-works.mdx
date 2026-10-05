@@ -75,5 +75,11 @@ over it. To bring in a feature later, [`stack add`](../../reference/cli/#stack-a
 merges exactly what that feature changes into the project, keeping your own
 edits.
 
+Each project also ships its own guidance for Claude Code: a `CLAUDE.md` with
+its commands, layout and the rules the template relies on, and task skills in
+`.claude/skills/` (adding a resource, a model, a job, a screen, a component, a
+worker…). Both are stripped like the code, so they only describe the features
+the project has, and `stack add` brings a feature's guidance with it.
+
 `stack.json` records what produced the project (template, version, name,
 scope, port and features), which is what `stack add` regenerates from.

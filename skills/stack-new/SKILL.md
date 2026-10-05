@@ -87,7 +87,11 @@ Print the template's `nextSteps`, then say plainly:
   backend. Vite inlines it at build time, so a built image is pinned to one
   environment — that is a build arg, not runtime config.
 
-The generated project records what produced it in `stack.json`.
+The generated project records what produced it in `stack.json`, and ships its
+own guidance: a `CLAUDE.md` with its commands, layout and rules, and task
+skills in `.claude/skills/` (`add-resource`, `add-screen`, `add-worker`…)
+covering only the features it has. Point at them: they are how the next
+session builds in the project the template's way.
 
 ## Adding to a project after the fact
 
