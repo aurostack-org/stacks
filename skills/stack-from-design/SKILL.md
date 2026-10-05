@@ -285,4 +285,5 @@ that the frontend's theme now carries the design system. Then:
 - that every `.env` still holds placeholders, and nothing boots until they are
   filled (config is validated at startup);
 - the first commands: API `yarn dc:up`, then `yarn db:migrate` once the first
-  models exist, since the template ships no migrations.
+  models exist, since the template ships no migrations;
+- that the `stack-tasks` skill turns `BUILD-PLAN.md` into the Linear backlog.

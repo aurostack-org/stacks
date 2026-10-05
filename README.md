@@ -23,11 +23,11 @@ The CLI is plain Node ESM (20.19+) with **no dependencies and no build step**.
 /plugin install stacks@aurostack
 ```
 
-This adds three skills: `/stacks:stack-new` scaffolds a project (or just ask
+This adds four skills: `/stacks:stack-new` scaffolds a project (or just ask
 for "a new API"), `/stacks:stack-from-design` reads a finished claude.ai design,
 plans the services it needs, scaffolds them all and applies its design system
-to the UI kit theme, and `/stacks:stack-sync` folds improvements back into the
-templates. The plugin carries the CLI and templates with it.
+to the UI kit theme, `/stacks:stack-tasks` turns that plan into a Linear
+backlog, and `/stacks:stack-sync` folds improvements back into the templates. The plugin carries the CLI and templates with it.
 
 To have Claude Code offer it to everyone who opens a repository, commit this to
 the repository's `.claude/settings.json`:

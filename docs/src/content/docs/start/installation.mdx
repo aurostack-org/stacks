@@ -39,7 +39,7 @@ Inside Claude Code:
 /plugin install stacks@aurostack
 ```
 
-The plugin brings the CLI, the templates and three skills:
+The plugin brings the CLI, the templates and four skills:
 
 - **`/stacks:stack-new`** scaffolds a project. It asks which template and
   features you need, runs the CLI, and walks you through the setup the project
@@ -49,6 +49,10 @@ The plugin brings the CLI, the templates and three skills:
   agrees the plan and the folder layout with you, generates every project,
   applies the design system's tokens to the UI kit theme and writes a
   `BUILD-PLAN.md`, including the gaps no template covers.
+- **`/stacks:stack-tasks`** turns that `BUILD-PLAN.md` into a Linear project:
+  PR-sized issues from backend to frontend, a milestone per phase, estimates,
+  priorities and blockers. You review the whole list before anything is
+  created, and re-running it updates the same issues.
 - **`/stacks:stack-sync`** folds changes from a real project back into a
   template (for maintainers; see [Refreshing templates](../../maintaining/extract/)).
 
