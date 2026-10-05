@@ -8,6 +8,7 @@
  *   stack list
  *   stack info <template>
  *   stack new <template> <dir> [--with a,b] [--without c] [--all]
+ *   stack add <feature...> [--dir <project>]
  *   stack extract <template> [--source dir] [--overwrite] [--prune]
  *   stack doctor [template]
  */
@@ -25,6 +26,7 @@ import {
 	sourceConfig
 } from './src/manifest.mjs';
 import { generate } from './src/generate.mjs';
+import { addFeatures } from './src/add.mjs';
 import { extract } from './src/extract.mjs';
 import { runHooks } from './src/hooks.mjs';
 import {
@@ -33,7 +35,7 @@ import {
 	bracketBalance
 } from './src/strip.mjs';
 import { walk, matcher, isTextFile, readText, DEFAULT_SKIP_DIRS } from './src/fsx.mjs';
-import { kebab, interpolate } from './src/tokens.mjs';
+import { kebab, interpolate, buildContext } from './src/tokens.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(
@@ -69,6 +71,7 @@ ${c.bold('Commands')}
   list                              List available templates
   info <template>                   Show a template's features and defaults
   new <template> <dir> [options]    Generate a project
+  add <feature...> [options]        Add features to a generated project
   extract <template> [options]      Refresh a template from its source repo
   doctor [template]                 Validate templates against their manifests
   version                           Print the stack version (also --version)
@@ -86,6 +89,12 @@ ${c.bold('new options')}
   --force              Write into a non-empty directory
   --dry-run            Print what would happen, write nothing
 
+${c.bold('add options')}
+  --dir <project>      The generated project ${c.dim('(default: current directory)')}
+  --no-hooks           Skip install / format / prisma generate
+  --force              Merge into uncommitted changes
+  --dry-run            Print what would change, write nothing
+
 ${c.bold('extract options')}
   --source <dir>       Override the source path in stacks.local.json
   --overwrite          Replace template files that already differ
@@ -95,6 +104,7 @@ ${c.bold('extract options')}
 ${c.bold('Examples')}
   stack new nest-api ~/Projects/acme/api --with realtime,media
   stack new react-monorepo ~/Projects/acme/web --with app-landing,app-admin
+  stack add realtime notifications --dir ~/Projects/acme/api
   stack extract nest-api --source ~/Projects/acme/web/backend
 `;
 
@@ -220,6 +230,89 @@ function cmdNew(args, values) {
 		log(c.bold('  Next'));
 		for (const step of manifest.nextSteps) log(`    ${interpolate(step, ctx)}`);
 	}
+	log('');
+}
+
+function cmdAdd(args, values) {
+	const features = csv(args);
+	if (features.length === 0) {
+		log(c.red('Usage: stack add <feature...> [--dir <project>]'));
+		process.exit(1);
+	}
+	const project = path.resolve(expandHome(values.dir || '.'));
+	const stackFile = path.join(project, 'stack.json');
+	if (!fs.existsSync(stackFile)) {
+		throw new Error(
+			`${project} has no stack.json: run stack add inside a project stack generated, or pass --dir.`
+		);
+	}
+	const manifest = loadManifest(ROOT, JSON.parse(fs.readFileSync(stackFile, 'utf8')).template);
+	const dryRun = Boolean(values['dry-run']);
+
+	const report = addFeatures(manifest, project, {
+		features,
+		toolVersion: VERSION,
+		dryRun,
+		force: Boolean(values.force)
+	});
+
+	log('');
+	log(`  ${c.bold(manifest.title || manifest.name)} ← ${c.cyan(project)}`);
+	if (report.already.length) log(`  ${c.dim('already in')}  ${report.already.join(', ')}`);
+	if (report.added.length === 0) {
+		log(c.green('  Nothing to add.'));
+		log('');
+		return;
+	}
+	log(`  ${c.dim('adding')}      ${c.green(report.added.join(', '))}`);
+	log(
+		`  ${c.dim('files')}       ${report.written.length} new, ` +
+			`${report.merged.length} merged, ${report.removed.length} removed`
+	);
+	if (!report.formatted) {
+		log(
+			c.yellow(
+				"  Could not format the template copies with the project's Prettier (not installed?): expect formatting conflicts."
+			)
+		);
+	}
+	const list = (title, items, tint = (s) => s) => {
+		if (!items.length) return;
+		log(`  ${title}`);
+		for (const item of items) log(`    ${tint(item)}`);
+	};
+	list(c.dim('new'), report.written, c.green);
+	list(c.dim('merged'), report.merged);
+	list(c.dim('removed'), report.removed);
+	list(c.yellow('conflicts'), report.conflicts, c.yellow);
+	list(c.yellow('review'), report.kept, c.yellow);
+	if (report.envKeys.length) {
+		log(`  ${c.dim('.env')}        new keys with placeholder values: ${report.envKeys.join(', ')}`);
+	}
+	log('');
+
+	if (dryRun) {
+		log(c.yellow('  dry run — nothing written'));
+		log('');
+		return;
+	}
+
+	// The scaffold's first commit belongs to `new`; install, format and
+	// generate have to run again for the new code.
+	const hooks = (manifest.hooks || []).filter((h) => !/^git init/.test(h.run));
+	if (hooks.length) {
+		const stack = JSON.parse(fs.readFileSync(stackFile, 'utf8'));
+		log(c.bold('  Post-add'));
+		runHooks({ ...manifest, hooks }, project, new Set(stack.features), buildContext(stack), {
+			skip: values['no-hooks'],
+			strict: Boolean(values.strict),
+			log
+		});
+		log('');
+	}
+
+	log(report.conflicts.length ? c.yellow('  Done, with conflicts to resolve.') : c.green('  Done.'));
+	log(c.dim('  Review with git diff; git checkout . && git clean -fd undoes it.'));
 	log('');
 }
 
@@ -623,6 +716,7 @@ function main() {
 			with: { type: 'string', multiple: true },
 			without: { type: 'string', multiple: true },
 			source: { type: 'string' },
+			dir: { type: 'string' },
 			all: { type: 'boolean' },
 			force: { type: 'boolean' },
 			overwrite: { type: 'boolean' },
@@ -654,6 +748,8 @@ function main() {
 			return cmdInfo(rest[0]);
 		case 'new':
 			return cmdNew(rest, values);
+		case 'add':
+			return cmdAdd(rest, values);
 		case 'extract':
 			return cmdExtract(rest, values);
 		case 'doctor':

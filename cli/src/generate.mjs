@@ -235,6 +235,9 @@ export function generate(manifest, target, options) {
 					generatedAt: new Date().toISOString(),
 					name: ctx.name,
 					scope: ctx.scope,
+					// What `stack add` needs to regenerate this project exactly.
+					port: Number(ctx.port),
+					description: ctx.description,
 					features: report.enabled
 				},
 				null,

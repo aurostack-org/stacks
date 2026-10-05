@@ -14,6 +14,7 @@ stack <command> [options]
 | [`stack list`](#stack-list) | List the templates |
 | [`stack info <template>`](#stack-info) | Show a template's features and defaults |
 | [`stack new <template> <dir>`](#stack-new) | Generate a project |
+| [`stack add <feature…>`](#stack-add) | Add features to a generated project |
 | [`stack extract <template>`](#stack-extract) | Refresh a template from its source repo (maintainers) |
 | [`stack doctor [template]`](#stack-doctor) | Validate templates against their manifests |
 | `stack version`, `--version`, `-v` | Print the stacks version |
@@ -87,6 +88,62 @@ Then the hooks run, and the template's next steps are printed.
 | `Cannot disable "b": feature "a" requires it. Drop "a" too, or keep "b".` | You dropped a requirement of a feature you kept |
 | `Hook failed: <label> (exit N)` | Only with `--strict`: a hook failed. The files are already written |
 | `Template "t" has no files/ directory yet. Run: stack extract t` | A template that was never extracted |
+
+## stack add
+
+```sh
+stack add <feature...> [--dir <project>] [options]
+```
+
+Adds optional features to a project `stack new` generated, after the fact. Run
+it inside the project or point `--dir` at it; the project's `stack.json` says
+which template and features it has.
+
+It is a three-way merge with the template as the common base. The template is
+generated twice into a scratch directory, with the project's name, scope and
+port, once with the features the project has and once with the new ones too,
+and both copies are formatted with the project's own Prettier. The difference
+between them is exactly what the features change, and that is what gets
+applied:
+
+- **new files** are written; a file you already have at that path is reported
+  as a conflict and left alone;
+- **changed files** are merged with `git merge-file`, so your edits survive and
+  only hunks that genuinely overlap come back as conflict markers
+  (`<<<<<<< yours` … `>>>>>>> with <feature>`);
+- **`package.json`** is merged by key: the features' dependencies and scripts
+  are added and nothing else is touched;
+- **`.env`** gets the new `.env.example` keys, with their placeholder values,
+  under a `# Added by stack add` comment.
+
+Requirements come along (adding `media` also adds `queue` if the project lacks
+it). `stack.json` is updated, then the template's hooks run again except the
+first commit: install, format, Prisma generate.
+
+| Option | Default | Effect |
+|---|---|---|
+| `--dir <project>` | the current directory | The generated project |
+| `--dry-run` | | Print what would change; write nothing, run no hooks |
+| `--force` | | Merge into uncommitted changes, or into a directory that is not a git repository |
+| `--no-hooks` | | Skip install, format and Prisma generate |
+| `--strict` | | Make any hook failure fatal |
+
+The project must be a git repository with a clean working tree, so the whole
+addition is one diff: review it with `git diff`, undo it with
+`git checkout . && git clean -fd`.
+
+**Errors:**
+
+| Message | Cause |
+|---|---|
+| `… has no stack.json …` | Not a project `stack new` generated, or `--dir` points elsewhere |
+| `… has uncommitted changes …` | Commit or stash first, or pass `--force` |
+| `… is not a git repository …` | `git init` and commit first, or pass `--force` |
+| `Unknown feature "x" for template "t". Known: …` | A name the project's template doesn't declare |
+
+Projects generated before stacks recorded `port` in `stack.json` regenerate
+with the template's default port. If yours used `--port`, add `"port": <n>` to
+`stack.json` first, or expect a conflict on the lines that carry it.
 
 ## stack extract
 
