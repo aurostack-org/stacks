@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 from opentelemetry import trace
 
-DEFAULT_SERVICE_NAME = "acme-py"
+DEFAULT_SERVICE_NAME = "acme"
 
 _providers: list = []
 
