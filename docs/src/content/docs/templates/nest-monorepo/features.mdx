@@ -1,0 +1,29 @@
+---
+title: nest-monorepo features
+description: Every nest-monorepo feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/nest-monorepo/template.json`. Drop a default with
+`--without`, add an opt-in with `--with`.
+
+<FeatureTable template="nest-monorepo" />
+
+## Notes
+
+- **The API's features keep their names** (`queue`, `realtime`, `testing`…) and
+  do what they do in [nest-api](../../nest-api/features/).
+- **The worker's are prefixed** where a name would collide: `worker-queue`,
+  `worker-browser`, `worker-pm2`. They only apply with `app-worker`; without it
+  they are listed in `stack.json` but change nothing.
+- **Shared features cover both apps.** `observability` is the API's
+  OpenTelemetry setup and the worker's `telemetry`; `temporal` is the API's
+  client and the worker's Temporal worker; `docker`, `ci` and `secrets` cover
+  every app.
+- **`temporal`** switches the worker image to `node:24-bookworm-slim`, as in
+  node-worker: Temporal's native core doesn't load on Alpine.
+- **`app-worker`** off gives an API-only monorepo. `stack add app-worker`
+  brings the worker in later, exactly as if it had been generated with it.

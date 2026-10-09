@@ -28,6 +28,7 @@ export const sidebar = [
 		items: [
 			{ label: 'Choosing templates', slug: 'templates' },
 			template('nest-api', 'nest-api'),
+			template('nest-monorepo', 'nest-monorepo'),
 			template('react-app', 'react-app'),
 			template('react-monorepo', 'react-monorepo'),
 			template('node-worker', 'node-worker'),

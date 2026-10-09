@@ -44,9 +44,11 @@ DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<database>?sslmode=requi
 
 <Aside type="caution" title="Keep the workers' schema in step">
 A worker compiled against an old schema keeps running until it touches a column
-that's gone. Share the API's `prisma/schema` with node-worker through a git
-submodule, update py-worker's models with every migration, and redeploy workers
-after schema changes.
+that's gone. Generate the API and a Node worker together as
+[nest-monorepo](../../templates/nest-monorepo/) to share one schema package, or
+share the API's `prisma/schema` with node-worker through a git submodule;
+update py-worker's models with every migration, and redeploy workers after
+schema changes.
 </Aside>
 
 <Internal id="postgres" />

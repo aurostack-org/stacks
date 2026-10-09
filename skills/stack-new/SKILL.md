@@ -1,6 +1,6 @@
 ---
 name: stack-new
-description: Scaffold a new project from the house templates — a NestJS API, a single-app React frontend, a Turborepo React monorepo, a Node background worker, or a Python worker — choosing which optional features to include. USE THIS whenever someone is starting a new codebase and says "new backend", "new API", "spin up a project", "start a new app", "scaffold", "bootstrap a service", "I need a worker", or names one of the templates. Also use when asked what templates or features are available. It runs the `stack` CLI; it does not hand-write boilerplate.
+description: Scaffold a new project from the house templates — a NestJS API, an API + Node worker monorepo sharing one Prisma package, a single-app React frontend, a Turborepo React monorepo, a Node background worker, or a Python worker — choosing which optional features to include. USE THIS whenever someone is starting a new codebase and says "new backend", "new API", "spin up a project", "start a new app", "scaffold", "bootstrap a service", "I need a worker", or names one of the templates. Also use when asked what templates or features are available. It runs the `stack` CLI; it does not hand-write boilerplate.
 ---
 
 # Scaffolding a new project
@@ -32,6 +32,14 @@ Run `node ${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs list` and, for the likely template
   endpoints is `nest-api`; background jobs with no HTTP surface are
   `node-worker` (or `py-worker` when the work belongs in Python — data
   processing, ML, scientific libraries).
+
+  An API **and** a Node worker that reads its tables is `nest-monorepo`: the
+  same two stacks in one Turborepo workspace, sharing one Prisma package
+  (`packages/db`) so the worker never needs the API's schema copied in. Prefer
+  it over separate `nest-api` + `node-worker` repositories unless the two must
+  release independently or belong to different owners. `--without app-worker`
+  gives the API alone in that layout, with the worker addable later
+  (`stack add app-worker`).
 
   A browser UI is `react-app` or `react-monorepo`. **Default to `react-app`.**
   They are the same stack; the difference is deployment, so ask about that

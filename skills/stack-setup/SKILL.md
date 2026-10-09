@@ -118,6 +118,12 @@ yarn db:seed
 
 ## 5. Workers
 
+**nest-monorepo**: run the API steps above from the monorepo root or
+`apps/api`; there is no schema to copy, both apps import `packages/db`. Give
+`apps/worker/.env` the API's `DATABASE_URL` and `REDIS_*`, then start
+`yarn dev` from the root in the background and check both the API (`/health`)
+and the worker's log, and stop it. The API's tests run from `apps/api`.
+
 **node-worker**: bring the API's schema in. Copy the API's
 `prisma/schema/*.prisma` except `base.prisma` into `worker/prisma/schema/`,
 and remove the placeholder `User` model from the worker's `base.prisma` (the

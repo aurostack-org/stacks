@@ -1,0 +1,76 @@
+---
+title: nest-monorepo architecture
+description: How the workspace is laid out, how the shared Prisma package is built, and why.
+sidebar:
+  label: Architecture
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Layout
+
+```
+backend/
+├── package.json        workspaces, turbo, the root db:* and dc:* shortcuts
+├── turbo.json          build → typecheck, lint, test, dev all depend on ^build
+├── compose.yml         Postgres + Redis (+ Temporal) for every app
+├── compose.test.yml    the API's test stack
+├── .forgejo/           root CI: one pipeline for every workspace
+├── apps/
+│   ├── api/            nest-api, minus its prisma/ folder
+│   └── worker/         node-worker, minus its prisma/ folder
+└── packages/
+    └── db/             prisma/schema, prisma/migrations, the compiled client
+```
+
+Inside `apps/api` and `apps/worker`, everything is as in
+[nest-api](../../nest-api/architecture/) and
+[node-worker](../../node-worker/architecture/).
+
+## The shared Prisma package
+
+`packages/db` is the only place a Prisma client is generated. Its `build`
+script runs `prisma generate` and then compiles the generated TypeScript to
+`dist/` as **CommonJS**, and its `exports` map serves `dist/*`:
+
+```ts
+import { Prisma, PrismaClient } from '@scope/db/client';
+import { Gender } from '@scope/db/enums';
+```
+
+CommonJS because the two apps disagree on module format: the Nest API is
+CommonJS, the worker is ESM, and ESM can import CommonJS but not the other way
+round without extra loader flags. One build serves both.
+
+Both apps depend on it as `"@scope/db": "workspace:*"`, so
+`node_modules/@scope/db` is a symlink to `packages/db`. Turbo's `^build` makes
+every app task wait for it: `build`, `typecheck`, `test` and `dev` never see a
+stale or missing client.
+
+<Aside title="The apps run the compiled client">
+After a schema change outside turbo, `yarn db:generate` rebuilds `dist/`. A
+running `yarn dev` keeps the old client loaded until it restarts: Nest's watch
+and `tsx watch` don't watch `node_modules`.
+</Aside>
+
+## Who owns what
+
+- **The API owns the database.** Its `db:*` scripts load the API's own `.env`
+  (or `.env.test`, `.env.production`) and run Prisma inside `@scope/db`. The
+  seeders stay in the API, because they create users through better-auth.
+- **The worker never migrates.** It imports the client and gets every model
+  the API has.
+- **Compose is shared.** The API's `dc:*` scripts drive the root
+  `compose.yml`; the worker points at the same Postgres and Redis.
+
+## Dependencies
+
+One `yarn.lock` at the root. A dependency goes in the workspace that imports
+it; the root holds only `turbo` and Prettier.
+
+The API installs into its own `apps/api/node_modules`
+(`installConfig.hoistingLimits: "workspaces"`). Its test library, Suites,
+finds its Vitest adapter by resolving it from beside `@suites/unit`, and with
+the two hoisted to different places every spec that builds a `TestBed` fails.
+The cost: root binaries such as `turbo` aren't on the PATH inside `apps/api`,
+so turbo commands run from the root.
