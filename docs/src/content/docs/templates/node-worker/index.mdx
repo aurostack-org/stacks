@@ -25,7 +25,7 @@ stack new node-worker ./worker --name shop-worker
 |---|---|
 | Entry point | `src/index.ts`, with `src/instrumentation.ts` preloaded through `node --import` |
 | Queues | One example consumer on the `example` queue (`src/workers/`) |
-| Database | The API's schema, copied or shared as a submodule; this worker owns no migrations |
+| Database | The API's schema, copied or shared as a submodule (or shared automatically in [nest-monorepo](../nest-monorepo/)); this worker owns no migrations |
 | Telemetry | OpenTelemetry to OpenObserve: job spans, Prisma and Redis spans, logs, metrics |
 | Temporal | `--with temporal`: a worker on task queue `main` with an example workflow and activity |
 | Runs as | `yarn start`, PM2 (`ecosystem.config.cjs`), or the Docker image |

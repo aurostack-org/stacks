@@ -20,7 +20,9 @@ and made the first commit.
    `prisma/schema/` beside `base.prisma`, and replace the placeholder `User`
    with the API's real one (`src/db.ts` extensions are typed against a `User`
    with an `email`, so replace it rather than delete it). Better: add the
-   API's schema directory as a git submodule so both always agree.
+   API's schema directory as a git submodule so both always agree. (In
+   [nest-monorepo](../../nest-monorepo/) this step does not exist: the worker
+   imports the API's client from `packages/db`.)
 
 2. **Point it at the API's services** in `.env`: `DATABASE_URL` and `REDIS_*`
    exactly as the API has them. With the API's `yarn dc:up` running, the

@@ -17,7 +17,7 @@ different things, and a project can use both.
 | Retries | per job: attempts and backoff | per activity, with its own policy; the workflow carries on |
 | Visibility | Bull Board at `/dashboard` | full history of every run in the Temporal UI |
 | Infrastructure | Redis, already there | a Temporal cluster |
-| Workers | node-worker, py-worker | node-worker, py-worker |
+| Workers | node-worker, nest-monorepo's worker, py-worker | node-worker, nest-monorepo's worker, py-worker |
 
 **Use BullMQ** for fire-and-forget work: send an email, resize an image,
 generate a report, a nightly sweep. If the job fails, running it again from the

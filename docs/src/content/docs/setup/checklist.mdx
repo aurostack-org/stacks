@@ -59,9 +59,18 @@ Environment page explains its variables in detail.
 - [ ] With `app-landing`: `VITE_APP_SITE_URL`, `PRODUCTION_ORIGIN`, and the
       terms, privacy and contact pages other apps link to.
 
+## nest-monorepo
+
+- [ ] Everything under nest-api applies to `apps/api`, and everything under
+      node-worker to `apps/worker`, except the schema: it is shared through
+      `packages/db`, so there is nothing to copy.
+- [ ] `<name>-api-migrate` runs once before each deploy, and the API and the
+      worker deploy on the same image tag.
+
 ## node-worker
 
 - [ ] The API's Prisma schema copied in (or shared as a submodule), `yarn db:generate`.
+      Not needed with [nest-monorepo](../../templates/nest-monorepo/).
 - [ ] `DATABASE_URL` and `REDIS_*` identical to the API's.
 - [ ] Queue names identical to the API's producers (`src/workers/constants.ts`).
 - [ ] With `temporal`: `TEMPORAL_TASK_QUEUE` = where the API starts workflows.

@@ -47,7 +47,9 @@ datasource, the generator and one placeholder `User` model (a schema with no
 models generates no client). Copy the API's `prisma/schema/*.prisma` beside it,
 or better, share one schema through a git submodule, so a migration on one side
 can't leave the other compiling against columns that no longer exist. CI checks
-out submodules for exactly this.
+out submodules for exactly this. Simpler still, generate the API and this worker
+together as [nest-monorepo](../../nest-monorepo/), where both import one Prisma
+package and a migration that breaks the worker fails its typecheck.
 
 `src/db.ts` exports a `PrismaClient` singleton (`DB.getInstance()`) using the
 `pg` adapter, extended with `exists`, `paginate`, and `user.findById` /

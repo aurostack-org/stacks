@@ -86,6 +86,11 @@ Copy the API's `prisma/schema/*.prisma` into the worker's `prisma/schema/`,
 then `yarn db:generate && yarn dev`. Its `.env` already points at the same
 PostgreSQL and Redis. See [node-worker development](../../templates/node-worker/development/).
 
+If you know from the start that the API needs a Node worker, generate both as
+one repository instead, with no schema to copy:
+`stack new nest-monorepo ~/code/shop/backend --name shop`. See
+[nest-monorepo](../../templates/nest-monorepo/).
+
 ## What's next
 
 - **[Setup checklist](../../setup/checklist/)**: everything a project needs
