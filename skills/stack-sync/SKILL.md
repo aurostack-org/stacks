@@ -86,6 +86,20 @@ So the direction of a change matters:
 
 Run `stack doctor react-app` after every derive.
 
+`nest-monorepo` is derived the same way, from **two** templates:
+`templates/nest-monorepo/derive.mjs` (run it with `bash
+templates/nest-monorepo/derive.sh`) copies `nest-api` into `apps/api` and
+`node-worker` into `apps/worker`, moves the Prisma schema into `packages/db`,
+rewrites the imports, scripts and guidance that the move changes, copies
+`overrides/` on top, and **writes `template.json`** from `manifest.base.json`
+plus both source manifests. So an app-level change goes in `nest-api` or
+`node-worker`; the root files, `packages/db`, the Dockerfiles and the root CI
+go in `templates/nest-monorepo/overrides/`; a new or renamed feature goes in
+`manifest.base.json` or the derive's rename map. Every text patch in the
+derive names the exact text it expects, so rewording one of the source
+templates' `CLAUDE.md` or skills can fail the derive: update the patch then.
+Run `stack doctor nest-monorepo` after every derive.
+
 ## Adding a new optional feature
 
 1. **Put the working code in `files/`**, with every feature switched on. The

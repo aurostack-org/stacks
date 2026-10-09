@@ -11,6 +11,7 @@ builds and pushes it on every push to `main`.
 | Template | Image | Serves |
 |---|---|---|
 | nest-api | Node, `node dist/src/main` | the API on its `PORT` |
+| nest-monorepo | one image per app, built from the repo root, plus a `migrate` image | the API on its `PORT`; the worker, no port ([details](../../templates/nest-monorepo/deployment/)) |
 | react-app | nginx | the static bundle on port 80, `/healthz` |
 | react-monorepo | nginx, one image per app | each app on port 80, `/healthz` |
 | node-worker | Node (Debian with Temporal), PM2 or plain Node | no port |

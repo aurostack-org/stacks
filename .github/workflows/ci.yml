@@ -145,6 +145,66 @@ jobs:
       - run: yarn format:check
       - run: yarn build
 
+  nest-monorepo:
+    name: nest-monorepo (${{ matrix.variant }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: default, args: '', tests: true }
+          - { variant: every feature, args: --all, tests: true }
+          - { variant: without the worker, args: --without app-worker, tests: true }
+          - { variant: without testing, args: --without testing, tests: false }
+    # Ports and credentials match the templates' .env.test.example.
+    services:
+      postgres:
+        image: postgres:15.3
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: main
+        ports: ['5499:5432']
+        options: >-
+          --health-cmd "pg_isready -U root -d main"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4.1
+        ports: ['6399:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: /tmp/stack-ci/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+        working-directory: ${{ github.workspace }}
+
+      - name: Generate
+        working-directory: ${{ github.workspace }}
+        run: node cli/stack.mjs new nest-monorepo "$APP" --name ci-mono ${{ matrix.args }} --strict
+
+      # Turbo builds the shared Prisma package first, then every app.
+      - name: Build, typecheck, lint
+        run: yarn turbo run build typecheck lint
+
+      - name: Unit tests
+        if: matrix.tests
+        run: yarn turbo run test
+      # The API keeps its dependencies in its own folder, so its scripts run there.
+      - name: E2E tests
+        if: matrix.tests
+        working-directory: /tmp/stack-ci/app/apps/api
+        run: |
+          yarn test:db:push
+          yarn test:e2e
+
   py-worker:
     name: py-worker (${{ matrix.variant }})
     needs: cli
@@ -222,6 +282,7 @@ jobs:
           - { template: react-monorepo, feature: app-admin }
           - { template: node-worker, feature: temporal }
           - { template: py-worker, feature: temporal }
+          - { template: nest-monorepo, feature: temporal }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -242,6 +303,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # nest-monorepo joins once a published release contains it: the check
+        # starts from the latest release.
         template: [nest-api, react-app, react-monorepo, node-worker, py-worker]
     steps:
       - uses: actions/checkout@v4
@@ -282,6 +345,14 @@ jobs:
           - template: react-monorepo
             args: --all
             build_args: --build-arg APP=landing --build-arg VITE_APP_SITE_URL=https://example.com
+          # One image per app, built from the monorepo root. The worker with every
+          # feature is the heavy one: Debian for Temporal, plus Chromium.
+          - template: nest-monorepo
+            args: ''
+            dockerfile: apps/api/Dockerfile
+          - template: nest-monorepo
+            args: --all
+            dockerfile: apps/worker/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -292,4 +363,4 @@ jobs:
       - name: Generate
         run: node cli/stack.mjs new ${{ matrix.template }} "$APP" --name ci-image ${{ matrix.args }} --strict
       - name: Build
-        run: docker build ${{ matrix.build_args }} -t ci-image "$APP"
+        run: docker build ${{ matrix.build_args }} -f "$APP/${{ matrix.dockerfile || 'Dockerfile' }}" -t ci-image "$APP"

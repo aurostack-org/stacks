@@ -104,6 +104,7 @@ stage only. The `npm` GitHub environment is restricted to `v*` tags.
 | Template | What you get |
 |---|---|
 | `nest-api` | NestJS 12 + Prisma (Postgres) + Redis + BullMQ + better-auth + Vitest, Docker Compose for local Postgres/Redis, Scalar API reference at `/docs` |
+| `nest-monorepo` | `nest-api` and `node-worker` as one Yarn 4 + Turborepo workspace: both apps import one Prisma package (`packages/db`), one compose stack, turbo-pruned images with a migrate target. Derived from the two by `templates/nest-monorepo/derive.sh` |
 | `react-monorepo` | Yarn workspaces + Turborepo; Vite/React 19 apps over shared packages — one RTK Query `baseApi`, better-auth session handling, a shadcn-style UI kit with light/dark theming, layouts, generated OpenAPI types |
 | `react-app` | The same stack as one Vite app: shared code under `src/shared`, auth screens as routes, optional marketing site and admin console. One deployment instead of four |
 | `node-worker` | Standalone TypeScript worker — BullMQ consumers, Prisma against the API's database, pino, PM2 + Docker |

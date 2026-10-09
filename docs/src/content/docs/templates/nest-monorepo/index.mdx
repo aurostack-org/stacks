@@ -1,0 +1,62 @@
+---
+title: nest-monorepo
+description: The NestJS API and the Node worker as one Turborepo workspace, sharing one Prisma package.
+sidebar:
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The [nest-api](../nest-api/) and [node-worker](../node-worker/) stacks as one
+Yarn 4 + Turborepo workspace. The two apps share one Prisma package
+(`packages/db`) instead of the worker keeping a copy of the API's schema, so a
+schema change and every piece of code it affects land in one commit, and one
+build.
+
+```sh
+stack new nest-monorepo ./backend --name shop
+```
+
+**Stack:** everything in nest-api and node-worker, plus Turborepo 2 over Yarn 4
+workspaces. Docker images are built from the monorepo root with
+`turbo prune`.
+
+## At a glance
+
+| | |
+|---|---|
+| Workspaces | `apps/api` (`@scope/api`), `apps/worker` (`@scope/worker`), `packages/db` (`@scope/db`) |
+| Database access | `import { PrismaClient } from '@scope/db/client'` in both apps |
+| Migrations | owned by the API: `yarn db:migrate` from the root or `apps/api` |
+| Dev | `yarn dev` builds `@scope/db`, then runs the API (port 5000) and the worker |
+| Local services | one `compose.yml` at the root, shared by both apps |
+| Images | `apps/api/Dockerfile` (with a `migrate` target), `apps/worker/Dockerfile` |
+| Tests | the API's Vitest unit and e2e suites; `turbo run lint typecheck test build` |
+
+## A monorepo or two repositories?
+
+**Use nest-monorepo** when the worker reads and writes the API's tables, which
+is the usual case. Generated as two repositories, the worker needs the API's
+schema copied in (or a git submodule) after every migration, and the two drift
+silently: the worker compiles against columns that no longer exist until
+something fails at runtime.
+
+**Use nest-api and node-worker separately** when the two genuinely release on
+their own, different teams own them, or the worker belongs to a different
+product.
+
+The worker is the `app-worker` feature, on by default. `--without app-worker`
+gives an API-only monorepo that can take the worker later with
+`stack add app-worker`.
+
+The app code is the same files as the two source templates: nest-monorepo is
+**derived** from them by `templates/nest-monorepo/derive.sh`, which moves the
+schema into `packages/db` and rewrites the imports and scripts that change.
+
+<CardGrid>
+	<LinkCard title="Architecture" href="architecture/" />
+	<LinkCard title="Features" href="features/" />
+	<LinkCard title="Environment" href="environment/" />
+	<LinkCard title="Development" href="development/" />
+	<LinkCard title="Deployment" href="deployment/" />
+</CardGrid>

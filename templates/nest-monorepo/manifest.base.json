@@ -1,0 +1,112 @@
+{
+	"name": "nest-monorepo",
+	"version": "0.1.0",
+	"title": "NestJS API + worker monorepo (Turborepo)",
+	"description": "The nest-api and node-worker stacks as one Yarn 4 + Turborepo workspace: apps/api and apps/worker share one Prisma package (packages/db) instead of the worker copying the API's schema, one compose stack, turbo-pruned Docker images with a migrate target, and root CI that builds the images as a set.",
+	"derivedFrom": "nest-api, node-worker",
+	"defaults": {
+		"port": 5000
+	},
+	"aliasRoots": {
+		"#app/": "apps/worker/src/",
+		"#utils/": "apps/worker/src/utils/",
+		"#lib/": "apps/worker/src/lib/",
+		"@acme/db/": null
+	},
+	"generatedPaths": [
+		"**/node_modules/**",
+		"packages/db/prisma/generated/**",
+		"packages/db/dist/**"
+	],
+	"replacements": [
+		{
+			"from": "@acme/",
+			"to": "@{{scope}}/"
+		}
+	],
+	"hooks": [
+		{
+			"title": "seed each app's .env from .env.example",
+			"run": "for d in apps/*/; do [ -f \"$d.env.example\" ] && cp -n \"$d.env.example\" \"$d.env\"; done; true",
+			"optional": true
+		},
+		{
+			"title": "seed apps/api/.env.test from .env.test.example",
+			"run": "cp -n apps/api/.env.test.example apps/api/.env.test || true",
+			"when": "testing",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install --no-immutable",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "build the shared Prisma client (packages/db)",
+			"run": "yarn db:generate",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the nest-monorepo template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Edit apps/api/.env — DATABASE_URL, REDIS_*, BETTER_AUTH_SECRET and SMTP_* have placeholder values. apps/worker/.env needs the same DATABASE_URL and REDIS_*.",
+		"yarn dc:up && yarn dc:wait   # start Postgres + Redis",
+		"yarn db:migrate              # create the initial migration (runs in packages/db)",
+		"yarn dev                     # every app; the API on http://localhost:{{port}}/docs"
+	],
+	"features": {
+		"prisma": {
+			"title": "Prisma ORM + Postgres (shared packages/db)",
+			"description": "The schema, migrations and generated client live in packages/db and every app imports @scope/db/client. The client is generated as CommonJS and compiled, so the CommonJS API and the ESM worker load the same build. The API owns migrations; its db:* scripts run Prisma there."
+		},
+		"observability": {
+			"description": "OpenTelemetry traces, logs and metrics pushed over OTLP from every app (built for OpenObserve; set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend), plus Terminus health checks with a Prisma indicator in the API. Off at runtime until connected."
+		},
+		"temporal": {
+			"description": "A TemporalService in the API that starts and queries durable workflows, Temporal's dev server in compose.yml, and (with app-worker) a Temporal worker running the workflows and activities in apps/worker/src/temporal. The worker image switches to Debian, since Temporal's native core does not load on Alpine."
+		},
+		"docker": {
+			"title": "Docker Compose + images",
+			"description": "One compose.yml (Postgres, Redis) shared by every app, and a turbo-pruned production image per app built from the monorepo root, with a `migrate` target on the API image that runs prisma migrate deploy.",
+			"extraPackageJson": [
+				{
+					"file": "package.json",
+					"scripts": ["dc:up", "dc:wait", "dc:down", "dc:reinstall"]
+				}
+			]
+		},
+		"ci": {
+			"description": "Root Forgejo workflows: lint, typecheck, test and build every workspace on branches, the API's e2e suite on pull requests, and every image built and pushed under one shared tag."
+		},
+		"testing": {
+			"extraFiles": [".forgejo/workflows/test-e2e.yml"]
+		},
+		"app-worker": {
+			"title": "Background worker app",
+			"description": "apps/worker: a standalone TypeScript worker (BullMQ consumers, pino logging) reading and writing the API's database through the shared @scope/db client. The worker-* features only apply when it is on.",
+			"default": true,
+			"files": ["apps/worker/**"]
+		},
+		"worker-queue": {
+			"title": "Worker: BullMQ consumers",
+			"description": "Worker processes pulling from the same Redis queues the API produces to. Only with app-worker."
+		},
+		"worker-browser": {
+			"title": "Worker: headless browser (Puppeteer)",
+			"description": "For rendering or scraping pages that need JavaScript executed. Heavy: the worker image grows by roughly 800 MB (Chromium and its fonts). Only with app-worker."
+		},
+		"worker-pm2": {
+			"title": "Worker: PM2 process manager",
+			"description": "ecosystem.config.cjs, and pm2-runtime as the worker image's entrypoint. Only with app-worker."
+		}
+	}
+}

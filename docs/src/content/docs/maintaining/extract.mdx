@@ -69,6 +69,17 @@ a schema, not a history.
 on top. Edit shared code in react-monorepo and re-run the script; edit routing,
 build and Docker files in react-app directly. Keep `overrides/` short.
 
+## nest-monorepo is derived
+
+`nest-monorepo` is generated from **nest-api and node-worker** by
+`templates/nest-monorepo/derive.sh`: it places them under `apps/api` and
+`apps/worker`, moves the Prisma schema into `packages/db`, rewrites the imports,
+scripts and guidance the move changes, copies `overrides/` (root workspace
+files, `packages/db`, Dockerfiles, CI) on top, and writes `template.json` from
+`manifest.base.json` and both source manifests. Fix app code in the source
+templates and re-run the script; every text patch fails loudly when its anchor
+has moved.
+
 ## Add a feature
 
 <Steps>

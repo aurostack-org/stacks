@@ -1,0 +1,59 @@
+---
+title: nest-monorepo deployment
+description: Building the images from the monorepo root, migrating, and deploying the apps as a set.
+sidebar:
+  label: Deployment
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Images
+
+Every image is built from the monorepo root, because each needs
+`packages/db` as well as its app:
+
+```sh
+docker build -f apps/api/Dockerfile -t shop-api .
+docker build -f apps/api/Dockerfile --target migrate -t shop-api-migrate .
+docker build -f apps/worker/Dockerfile -t shop-worker .
+```
+
+Each Dockerfile runs `turbo prune <app> --docker` first: the install layer is
+built from that app's manifests and a pruned lockfile, so it is reused until a
+dependency the app actually uses changes. The build stage runs
+`turbo run build --filter=<app>`, which builds `@scope/db` first, and the
+runtime stage keeps production dependencies only.
+
+| Image | Runs | Port |
+|---|---|---|
+| `shop-api` | `node dist/src/main` in `apps/api` | 5000 |
+| `shop-api-migrate` | `prisma migrate deploy` against `$DATABASE_URL`, then exits | none |
+| `shop-worker` | `pm2-runtime` (or `node`, without `worker-pm2`) in `apps/worker` | none |
+
+<Aside title="The runtime stage copies packages/db">
+`node_modules/@scope/db` is a symlink to `packages/db`, so the runtime image
+keeps `packages/db/package.json` and `dist/` at the same relative path. A
+Dockerfile you write for another app needs the same two copies.
+</Aside>
+
+## Deploying
+
+1. Run `shop-api-migrate:<tag>` once, with the production `DATABASE_URL`.
+2. Start `shop-api:<tag>` and `shop-worker:<tag>`.
+
+Deploy every app on the **same tag**. They share one Prisma client, so an API
+and a worker from different commits can disagree about the schema.
+
+Everything else, the API's variables and health checks, the worker's process
+model and Chromium, is as in [nest-api](../../nest-api/deployment/) and
+[node-worker](../../node-worker/deployment/).
+
+## CI
+
+`.forgejo/workflows/` at the root:
+
+| Workflow | Runs on | Does |
+|---|---|---|
+| `ci.yml` | every branch except `main` and `development` | `turbo run lint typecheck test build` |
+| `test-e2e.yml` | pull requests into `development` | the API's e2e suite against service containers |
+| `build-and-push.yml` | `main`, manual runs | builds every image and pushes them under one shared tag |

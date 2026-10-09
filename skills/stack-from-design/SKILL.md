@@ -113,9 +113,12 @@ clear the feature has no use.
 
 Propose a worker only when the design shows work that must not run in a
 request: bulk imports and exports, scraping, report generation, media
-processing, long syncs with third parties. `node-worker` by default;
+processing, long syncs with third parties. A Node worker beside the API is
+`nest-monorepo` by default (one repository, one shared Prisma package);
+separate `nest-api` + `node-worker` only when they must release independently.
 `py-worker` when the work is data science, ML or a Python-only library.
-`--with browser` on `node-worker` for scraping or PDF rendering. Read
+`--with browser` on `node-worker` (`--with worker-browser` on `nest-monorepo`)
+for scraping or PDF rendering. Read
 `docs/src/content/docs/guides/background-work.mdx` before proposing Temporal
 over BullMQ.
 
@@ -178,7 +181,8 @@ node ${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs new <template> <root>/<dir> \
 ```
 
 Generate the API first: the frontend's `yarn gen` reads its OpenAPI document,
-and the worker copies its Prisma schema. If one generation fails, stop and
+and a separate `node-worker` copies its Prisma schema (`nest-monorepo` shares
+it, nothing to copy). If one generation fails, stop and
 report it; do not carry on with half a product.
 
 ### Links between the services

@@ -1,0 +1,33 @@
+---
+title: nest-monorepo environment
+description: The API's and the worker's .env files, and how they must match.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Each app has its own `.env`, seeded from its `.env.example` at generation.
+`packages/db` has none: Prisma there runs with the API's env, loaded by the
+API's `db:*` scripts.
+
+<Aside type="caution" title="Match the API exactly">
+The worker's `DATABASE_URL` and `REDIS_*` must point at the **API's** database
+and Redis. A wrong Redis is silent: the worker connects fine and never receives
+a job.
+</Aside>
+
+## apps/api
+
+The same variables as [nest-api](../../nest-api/environment/).
+
+<EnvTable template="nest-monorepo" file="apps/api/.env.example" />
+
+## apps/worker
+
+The same variables as [node-worker](../../node-worker/environment/).
+`PUPPETEER_EXECUTABLE_PATH` ships commented out: the worker image sets it, and
+an empty value would replace that path.
+
+<EnvTable template="nest-monorepo" file="apps/worker/.env.example" />

@@ -39,11 +39,12 @@ again as the first stage of every release:
 | CLI, manifests and package | | `stack doctor`; `check-package` (every template file is in the npm package, nothing private leaks) |
 | nest-api | default, `--all`, without media, without observability, without users, minimal, without testing | typecheck, build, lint, unit tests, and e2e tests against real Postgres and Redis services |
 | node-worker | default, `--all`, without pm2 | typecheck, lint, format check, build |
+| nest-monorepo | default, `--all`, without the worker, without testing | build, typecheck, lint across the workspace; the API's unit and e2e tests |
 | py-worker | default, `--with temporal` | byte-compile every module |
 | react-app, react-monorepo | default, `--all` | typecheck, lint, build |
-| stack add | nest-api + realtime, react-app + marketing, react-monorepo + app-admin, node-worker + temporal, py-worker + temporal | `scripts/check-add.mjs`: generate with the defaults, `stack add` the feature, and require the result to match `stack new --with` it exactly |
-| stack upgrade | every template | `scripts/check-upgrade.mjs`: generate with the latest published release, `stack upgrade` with this checkout, and require the result to match a fresh `stack new` (`.env` compared by keys) |
-| Docker images | nest-api, node-worker, node-worker `--with temporal` | `docker build` |
+| stack add | nest-api + realtime, react-app + marketing, react-monorepo + app-admin, node-worker + temporal, py-worker + temporal, nest-monorepo + temporal | `scripts/check-add.mjs`: generate with the defaults, `stack add` the feature, and require the result to match `stack new --with` it exactly |
+| stack upgrade | every template in the latest published release | `scripts/check-upgrade.mjs`: generate with the latest published release, `stack upgrade` with this checkout, and require the result to match a fresh `stack new` (`.env` compared by keys) |
+| Docker images | nest-api, node-worker, node-worker `--with temporal`, nest-monorepo's API, nest-monorepo `--all`'s worker | `docker build` |
 | Docs | | build this site, including the env-coverage and link checks |
 
 Every job generates its project with `--strict`, so a failing install or

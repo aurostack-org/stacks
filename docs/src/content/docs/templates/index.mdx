@@ -6,13 +6,15 @@ description: Which templates to combine for a project, and monolith or monorepo 
 import Diagram from '../../../components/Diagram.astro';
 
 A project is usually two to four generated repositories: an API, a front end,
-and a worker per kind of background work.
+and a worker per kind of background work, or an API and its Node worker
+generated together as one monorepo.
 
 | You need | Generate |
 |---|---|
 | An HTTP API, auth, a database | `nest-api` |
 | A web front end | `react-app` (or `react-monorepo`, below) |
 | Slow or heavy jobs outside the API process | `node-worker` |
+| The API and a Node worker sharing one database | `nest-monorepo` (one repository, one Prisma package; [why](nest-monorepo/#a-monorepo-or-two-repositories)) |
 | Jobs that need Python libraries | `py-worker` |
 | Durable, multi-step workflows | `--with temporal` on the API and a worker ([why](../guides/background-work/)) |
 
@@ -41,7 +43,7 @@ ship on different schedules, scale separately, or be locked down on their own
 |---|---|
 | Front end → API | the front end's `VITE_APP_API_URL`; the API's `FRONTEND_HOST` (and `MISC_CORS_ORIGINS`) |
 | API ↔ workers (jobs) | the same `REDIS_*`, and the same queue names on both sides |
-| API ↔ workers (data) | the same database; the worker's models match the API's schema |
+| API ↔ workers (data) | the same database; the worker's models match the API's schema (automatic in `nest-monorepo`) |
 | API → Temporal → workers | the same `TEMPORAL_ADDRESS` and `TEMPORAL_NAMESPACE`; the worker polls the task queue the API starts on |
 | Everything → OpenObserve | one org per project, a distinct `OTEL_SERVICE_NAME` per service |
 

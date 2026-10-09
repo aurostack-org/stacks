@@ -8,7 +8,9 @@ import Diagram from '../../../components/Diagram.astro';
 
 A typical project: `shop-api` (nest-api), `shop-web` (react-app), `shop-worker`
 (node-worker), and maybe `shop-py` (py-worker). Each is its own repository, and
-the defaults already agree on the local ports and services.
+the defaults already agree on the local ports and services. The API and the
+Node worker can instead be one repository, `nest-monorepo`, which removes the
+schema-sharing step below.
 
 <Diagram name="full-stack" title="The pieces of a project and what connects them" height={640} />
 
@@ -21,6 +23,13 @@ stack new node-worker ~/code/shop/worker --name shop-worker
 ```
 
 Add `--with temporal` to the API and the worker if you need durable workflows.
+
+Or, for the API and the Node worker as one workspace:
+
+```sh
+stack new nest-monorepo ~/code/shop/backend --name shop
+stack new react-app     ~/code/shop/web     --name shop-web
+```
 
 ## The links, one by one
 
@@ -69,10 +78,13 @@ worker throws to fail a job.
 
 The worker uses the API's database directly. It needs the API's schema:
 
+- **nest-monorepo:** nothing to do. Both apps import the client from
+  `packages/db`; a migration and the code it breaks fail `yarn typecheck`
+  together.
 - **node-worker:** copy the API's `prisma/schema/*.prisma` into the worker's
-  `prisma/schema/` (replacing the placeholder `User`), or better, make the
-  API's `prisma/schema` a git submodule of the worker. Run `yarn db:generate`
-  after every schema change, and redeploy.
+  `prisma/schema/` (replacing the placeholder `User`), or make the API's
+  `prisma/schema` a git submodule of the worker. Run `yarn db:generate` after
+  every schema change, and redeploy.
 - **py-worker:** hand-write SQLAlchemy models matching the tables it uses.
 
 Only the API runs migrations.

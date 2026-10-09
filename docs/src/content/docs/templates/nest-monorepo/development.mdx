@@ -1,0 +1,102 @@
+---
+title: nest-monorepo development
+description: Running both apps, changing the schema, testing, and the task skills.
+sidebar:
+  label: Development
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+import SkillTable from '../../../../components/SkillTable.astro';
+
+## First run
+
+<Steps>
+
+1. Fill in `apps/api/.env` (database, Redis, `BETTER_AUTH_SECRET`, SMTP) and
+   give `apps/worker/.env` the same `DATABASE_URL` and `REDIS_*`.
+
+2. Start Postgres and Redis, and wait until they accept connections:
+
+   ```sh
+   yarn dc:up && yarn dc:wait
+   ```
+
+3. Create the first migration and seed:
+
+   ```sh
+   yarn db:migrate --name init
+   yarn db:seed
+   ```
+
+4. Run every app:
+
+   ```sh
+   yarn dev        # the API on http://localhost:5000/docs, plus the worker
+   ```
+
+</Steps>
+
+## Commands
+
+From the root, turbo runs each across every workspace, building `@scope/db`
+first:
+
+```sh
+yarn build | typecheck | lint | test
+yarn format
+```
+
+One workspace: `yarn workspace @scope/api <script>`, or the script from the
+app's folder.
+
+## Changing the schema
+
+<Steps>
+
+1. Edit `packages/db/prisma/schema/*.prisma`.
+
+2. From the root or `apps/api`:
+
+   ```sh
+   yarn db:migrate --name add_things
+   ```
+
+   This runs `prisma migrate dev` in `@scope/db` with the API's `.env`, then
+   rebuilds the client.
+
+3. Restart `yarn dev`, and run `yarn typecheck` from the root: it checks every
+   app against the new client at once.
+
+</Steps>
+
+<Aside title="Tests use db push">
+The API's test database is pushed, not migrated: `yarn test:db:push` from
+`apps/api` after a schema change. It runs `prisma db push --accept-data-loss`,
+which Prisma refuses to run from an AI agent without the user's explicit
+consent.
+</Aside>
+
+## Tests
+
+The API's suites, as in [nest-api](../../nest-api/development/), run from
+`apps/api` against `compose.test.yml` (ports 5499 / 6399):
+
+```sh
+cd apps/api
+yarn test:dc:reinstall    # once: test stack up, schema pushed, seeded
+yarn test                 # unit
+yarn test:e2e             # e2e
+```
+
+## Task skills
+
+Each app ships its own Claude Code skills in `apps/<app>/.claude/skills/`, and
+a root `CLAUDE.md` describes the workspace.
+
+### apps/api
+
+<SkillTable template="nest-api" />
+
+### apps/worker
+
+<SkillTable template="node-worker" />
