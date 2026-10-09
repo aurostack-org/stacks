@@ -10,7 +10,9 @@ const SERVICES = [
 	'redis' // @feature cache
 ].join(' ');
 
-const TEST = 'docker compose -f compose.test.yml -p test';
+// A project name unique to this API: a shared `-p test` makes compose adopt
+// another project's test containers and their data volumes.
+const TEST = 'docker compose -f compose.test.yml -p acme-test';
 
 class DockerCompose extends Argv {
 	private async getArgs() {
@@ -31,20 +33,20 @@ class DockerCompose extends Argv {
 		const { cmd, env } = await this.getArgs();
 		if (env === 'dev') {
 			if (cmd === 'up') return `docker compose up -d ${SERVICES}`;
-			if (cmd === 'wait') return 'docker compose run wait';
+			if (cmd === 'wait') return 'docker compose run --rm wait';
 			if (cmd === 'down') return 'docker compose down';
 			if (cmd === 'recreate')
-				return `docker compose down && docker compose up -d ${SERVICES} && docker compose run wait`;
+				return `docker compose down && docker compose up -d ${SERVICES} && docker compose run --rm wait`;
 
 			return undefined;
 		}
 
 		if (env === 'test') {
 			if (cmd === 'up') return `${TEST} up -d ${SERVICES}`;
-			if (cmd === 'wait') return `${TEST} run wait`;
+			if (cmd === 'wait') return `${TEST} run --rm wait`;
 			if (cmd === 'down') return `${TEST} down`;
 			if (cmd === 'recreate')
-				return `${TEST} down && ${TEST} up -d ${SERVICES} && ${TEST} run wait`;
+				return `${TEST} down && ${TEST} up -d ${SERVICES} && ${TEST} run --rm wait`;
 
 			return undefined;
 		}
