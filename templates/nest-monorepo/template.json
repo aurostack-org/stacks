@@ -1,0 +1,617 @@
+{
+	"name": "nest-monorepo",
+	"version": "0.1.0",
+	"title": "NestJS API + worker monorepo (Turborepo)",
+	"description": "The nest-api and node-worker stacks as one Yarn 4 + Turborepo workspace: apps/api and apps/worker share one Prisma package (packages/db) instead of the worker copying the API's schema, one compose stack, turbo-pruned Docker images with a migrate target, and root CI that builds the images as a set.",
+	"derivedFrom": "nest-api, node-worker",
+	"defaults": {
+		"port": 5000
+	},
+	"aliasRoots": {
+		"#app/": "apps/worker/src/",
+		"#utils/": "apps/worker/src/utils/",
+		"#lib/": "apps/worker/src/lib/",
+		"@acme/db/": null
+	},
+	"generatedPaths": [
+		"**/node_modules/**",
+		"packages/db/prisma/generated/**",
+		"packages/db/dist/**"
+	],
+	"hooks": [
+		{
+			"title": "seed each app's .env from .env.example",
+			"run": "for d in apps/*/; do [ -f \"$d.env.example\" ] && cp -n \"$d.env.example\" \"$d.env\"; done; true",
+			"optional": true
+		},
+		{
+			"title": "seed apps/api/.env.test from .env.test.example",
+			"run": "cp -n apps/api/.env.test.example apps/api/.env.test || true",
+			"when": "testing",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install --no-immutable",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "build the shared Prisma client (packages/db)",
+			"run": "yarn db:generate",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the nest-monorepo template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"Edit apps/api/.env — DATABASE_URL, REDIS_*, BETTER_AUTH_SECRET and SMTP_* have placeholder values. apps/worker/.env needs the same DATABASE_URL and REDIS_*.",
+		"yarn dc:up && yarn dc:wait   # start Postgres + Redis",
+		"yarn db:migrate              # create the initial migration (runs in packages/db)",
+		"yarn dev                     # every app; the API on http://localhost:{{port}}/docs"
+	],
+	"replacements": [
+		{
+			"from": "@acme/",
+			"to": "@{{scope}}/"
+		},
+		{
+			"from": "Acme Corp",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "AcmeCorp",
+			"to": "{{pascal}}"
+		},
+		{
+			"from": "acme-corp",
+			"to": "{{name}}"
+		},
+		{
+			"from": "acmecorp",
+			"to": "{{name}}"
+		},
+		{
+			"from": "acme",
+			"to": "{{name}}"
+		},
+		{
+			"from": "\\bnum\\(\\)\\.default\\(5000\\)",
+			"to": "num().default({{port}})",
+			"regex": true
+		},
+		{
+			"from": "Number\\(env\\.PORT\\) \\|\\| 5000",
+			"to": "Number(env.PORT) || {{port}}",
+			"regex": true
+		},
+		{
+			"from": "^PORT='5000'$",
+			"to": "PORT='{{port}}'",
+			"regex": true,
+			"flags": "gm"
+		},
+		{
+			"from": "^(SERVER_HOST|BETTER_AUTH_URL)='http://localhost:5000'$",
+			"to": "$1='http://localhost:{{port}}'",
+			"regex": true,
+			"flags": "gm"
+		},
+		{
+			"from": "^EXPOSE 5000$",
+			"to": "EXPOSE {{port}}",
+			"regex": true,
+			"flags": "gm"
+		}
+	],
+	"features": {
+		"prisma": {
+			"title": "Prisma ORM + Postgres (shared packages/db)",
+			"description": "The schema, migrations and generated client live in packages/db and every app imports @scope/db/client. The client is generated as CommonJS and compiled, so the CommonJS API and the ESM worker load the same build. The API owns migrations; its db:* scripts run Prisma there.",
+			"core": true
+		},
+		"config": {
+			"title": "Zod-validated config service",
+			"description": "CustomConfigService wrapping @nestjs/config; app code never reads process.env directly.",
+			"core": true
+		},
+		"auth": {
+			"title": "better-auth (email/password, OAuth, roles)",
+			"description": "Global AuthGuard so every route is authenticated by default, @AllowAnonymous to opt out, access-control statements and roles in lib/access.ts.",
+			"core": true,
+			"requires": [
+				"prisma"
+			]
+		},
+		"cache": {
+			"title": "Redis cache",
+			"description": "CacheService on ioredis, plus the key-namespacing helpers. Required by the queue, throttler and realtime layers.",
+			"default": true,
+			"files": [
+				"apps/api/src/common/services/cache.service.ts",
+				"apps/api/src/common/utils/redis.keys.ts",
+				"apps/api/src/common/__tests__/cache.service.spec.ts"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"ioredis"
+				]
+			}
+		},
+		"queue": {
+			"title": "BullMQ background jobs",
+			"description": "QueueModule.register(), the Bull Board dashboard at /dashboard behind basic auth.",
+			"default": true,
+			"requires": [
+				"cache"
+			],
+			"files": [
+				"apps/api/src/common/modules/queue.module.ts",
+				"apps/api/.claude/skills/add-job/**"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/bullmq",
+					"bullmq",
+					"@bull-board/api",
+					"@bull-board/express",
+					"@bull-board/nestjs",
+					"bullmq-otel"
+				]
+			}
+		},
+		"mail": {
+			"title": "Transactional email",
+			"description": "MailService enqueuing onto the `mail` queue, a MailProcessor consumer, and React Email templates with a dev preview server.",
+			"default": true,
+			"requires": [
+				"queue"
+			],
+			"files": [
+				"apps/api/src/common/services/mail.service.ts",
+				"apps/api/src/common/processors/**",
+				"apps/api/src/common/types/email.ts",
+				"apps/api/emails/**",
+				"apps/api/__mocks__/**",
+				"apps/api/src/common/__tests__/mail.service.spec.ts",
+				"apps/api/.claude/skills/add-email/**"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs-modules/mailer",
+					"nodemailer",
+					"react",
+					"react-email",
+					"@react-email/components",
+					"@react-email/render"
+				],
+				"devDependencies": [
+					"@types/nodemailer",
+					"@types/react"
+				],
+				"scripts": [
+					"email:dev"
+				]
+			}
+		},
+		"rate-limit": {
+			"title": "Two-layer rate limiting",
+			"description": "ThrottlerGuard on a Redis Lua storage for app routes, plus better-auth's own limiter for /auth/* with per-endpoint rules.",
+			"default": true,
+			"requires": [
+				"cache"
+			],
+			"files": [
+				"apps/api/src/common/services/throttler-storage.service.ts",
+				"apps/api/src/common/services/auth-rate-limit.storage.ts",
+				"apps/api/src/lib/rate-limit.ts",
+				"apps/api/src/common/utils/ip.ts",
+				"apps/api/src/common/__tests__/throttler-storage.service.spec.ts",
+				"apps/api/test/rate-limit.spec.ts"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/throttler"
+				]
+			}
+		},
+		"openapi": {
+			"title": "OpenAPI + Scalar reference",
+			"description": "Swagger document at /openapi and a Scalar UI at /docs (auth + main API), both behind basic auth. Core rather than optional: @ApiTags/@ApiProperty decorators are pervasive in the controller and entity conventions, so removing @nestjs/swagger would mean annotating hundreds of lines.",
+			"core": true
+		},
+		"observability": {
+			"title": "Observability: OpenTelemetry and health checks",
+			"description": "OpenTelemetry traces, logs and metrics pushed over OTLP from every app (built for OpenObserve; set OPENOBSERVE_URL/ORG/TOKEN, or any OTEL_* backend), plus Terminus health checks with a Prisma indicator in the API. Off at runtime until connected.",
+			"requires": [
+				"http-client"
+			],
+			"default": true,
+			"files": [
+				"apps/api/src/common/controllers/health.controller.ts",
+				"apps/api/src/common/misc/prisma.indicator.ts",
+				"apps/api/src/common/__tests__/health.controller.spec.ts",
+				"apps/api/src/common/__tests__/prisma.indicator.spec.ts",
+				"apps/api/src/instrumentation.ts",
+				"apps/api/src/telemetry/**",
+				"apps/worker/src/telemetry/**"
+			],
+			"packageJson": [
+				{
+					"file": "apps/api/package.json",
+					"dependencies": [
+						"@nestjs/terminus",
+						"@opentelemetry/api",
+						"@opentelemetry/core",
+						"@opentelemetry/sdk-node",
+						"@opentelemetry/auto-instrumentations-node",
+						"@opentelemetry/exporter-trace-otlp-proto",
+						"@opentelemetry/exporter-logs-otlp-proto",
+						"@opentelemetry/exporter-metrics-otlp-proto",
+						"@opentelemetry/sdk-logs",
+						"@opentelemetry/sdk-metrics",
+						"@opentelemetry/resources",
+						"@opentelemetry/semantic-conventions",
+						"@opentelemetry/instrumentation",
+						"@opentelemetry/instrumentation-express",
+						"import-in-the-middle",
+						"@prisma/instrumentation"
+					]
+				},
+				{
+					"file": "apps/worker/package.json",
+					"dependencies": [
+						"@opentelemetry/api",
+						"@opentelemetry/core",
+						"@opentelemetry/sdk-node",
+						"@opentelemetry/auto-instrumentations-node",
+						"@opentelemetry/exporter-trace-otlp-proto",
+						"@opentelemetry/exporter-logs-otlp-proto",
+						"@opentelemetry/exporter-metrics-otlp-proto",
+						"@opentelemetry/sdk-logs",
+						"@opentelemetry/sdk-metrics",
+						"@opentelemetry/resources",
+						"@opentelemetry/semantic-conventions",
+						"@opentelemetry/instrumentation",
+						"import-in-the-middle",
+						"@prisma/instrumentation"
+					]
+				}
+			]
+		},
+		"users": {
+			"title": "Users module",
+			"description": "Admin-style user listing/lookup gated by permissions, plus the authenticated user's own /me resource and avatar upload.",
+			"default": true,
+			"requires": [
+				"auth"
+			],
+			"files": [
+				"apps/api/src/users/**",
+				"apps/api/test/users.spec.ts",
+				"apps/api/test/current-user.spec.ts"
+			]
+		},
+		"media": {
+			"title": "File uploads (S3)",
+			"description": "MediaService and S3Service for public and private uploads, with multipart decorators.",
+			"requires": [
+				"auth",
+				"queue"
+			],
+			"default": true,
+			"files": [
+				"apps/api/src/media/**",
+				"apps/api/src/users/dto/avatar.dto.ts"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@aws-sdk/client-s3"
+				],
+				"devDependencies": [
+					"@types/multer"
+				]
+			}
+		},
+		"scheduler": {
+			"title": "Cron / interval scheduling",
+			"description": "@nestjs/schedule wired at the root so modules can declare @Cron and @Interval jobs.",
+			"default": true,
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/schedule"
+				]
+			}
+		},
+		"http-client": {
+			"title": "Outbound HTTP client",
+			"description": "@nestjs/axios registered with a default timeout, for calling third-party APIs.",
+			"default": true,
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/axios",
+					"axios"
+				]
+			}
+		},
+		"realtime": {
+			"title": "Socket.IO realtime layer",
+			"description": "An authenticated gateway, Redis-backed presence, a Redis Socket.IO adapter for horizontal scale, and WS auth/permission guards. Opt-in.",
+			"requires": [
+				"cache",
+				"auth"
+			],
+			"files": [
+				"apps/api/src/realtime/**",
+				"apps/api/.claude/skills/add-realtime-event/**"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/websockets",
+					"@nestjs/platform-socket.io",
+					"socket.io",
+					"@socket.io/redis-adapter"
+				]
+			}
+		},
+		"notifications": {
+			"title": "Persistent user notifications",
+			"description": "A Notification model plus dispatch/read endpoints. Pushes each new notification over the realtime layer when that feature is also on, and persists either way.",
+			"requires": [
+				"auth"
+			],
+			"files": [
+				"apps/api/src/notifications/**",
+				"packages/db/prisma/schema/notification.prisma",
+				"apps/api/test/notifications.spec.ts",
+				"apps/api/.claude/skills/add-notification/**"
+			]
+		},
+		"feature-flags": {
+			"title": "GrowthBook feature flags",
+			"description": "A session-aware FeatureFlagGuard and FeatureFlagService for gating routes on flags.",
+			"requires": [
+				"cache",
+				"auth",
+				"scheduler"
+			],
+			"files": [
+				"apps/api/src/common/services/feature-flag.service.ts",
+				"apps/api/src/common/guards/feature-flag.guard.ts"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@growthbook/growthbook"
+				]
+			}
+		},
+		"temporal": {
+			"title": "Temporal client",
+			"description": "A TemporalService in the API that starts and queries durable workflows, Temporal's dev server in compose.yml, and (with app-worker) a Temporal worker running the workflows and activities in apps/worker/src/temporal. The worker image switches to Debian, since Temporal's native core does not load on Alpine.",
+			"files": [
+				"apps/api/src/common/services/temporal.service.ts",
+				"apps/api/src/common/__tests__/temporal.service.spec.ts",
+				"apps/worker/src/temporal/**",
+				"apps/worker/.claude/skills/add-workflow/**"
+			],
+			"packageJson": [
+				{
+					"file": "apps/api/package.json",
+					"dependencies": [
+						"@temporalio/client"
+					]
+				},
+				{
+					"file": "apps/worker/package.json",
+					"dependencies": [
+						"@temporalio/activity",
+						"@temporalio/worker",
+						"@temporalio/workflow"
+					]
+				}
+			]
+		},
+		"graphql": {
+			"title": "GraphQL endpoint",
+			"description": "Code-first GraphQL via Apollo, registered alongside the REST controllers. Resolvers in any feature module are picked up automatically.",
+			"files": [
+				"apps/api/src/app.resolver.ts"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"dependencies": [
+					"@nestjs/graphql",
+					"@nestjs/apollo",
+					"@apollo/server",
+					"@as-integrations/express5",
+					"graphql"
+				]
+			}
+		},
+		"testing": {
+			"title": "Vitest unit + e2e suites",
+			"description": "Two Vitest projects, an AppFactory that boots the real app against real Postgres and Redis, and a test Docker stack.",
+			"default": true,
+			"requires": [
+				"docker"
+			],
+			"files": [
+				"apps/api/test/**",
+				"apps/api/src/**/__tests__/**",
+				"apps/api/vitest.config.ts",
+				"compose.test.yml",
+				"apps/api/.env.test.example",
+				".forgejo/workflows/test-e2e.yml"
+			],
+			"packageJson": {
+				"file": "apps/api/package.json",
+				"devDependencies": [
+					"vitest",
+					"@vitest/coverage-v8",
+					"@vitest/ui",
+					"@suites/di.nestjs",
+					"@suites/doubles.vitest",
+					"@suites/unit",
+					"@golevelup/ts-vitest",
+					"@nestjs/testing",
+					"supertest",
+					"@types/supertest",
+					"fishery",
+					"unplugin-swc"
+				],
+				"scripts": [
+					"test",
+					"test:watch",
+					"test:ui",
+					"test:e2e",
+					"test:e2e:watch",
+					"test:e2e:ui",
+					"test:cov",
+					"test:all",
+					"test:all:ui",
+					"test:db:generate",
+					"test:db:push",
+					"test:db:seed",
+					"test:dc:up",
+					"test:dc:wait",
+					"test:dc:down",
+					"test:dc:recreate",
+					"test:dc:reinstall"
+				]
+			}
+		},
+		"docker": {
+			"title": "Docker Compose + images",
+			"description": "One compose.yml (Postgres, Redis) shared by every app, and a turbo-pruned production image per app built from the monorepo root, with a `migrate` target on the API image that runs prisma migrate deploy.",
+			"default": true,
+			"files": [
+				"apps/api/Dockerfile",
+				".dockerignore",
+				"compose.yml",
+				"apps/api/.bin/dc.ts",
+				"apps/worker/Dockerfile",
+				"apps/worker/Dockerfile.dev"
+			],
+			"packageJson": [
+				{
+					"file": "apps/api/package.json",
+					"scripts": [
+						"dc:up",
+						"dc:down",
+						"dc:wait",
+						"dc:recreate",
+						"dc:reinstall",
+						"down",
+						"reinstall"
+					]
+				},
+				{
+					"file": "package.json",
+					"scripts": [
+						"dc:up",
+						"dc:wait",
+						"dc:down",
+						"dc:reinstall"
+					]
+				}
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"description": "Root Forgejo workflows: lint, typecheck, test and build every workspace on branches, the API's e2e suite on pull requests, and every image built and pushed under one shared tag.",
+			"requires": [
+				"secrets"
+			],
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		},
+		"secrets": {
+			"title": "Infisical secret sync",
+			"description": "`yarn secrets -e <env>` pulls the matching .env file instead of passing secrets around by hand.",
+			"default": true,
+			"files": [
+				"apps/api/.bin/secrets.ts",
+				"apps/worker/.bin/secrets.ts"
+			],
+			"packageJson": [
+				{
+					"file": "apps/api/package.json",
+					"scripts": [
+						"secrets"
+					]
+				},
+				{
+					"file": "apps/worker/package.json",
+					"scripts": [
+						"secrets"
+					]
+				}
+			]
+		},
+		"worker-queue": {
+			"title": "Worker: BullMQ consumers",
+			"description": "Worker processes pulling from the same Redis queues the API produces to. Only with app-worker.",
+			"default": true,
+			"files": [
+				"apps/worker/src/utils/worker.ts",
+				"apps/worker/src/workers/**",
+				"apps/worker/.claude/skills/add-worker/**"
+			],
+			"packageJson": {
+				"file": "apps/worker/package.json",
+				"dependencies": [
+					"bullmq",
+					"bullmq-otel",
+					"ioredis"
+				]
+			}
+		},
+		"worker-browser": {
+			"title": "Worker: headless browser (Puppeteer)",
+			"description": "For rendering or scraping pages that need JavaScript executed. Heavy: the worker image grows by roughly 800 MB (Chromium and its fonts). Only with app-worker.",
+			"files": [
+				"apps/worker/src/utils/browser.ts"
+			],
+			"packageJson": {
+				"file": "apps/worker/package.json",
+				"dependencies": [
+					"puppeteer"
+				]
+			}
+		},
+		"worker-pm2": {
+			"title": "Worker: PM2 process manager",
+			"description": "ecosystem.config.cjs, and pm2-runtime as the worker image's entrypoint. Only with app-worker.",
+			"default": true,
+			"files": [
+				"apps/worker/ecosystem.config.cjs"
+			]
+		},
+		"app-worker": {
+			"title": "Background worker app",
+			"description": "apps/worker: a standalone TypeScript worker (BullMQ consumers, pino logging) reading and writing the API's database through the shared @scope/db client. The worker-* features only apply when it is on.",
+			"default": true,
+			"files": [
+				"apps/worker/**"
+			]
+		}
+	}
+}

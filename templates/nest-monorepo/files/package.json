@@ -1,0 +1,34 @@
+{
+	"name": "acme-backend",
+	"private": true,
+	"version": "0.0.0",
+	"engines": {
+		"node": ">=24"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "turbo run lint",
+		"typecheck": "turbo run typecheck",
+		"test": "turbo run test",
+		"format": "prettier --write \"apps/api/{src,test}/**/*.ts\" apps/worker --no-error-on-unmatched-pattern",
+		"db:generate": "yarn workspace @acme/db build",
+		"db:migrate": "yarn workspace @acme/api db:migrate",
+		"db:migrate:create": "yarn workspace @acme/api db:migrate:create",
+		"db:seed": "yarn workspace @acme/api db:seed",
+		"db:studio": "yarn workspace @acme/api db:studio",
+		"dc:up": "yarn workspace @acme/api dc:up",
+		"dc:wait": "yarn workspace @acme/api dc:wait",
+		"dc:down": "yarn workspace @acme/api dc:down",
+		"dc:reinstall": "yarn workspace @acme/api dc:reinstall"
+	},
+	"devDependencies": {
+		"prettier": "^3.9.9",
+		"turbo": "^2.11.7"
+	},
+	"packageManager": "yarn@4.14.1"
+}

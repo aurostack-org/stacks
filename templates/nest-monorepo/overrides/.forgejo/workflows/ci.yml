@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+      - "!main"
+      - "!development"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # @feature:start testing
+      - name: Install Infisical CLI
+        run: npm install -g @infisical/cli
+
+      # The API's unit tests load apps/api/.env.test.
+      - name: Fetch secrets
+        env:
+          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
+          INFISICAL_API_URL: https://inf.aurostack.co
+        run: yarn workspace @acme/api secrets -e test
+      # @feature:end
+
+      # Turbo builds @acme/db (prisma generate + tsc) before anything that
+      # imports it, so there is no separate generate step.
+      - name: Lint, typecheck, test, build
+        run: yarn turbo run lint typecheck test build
