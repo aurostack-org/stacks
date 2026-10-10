@@ -48,8 +48,9 @@ install system software without asking.
 `yarn secrets` (`-e dev` by default) **overwrites** `.env` with the project's
 Infisical environment. So it runs before anything else writes to `.env`:
 
-- `INFISICAL_PROJECT_ID` set in the shell and the `infisical` CLI logged in:
-  ask, then run `yarn secrets` in each service that has the script. If a
+- A `"projectId"` in the service's `infisical.jsonc` and the `infisical` CLI
+  logged in: ask, then run `yarn secrets` in each service that has the script
+  (in a monorepo, each workspace has its own `infisical.jsonc`). If a
   `.env` already has local edits, say they will be replaced and ask first.
 - Otherwise: local setup uses `.env` alone, and wiring Infisical goes on the
   production checklist (step 7).
@@ -162,7 +163,7 @@ Write `SETUP.md` at the product root (or the project root), per service:
   feature present: production values (`APP_ENV`, public URLs, cookie domain,
   `RATE_LIMIT_IP_HEADERS`), example values to change (`SUPERUSER_*`,
   `BASIC_AUTH_*`), real Postgres, Redis, SMTP and S3, Infisical environments
-  and `INFISICAL_PROJECT_ID`, CI repository secrets, OpenObserve orgs and
+  and the project id in every `infisical.jsonc`, CI repository secrets, OpenObserve orgs and
   tokens, a Temporal namespace, DNS and TLS. Each item links to its doc page
   and is an unticked box: this skill does not do them.
 

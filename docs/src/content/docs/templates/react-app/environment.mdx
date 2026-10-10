@@ -22,10 +22,6 @@ start; restart `yarn dev` after changing it.
 
 ## Not in `.env.example`
 
-| Variable | Used by | Effect |
-|---|---|---|
-| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH` | `yarn secrets` | See [Secrets with Infisical](../../../setup/secrets/) |
-
 There is deliberately no `VITE_APP_URL`: absolute links (email verification
 callbacks) use `window.location.origin`. A stale URL baked into an image would
 send every verification link to the previous environment, invisibly, until a

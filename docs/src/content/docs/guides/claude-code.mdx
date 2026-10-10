@@ -77,7 +77,7 @@ then the frontend). It works from the [setup checklist](../../setup/checklist/):
   it names the keys and the file, then checks they are set. It never asks for
   a secret in chat or prints one; a small helper reports each key as missing,
   empty, still the example, or set.
-- **Infisical first**: if `INFISICAL_PROJECT_ID` is set it pulls the dev
+- **Infisical first**: if `infisical.jsonc` has a project id it pulls the dev
   environment (`yarn secrets`), before anything else writes `.env`.
 - **Verified, not assumed**: the API is migrated, seeded and answering on
   `/health`; the worker has the API's schema and connects; the frontend's
