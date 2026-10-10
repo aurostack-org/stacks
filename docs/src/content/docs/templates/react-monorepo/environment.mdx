@@ -25,7 +25,6 @@ secret there, and build one image per environment. See
 |---|---|---|
 | `VITE_APP_ALLOWED_HOSTS` | any `apps/*/.env` | Comma-separated hostnames the dev server answers beyond `localhost` (a tunnel, `*.lvh.me`) |
 | `API_DOC_URL`, `API_DOC_USER`, `API_DOC_PASSWORD` | `packages/types/.env` | Where `yarn workspace @scope/types gen` fetches the OpenAPI document; create this file by hand (or with its `secrets` script) |
-| `INFISICAL_PROJECT_ID`, `INFISICAL_PATH_PREFIX` | shell | `yarn secrets`: each workspace pulls from `<prefix>/<app>` (default prefix `/frontend`) |
 
 ## What the API must mirror
 

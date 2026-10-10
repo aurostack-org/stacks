@@ -303,9 +303,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # nest-monorepo joins once a published release contains it: the check
-        # starts from the latest release.
-        template: [nest-api, react-app, react-monorepo, node-worker, py-worker]
+        template: [nest-api, nest-monorepo, react-app, react-monorepo, node-worker, py-worker]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -11,7 +11,7 @@
 		"gen:schema": "node .bin/openapi.js",
 		"gen:types": "openapi-ts",
 		"gen": "node .bin/openapi.js && openapi-ts",
-		"secrets": "node .bin/secrets.js",
+		"secrets": "secrets",
 		"lint": "eslint .",
 		"typecheck": "tsc --noEmit"
 	},
@@ -19,6 +19,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@aurostack/secrets": "^0.1.1",
 		"@hey-api/client-fetch": "^0.5.2",
 		"@hey-api/openapi-ts": "^0.59.1",
 		"@acme/config": "workspace:*",

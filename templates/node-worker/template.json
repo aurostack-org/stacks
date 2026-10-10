@@ -135,9 +135,12 @@
 			"title": "Infisical secret sync",
 			"default": true,
 			"files": [
-				".bin/secrets.ts"
+				"infisical.jsonc"
 			],
 			"packageJson": {
+				"devDependencies": [
+					"@aurostack/secrets"
+				],
 				"scripts": [
 					"secrets"
 				]

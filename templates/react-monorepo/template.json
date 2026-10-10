@@ -239,8 +239,11 @@
 			"title": "Infisical secret sync",
 			"default": true,
 			"files": [
-				"apps/*/.bin/**",
-				"packages/types/.bin/**"
+				"apps/admin/infisical.jsonc",
+				"apps/auth/infisical.jsonc",
+				"apps/client/infisical.jsonc",
+				"apps/landing/infisical.jsonc",
+				"packages/types/infisical.jsonc"
 			],
 			"packageJson": [
 				{
@@ -250,30 +253,45 @@
 				},
 				{
 					"file": "apps/admin/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
 				},
 				{
 					"file": "apps/auth/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
 				},
 				{
 					"file": "apps/client/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
 				},
 				{
 					"file": "apps/landing/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
 				},
 				{
 					"file": "packages/types/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
