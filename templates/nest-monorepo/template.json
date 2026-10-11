@@ -548,18 +548,24 @@
 			"description": "`yarn secrets -e <env>` pulls the matching .env file instead of passing secrets around by hand.",
 			"default": true,
 			"files": [
-				"apps/api/.bin/secrets.ts",
-				"apps/worker/.bin/secrets.ts"
+				"apps/api/infisical.jsonc",
+				"apps/worker/infisical.jsonc"
 			],
 			"packageJson": [
 				{
 					"file": "apps/api/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]
 				},
 				{
 					"file": "apps/worker/package.json",
+					"devDependencies": [
+						"@aurostack/secrets"
+					],
 					"scripts": [
 						"secrets"
 					]

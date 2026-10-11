@@ -175,7 +175,9 @@ rm('apps/api/prisma');
 rm('apps/api/prisma.config.ts');
 rm('apps/worker/prisma');
 rm('apps/worker/prisma.config.ts');
-rm('apps/worker/.bin/db.ts');
+// db.ts (its schema is packages/db's) and secrets.ts (the @aurostack/secrets
+// CLI) were the only users of the worker's .bin helpers; nothing is left there.
+rm('apps/worker/.bin');
 
 move('apps/api/compose.yml', 'compose.yml');
 move('apps/api/compose.test.yml', 'compose.test.yml');
@@ -379,6 +381,11 @@ editJson('apps/api/package.json', (pkg) => {
 	pkg.devDependencies = sortKeys(pkg.devDependencies);
 });
 
+// One Infisical folder per app, like react-monorepo's /frontend/<app>: both
+// source templates fetch from the project root, which here would hand the API's
+// secrets to the worker and the other way round.
+patch('apps/api/infisical.jsonc', [['"path": "/",', '"path": "/backend/api",']]);
+
 console.log('==> apps/api: guidance');
 patch('apps/api/CLAUDE.md', [
 	[
@@ -503,7 +510,16 @@ editJson('apps/worker/package.json', (pkg) => {
 	pkg.dependencies = sortKeys(pkg.dependencies);
 	delete pkg.devDependencies.prisma;
 	delete pkg.devDependencies['prisma-dbml-generator'];
+	// Only the removed .bin scripts used these.
+	for (const dep of ['shelljs', 'yargs']) delete pkg.dependencies[dep];
+	for (const dep of ['@types/shelljs', '@types/yargs']) delete pkg.devDependencies[dep];
 });
+
+patch('apps/worker/infisical.jsonc', [
+	['"path": "/",', '"path": "/backend/worker",'],
+	// The worker's packages are hoisted to the monorepo root.
+	['"./node_modules/@aurostack/secrets/schema.json"', '"../../node_modules/@aurostack/secrets/schema.json"']
+]);
 
 console.log('==> apps/worker: guidance');
 patch('apps/worker/CLAUDE.md', [

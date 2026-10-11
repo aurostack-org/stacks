@@ -44,15 +44,15 @@ Secrets and variables to set on the repository:
 | Name | For |
 |---|---|
 | `INFISICAL_TOKEN` | Machine identity token for the Infisical CLI |
-| `INFISICAL_PROJECT_ID` | The project's Infisical id. Not in the workflows by design: add it to the runner environment or the workflow `env` |
 | `REGISTRY_URL`, `REGISTRY`, `DK_USER`, `DK_ACCESS_TOKEN` | Registry login and image prefix |
 
 `INFISICAL_API_URL` in the workflows points at the Infisical instance; change it
-if yours is elsewhere.
+if yours is elsewhere. The project id and folder come from the committed
+`infisical.jsonc`.
 
 <Aside type="caution">
-If `INFISICAL_PROJECT_ID` is missing, `yarn secrets` fails the job, so the tests
-never run against an empty `.env.test`.
+If `"projectId"` in `infisical.jsonc` is empty, `yarn secrets` fails the job, so
+the tests never run against an empty `.env.test`.
 </Aside>
 
 ## Production checklist
