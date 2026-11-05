@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copy the house UI kit from react-monorepo into next-site's source repository.
+# Copy the house UI kit from react-monorepo into the next-site template.
 #
 # next-site keeps its own storefront components (from Payload's starter) but
 # shares the house kit's atoms and its theme, so a design system applied with
@@ -18,9 +18,8 @@
 # default; Vite never needed it). Everything else in src/components/ui is the
 # starter's and untouched here.
 #
-# Usage:  bash templates/next-site/derive-ui.sh [source-dir]
-#         (default: sources.next-site.path in stacks.local.json)
-# Then extract into the template:  stack extract next-site --overwrite
+# Usage:  bash templates/next-site/derive-ui.sh [dir]   (default: this template's files/)
+#         stack doctor next-site                       # always, afterwards
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -28,17 +27,9 @@ STACKS="$(cd "$HERE/../.." && pwd)"
 KIT="$STACKS/templates/react-monorepo/files/packages/ui/src"
 CONFIG="$STACKS/templates/react-monorepo/files/packages/config/tailwind/theme.css"
 
-DST="${1:-}"
-if [ -z "$DST" ]; then
-	DST="$(node -e "
-		const fs = require('fs');
-		const file = process.env.STACKS_LOCAL || '$STACKS/stacks.local.json';
-		const p = JSON.parse(fs.readFileSync(file, 'utf8')).sources['next-site'].path;
-		console.log(p.replace(/^~(?=\$|\/)/, require('os').homedir()));
-	")"
-fi
+DST="${1:-$HERE/files}"
 UI="$DST/src/components/ui"
-[ -d "$UI" ] || { echo "not a next-site source: $DST (no src/components/ui)" >&2; exit 1; }
+[ -d "$UI" ] || { echo "not a next-site tree: $DST (no src/components/ui)" >&2; exit 1; }
 
 # The atoms both kits have. The starter's own (dialog, sheet, carousel) stay.
 ATOMS=(button card checkbox input label select sonner textarea)
@@ -76,4 +67,4 @@ for mod in "${CLIENT[@]}"; do
 done
 
 echo
-echo "done. In $DST: yarn typecheck && yarn lint && yarn build"
+echo "done. Check it in place (see README.md), then: node $STACKS/cli/stack.mjs doctor next-site"
