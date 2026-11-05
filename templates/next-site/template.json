@@ -1,0 +1,270 @@
+{
+	"name": "next-site",
+	"version": "0.1.0",
+	"title": "Next.js site with Payload CMS (business website, optional shop)",
+	"description": "One Next.js 16 app with Payload CMS 3 built in, on Postgres: pages built from blocks, a contact form, SEO, site search and owner-managed redirects, all edited by the site's owner at /admin. Add `shop` for a small store (products with variants, cart, checkout, customer accounts, orders) paid outside the site and marked paid in the admin. No separate backend; one Docker image.",
+	"defaults": {
+		"port": 3000
+	},
+	"aliasRoots": {
+		"@/": "src/"
+	},
+	"generatedPaths": [
+		"**/node_modules/**",
+		".next/**",
+		"src/payload-types.ts",
+		"src/app/(payload)/admin/importMap.js"
+	],
+	"replacements": [
+		{
+			"from": "acme-site",
+			"to": "{{name}}"
+		},
+		{
+			"from": "Acme Corp",
+			"to": "{{Name}}"
+		},
+		{
+			"from": "acme",
+			"to": "{{name}}"
+		}
+	],
+	"features": {
+		"cms": {
+			"title": "Payload CMS",
+			"description": "Pages built from blocks (content, media, call to action, banner, code, form), media uploads, header and footer menus, contact forms with emailed submissions, SEO fields, and the admin at /admin. Postgres through Payload's own adapter, which owns the schema and migrations.",
+			"core": true
+		},
+		"ui": {
+			"title": "UI kit (src/components/ui)",
+			"description": "The house UI kit (button, card, checkbox, input, label, select, toasts, textarea), its light/dark theme with a no-flash init script, and its tokens, shared with react-app and react-monorepo (see derive-ui.sh), plus the storefront's own dialog, sheet and carousel on the same tokens.",
+			"core": true
+		},
+		"shop": {
+			"title": "Shop",
+			"description": "Payload's ecommerce plugin: products with variants and stock, cart, checkout, customer accounts and addresses, guest checkout and order lookup. Prices are in one currency (GHS by default, src/lib/currency.ts). Payment is pluggable (src/payments); the bundled `manual` method creates the order as awaiting payment, shows the owner's payment instructions, emails both sides, and the owner marks it paid in the admin.",
+			"files": [
+				"src/collections/Products/**",
+				"src/collections/Orders/**",
+				"src/collections/Categories.ts",
+				"src/globals/ShopSettings.ts",
+				"src/payments/**",
+				"src/lib/currency.ts",
+				"src/lib/constants.ts",
+				"src/app/(app)/(account)/**",
+				"src/app/(app)/checkout/**",
+				"src/app/(app)/create-account/**",
+				"src/app/(app)/find-order/**",
+				"src/app/(app)/forgot-password/**",
+				"src/app/(app)/login/**",
+				"src/app/(app)/logout/**",
+				"src/app/(app)/products/**",
+				"src/app/(app)/shop/**",
+				"src/components/AccountNav/**",
+				"src/components/addresses/**",
+				"src/components/Cart/**",
+				"src/components/CollectionArchive/**",
+				"src/components/CategoryTabs/**",
+				"src/components/checkout/**",
+				"src/components/forms/AccountForm/**",
+				"src/components/forms/AddressForm/**",
+				"src/components/forms/CreateAccountForm/**",
+				"src/components/forms/FindOrderForm/**",
+				"src/components/forms/ForgotPasswordForm/**",
+				"src/components/forms/LoginForm/**",
+				"src/components/Grid/**",
+				"src/components/Header/MobileAccountMenu.tsx",
+				"src/components/Header/ShopActions.tsx",
+				"src/components/layout/search/**",
+				"src/components/OrderItem/**",
+				"src/components/OrderStatus/**",
+				"src/components/Price.tsx",
+				"src/components/product/**",
+				"src/components/ProductGridItem/**",
+				"src/components/ProductItem/**",
+				"src/components/Search/**",
+				"src/components/ui/carousel.tsx",
+				"src/blocks/ArchiveBlock/**",
+				"src/blocks/Carousel/**",
+				"src/blocks/ThreeItemGrid/**",
+				"src/access/adminOrCustomerOwner.ts",
+				"src/access/customerOnlyFieldAccess.ts",
+				"src/access/isDocumentOwner.ts",
+				"src/providers/Auth/**",
+				"src/providers/Shop.tsx",
+				"src/endpoints/seed/shop/**",
+				"tests/e2e/frontend.e2e.spec.ts",
+				"tests/int/manual-payment.int.spec.ts",
+				".claude/skills/add-payment-provider/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@payloadcms/plugin-ecommerce",
+					"embla-carousel-auto-scroll",
+					"embla-carousel-react"
+				]
+			}
+		},
+		"search": {
+			"title": "Site search",
+			"description": "Payload's search plugin keeps an index of pages (and products, with the shop) in step as they are edited; /search queries it.",
+			"default": true,
+			"files": [
+				"src/search/**",
+				"src/app/(app)/search/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@payloadcms/plugin-search"
+				]
+			}
+		},
+		"redirects": {
+			"title": "Owner-managed redirects",
+			"description": "Content → Redirects in the admin, for pages that moved or were renamed. Checked only when a page is not found, so they cost nothing on pages that exist.",
+			"default": true,
+			"files": [
+				"src/redirects/**"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@payloadcms/plugin-redirects"
+				]
+			}
+		},
+		"telemetry": {
+			"title": "Monitoring → OpenObserve",
+			"description": "OpenTelemetry on the server (Next's request and render spans, outgoing HTTP, Postgres, logs, metrics) and OpenObserve RUM in the browser (page views, errors, slow resources, the signed-in customer's id), with trace headers so a click links to the server trace. Off at runtime until OPENOBSERVE_* / NEXT_PUBLIC_OPENOBSERVE_* are set.",
+			"default": true,
+			"files": [
+				"src/telemetry/**",
+				"src/instrumentation.ts"
+			],
+			"packageJson": {
+				"dependencies": [
+					"@openobserve/browser-logs",
+					"@openobserve/browser-rum",
+					"@opentelemetry/auto-instrumentations-node",
+					"@opentelemetry/exporter-logs-otlp-proto",
+					"@opentelemetry/exporter-metrics-otlp-proto",
+					"@opentelemetry/exporter-trace-otlp-proto",
+					"@opentelemetry/resources",
+					"@opentelemetry/sdk-logs",
+					"@opentelemetry/sdk-metrics",
+					"@opentelemetry/sdk-node",
+					"@opentelemetry/semantic-conventions"
+				]
+			}
+		},
+		"testing": {
+			"title": "Tests (Vitest + Playwright)",
+			"description": "Integration tests against a real Payload and Postgres (tests/int), and Playwright end-to-end tests of the admin and, with the shop, the storefront (tests/e2e).",
+			"default": true,
+			"files": [
+				"tests/**",
+				"vitest.config.mts",
+				"vitest.setup.ts",
+				"playwright.config.ts",
+				"test.env"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"@playwright/test",
+					"@vitejs/plugin-react",
+					"dotenv",
+					"jsdom",
+					"tsx",
+					"vite-tsconfig-paths",
+					"vitest"
+				],
+				"scripts": [
+					"test",
+					"test:e2e",
+					"test:int"
+				]
+			}
+		},
+		"husky": {
+			"title": "Git hooks + lint-staged",
+			"default": true,
+			"files": [
+				".husky/**"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"husky",
+					"lint-staged"
+				],
+				"scripts": [
+					"prepare"
+				]
+			}
+		},
+		"docker": {
+			"title": "Docker image",
+			"description": "Multi-stage build of Next's standalone server, Payload included. Builds without a database; pending migrations run when the server starts; uploads go to a volume at /app/media; /api/health for the healthcheck.",
+			"default": true,
+			"files": [
+				"Dockerfile",
+				".dockerignore",
+				"build.sh"
+			]
+		},
+		"ci": {
+			"title": "Forgejo Actions CI",
+			"description": "Format, lint, typecheck and build on every branch; build and push the image from main.",
+			"default": true,
+			"files": [
+				".forgejo/**"
+			]
+		},
+		"secrets": {
+			"title": "Infisical secret sync",
+			"default": true,
+			"files": [
+				"infisical.jsonc"
+			],
+			"packageJson": {
+				"devDependencies": [
+					"@aurostack/secrets"
+				],
+				"scripts": [
+					"secrets"
+				]
+			}
+		}
+	},
+	"hooks": [
+		{
+			"title": "create .env with fresh secrets",
+			"run": "node .bin/init-env.mjs",
+			"optional": true
+		},
+		{
+			"title": "yarn install",
+			"run": "yarn install --no-immutable",
+			"optional": true
+		},
+		{
+			"title": "regenerate Payload types and admin import map for this feature set",
+			"run": "yarn generate:types && yarn generate:importmap",
+			"optional": true
+		},
+		{
+			"title": "format (the feature strip leaves valid but unformatted code)",
+			"run": "yarn format",
+			"optional": true
+		},
+		{
+			"title": "git init",
+			"run": "git init -q && git add -A && git commit -qm 'chore: scaffold {{name}} from the next-site template'",
+			"optional": true
+		}
+	],
+	"nextSteps": [
+		"yarn dc:up          # Postgres + Mailpit (http://localhost:8025)",
+		"yarn dev            # http://localhost:{{port}} — the first visit to /admin creates the owner's account",
+		"In /admin, use Seed on the dashboard for demo content, or start writing pages.",
+		"Before the first deploy: yarn payload migrate:create initial (see CLAUDE.md, Migrations)."
+	]
+}

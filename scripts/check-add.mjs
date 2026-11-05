@@ -8,6 +8,7 @@
  * generates it again with the feature from the start and compares the two
  * trees. `.env` is compared by its keys and values only: `stack add` appends
  * new keys under a comment rather than where `.env.example` places them.
+ * Secrets a hook generated at random are compared as present, not by value.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -47,11 +48,15 @@ const files = (root) => {
 	rec(root, '');
 	return out.filter((f) => f !== 'stack.json').sort();
 };
+// A secret a hook generated (next-site's PAYLOAD_SECRET) is random on each
+// side; compare that one is set, not its value.
+const GENERATED_SECRET = /^([A-Z][A-Z0-9_]*=)(['"]?)[0-9a-f]{32,}\2$/;
 const envPairs = (file) =>
 	fs
 		.readFileSync(file, 'utf8')
 		.split('\n')
 		.filter((line) => /^[A-Z][A-Z0-9_]*=/.test(line))
+		.map((line) => line.replace(GENERATED_SECRET, '$1<generated secret>'))
 		.sort()
 		.join('\n');
 

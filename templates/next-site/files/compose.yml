@@ -1,0 +1,25 @@
+name: acme
+services:
+  database:
+    container_name: acme-database
+    image: postgres:15.3
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: main
+    volumes:
+      - database:/var/lib/postgresql/data
+  # Catches every email the site sends: http://localhost:8025
+  mailpit:
+    container_name: acme-mailpit
+    image: axllent/mailpit:v1.27
+    restart: always
+    ports:
+      - 1025:1025
+      - 8025:8025
+
+volumes:
+  database:

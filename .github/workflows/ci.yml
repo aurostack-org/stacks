@@ -268,6 +268,56 @@ jobs:
       - run: yarn lint
       - run: yarn build
 
+  next-site:
+    name: next-site (${{ matrix.variant }})
+    needs: cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: business site, args: '', tests: true }
+          - { variant: with shop, args: --with shop, tests: true }
+          - { variant: every feature, args: --all, tests: true }
+          - { variant: minimal, args: '--without search,redirects,telemetry,testing,husky,docker,ci,secrets', tests: false }
+    # The integration tests boot Payload against a real Postgres.
+    services:
+      postgres:
+        image: postgres:15.3
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: main
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U root -d main"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+    defaults:
+      run:
+        working-directory: /tmp/stack-ci/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+        working-directory: ${{ github.workspace }}
+      - name: Generate
+        working-directory: ${{ github.workspace }}
+        run: node cli/stack.mjs new next-site "$APP" --name ci-site ${{ matrix.args }} --strict
+      - run: yarn format:check
+      - run: yarn typecheck
+      - run: yarn lint
+      # Pages render per request, so the build needs no database.
+      - run: yarn build
+      - name: Integration tests
+        if: matrix.tests
+        run: yarn test:int
+        env:
+          SMTP_HOST: ''
+
   add:
     name: stack add (${{ matrix.template }} + ${{ matrix.feature }})
     needs: cli
@@ -283,6 +333,7 @@ jobs:
           - { template: node-worker, feature: temporal }
           - { template: py-worker, feature: temporal }
           - { template: nest-monorepo, feature: temporal }
+          - { template: next-site, feature: shop }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -351,6 +402,10 @@ jobs:
           - template: nest-monorepo
             args: --all
             dockerfile: apps/worker/Dockerfile
+          # Next inlines NEXT_PUBLIC_* at build time; no database is needed.
+          - template: next-site
+            args: --with shop
+            build_args: --build-arg NEXT_PUBLIC_SERVER_URL=https://example.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
