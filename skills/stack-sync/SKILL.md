@@ -100,34 +100,35 @@ derive names the exact text it expects, so rewording one of the source
 templates' `CLAUDE.md` or skills can fail the derive: update the patch then.
 Run `stack doctor nest-monorepo` after every derive.
 
-## next-site: markers live in its source
+## next-site: edited in place
 
-`next-site` is extracted from a source repository (`sources.next-site` in
-`stacks.local.json`), which began as Payload's ecommerce starter. Unlike the
-other templates, its **feature markers are committed in that source**: they
-are comments, so the source still runs with every feature on, and extraction
-copies them through. So:
+`next-site` has no source repository and no `stacks.local.json` entry:
+`templates/next-site/files` is the source. It began as Payload's ecommerce
+starter and is maintained by editing and running it where it is
+(`templates/next-site/README.md`, "Working on it": an empty `yarn.lock` makes
+it a project of its own, then `yarn install`, `yarn dev`, `yarn test:int`).
+What a run leaves behind is ignored by the stacks `.gitignore`.
 
-- every change, including a new marker, is made in the source and verified
-  there (`yarn typecheck && yarn lint && yarn build`, `yarn test:int` against
-  Postgres), then `stack extract next-site --overwrite --prune`. Its
-  "conflicts" are the source's own edits, not hand-annotations to protect;
-- never edit `templates/next-site/files` directly: the next extract
-  overwrites it;
-- a new feature's seams in shared code are annotated indirections (an array of
+- A change is verified in place (`yarn typecheck && yarn lint && yarn build`,
+  `yarn test:int` against Postgres), then `stack doctor next-site`.
+- After a change to a collection, global, field or admin component, regenerate
+  and commit `src/payload-types.ts` and the admin `importMap.js`: generation
+  starts from these all-features versions and the hooks regenerate them per
+  project.
+- A new feature's seams in shared code are annotated indirections (an array of
   providers, header actions, plugins, blocks, dashboard tips, each entry on
   its own marked line), never markers inside JSX: a marker on a JSX line
   strips the comment's closing brace with it.
 
-It also takes the house UI kit from `react-monorepo`:
+It takes the house UI kit from `react-monorepo`:
 `bash templates/next-site/derive-ui.sh` copies the shared atoms, the theme and
-the token stylesheets into the source's `src/components/ui/`, adding
-`'use client'` where Next needs it. **A UI kit change in `react-monorepo` is
-therefore three steps**: `templates/react-app/derive.sh`, then
-`templates/next-site/derive-ui.sh`, then extract `next-site`. The storefront's
-own components use the kit's semantic tokens only; keep it that way (no
-palette colours such as `neutral-500` or `white`), or a theme stops reaching
-them.
+the token stylesheets into its `src/components/ui/`, adding `'use client'`
+where Next needs it. **A UI kit change in `react-monorepo` is therefore two
+derives**: `templates/react-app/derive.sh` and
+`templates/next-site/derive-ui.sh`, each followed by its `stack doctor`. The
+storefront's own components use the kit's semantic tokens only; keep it that
+way (no palette colours such as `neutral-500` or `white`), or a theme stops
+reaching them.
 
 `templates/next-site/README.md` has the Payload upgrade procedure.
 

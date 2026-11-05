@@ -21,3 +21,12 @@ dev-dist/
 # Maintainer-only extraction config (source paths, include/exclude, identifier map).
 stacks.local.json
 __pycache__/
+
+# next-site is maintained by running it in place (templates/next-site/README.md).
+# What a dev run, a build and a seed leave behind; scoped, because a bare
+# `media/` would also hide nest-api's src/media.
+templates/next-site/files/.next/
+templates/next-site/files/media/
+templates/next-site/files/AGENTS.md
+templates/next-site/files/next-env.d.ts
+templates/next-site/files/yarn.lock

@@ -17,23 +17,8 @@ the product is the site.
 
 ## Where it comes from
 
-Payload's official `ecommerce` starter at **v3.93.0** (MIT), reworked in a
-source repository and extracted here. That source is the place to work:
-
-```sh
-# stacks.local.json → sources.next-site.path, e.g. ~/Projects/aurostack/next-site
-stack extract next-site --overwrite --prune
-stack doctor next-site
-```
-
-Unusually, the feature markers live **in the source repository**, not only in
-the template: they are comments, so the source still runs with every feature
-on, and extraction copies them through. That is why `--overwrite` is the
-normal way to extract here rather than a last resort. Do not hand-edit files
-under `files/`; change the source and extract.
-
-What changed from the starter, and why, is in the source's git history. The
-headline changes:
+Payload's official `ecommerce` starter at **v3.93.0** (MIT), reworked into
+this template. The headline changes from the starter:
 
 - MongoDB → Postgres; pnpm → Yarn 4 (node-modules linker); Next 16.4.
 - Stripe removed. Payments are adapters in `src/payments/`; the bundled
@@ -54,6 +39,41 @@ headline changes:
   and OpenObserve RUM, Infisical, husky and Forgejo CI as in the other
   templates.
 
+## Working on it
+
+`files/` is the source: edit it in place, run it in place. With every feature
+on, it is a working site.
+
+```sh
+cd templates/next-site/files
+touch yarn.lock              # a project of its own, not part of the stacks repo
+yarn install
+yarn env:init                # .env with fresh secrets
+docker compose up -d database
+yarn dev                     # http://localhost:3000, /admin, Seed on the dashboard
+yarn typecheck && yarn lint && yarn format:check && yarn build
+yarn test:int                # against DATABASE_URL; use a scratch database
+```
+
+What a run leaves behind (`.next/`, `media/`, `next-env.d.ts`, `AGENTS.md`,
+`yarn.lock`, `node_modules/`, `.env`) is ignored by the stacks `.gitignore`.
+Delete `node_modules` when done; it is large. Then:
+
+```sh
+stack doctor next-site       # markers, feature files, imports per selection
+```
+
+and generate the variants CI builds (`.github/workflows/ci.yml`, job
+`next-site`) when a change touches a feature seam. After a change to a
+collection, global, field or admin component, run `yarn generate:types &&
+yarn generate:importmap` and commit `src/payload-types.ts` and
+`src/app/(payload)/admin/importMap.js`: they are the all-features versions
+that generation starts from.
+
+There is no extraction step and no `stacks.local.json` entry. When a client
+site built from this template improves something generic, fold it back by
+hand with the stack-sync skill's judgement about what is generic.
+
 ## Feature seams
 
 Shared files reach shop-only code through annotated indirections rather than
@@ -71,7 +91,7 @@ which plugins are enabled. The template ships the all-features versions; the
 
 ## Upgrading Payload
 
-Bump every `@payloadcms/*` and `payload` to the same version in the source,
-check `next`'s peer range (`npm view @payloadcms/next@<v> peerDependencies`),
-diff Payload's `templates/ecommerce` between the two tags for fixes worth
-taking, run the source's `yarn test:int` against Postgres, then extract.
+Bump every `@payloadcms/*` and `payload` in `files/package.json` to the same
+version, check `next`'s peer range (`npm view @payloadcms/next@<v>
+peerDependencies`), diff Payload's `templates/ecommerce` between the two tags
+for fixes worth taking, and run the checks and `yarn test:int` in place.

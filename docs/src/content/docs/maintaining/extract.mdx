@@ -69,18 +69,17 @@ a schema, not a history.
 on top. Edit shared code in react-monorepo and re-run the script; edit routing,
 build and Docker files in react-app directly. Keep `overrides/` short.
 
-## next-site keeps its markers in the source
+## next-site is edited in place
 
-`next-site` is extracted from a source repository that began as Payload's
-ecommerce starter, but its feature markers are committed **in the source**:
-they are comments, so the source still runs with every feature on. Change
-and test the source, then `stack extract next-site --overwrite --prune`;
-never edit `templates/next-site/files` by hand.
+`next-site` isn't extracted: `templates/next-site/files` is its source, edited
+and run where it is (the template's README has the commands; what a run leaves
+behind is gitignored), then checked with `stack doctor next-site`. It began
+as Payload's ecommerce starter, so improvements from a client site built on it
+are folded back by hand.
 
 Its UI kit atoms, theme and tokens come from react-monorepo through
-`templates/next-site/derive-ui.sh`, which writes them into the source. A kit
-change in react-monorepo is re-derived into react-app (`derive.sh`) and into
-next-site's source (`derive-ui.sh`), then next-site is extracted.
+`templates/next-site/derive-ui.sh`. A kit change in react-monorepo is
+re-derived into react-app (`derive.sh`) and into next-site (`derive-ui.sh`).
 
 ## nest-monorepo is derived
 
