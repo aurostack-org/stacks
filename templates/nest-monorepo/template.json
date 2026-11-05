@@ -414,7 +414,8 @@
 				{
 					"file": "apps/api/package.json",
 					"dependencies": [
-						"@temporalio/client"
+						"@temporalio/client",
+						"protobufjs"
 					]
 				},
 				{
@@ -422,7 +423,8 @@
 					"dependencies": [
 						"@temporalio/activity",
 						"@temporalio/worker",
-						"@temporalio/workflow"
+						"@temporalio/workflow",
+						"protobufjs"
 					]
 				}
 			]
