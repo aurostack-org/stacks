@@ -1,6 +1,6 @@
 ---
 name: stack-add
-description: Add an optional template feature to a project the templates already generated — realtime, notifications, temporal, feature flags, graphql, marketing, admin, pwa, charts and the rest — by merging exactly what that feature changes into the project with `stack add`, keeping the project's own edits. USE THIS when someone wants to add or enable a feature in an existing stacks project: "add realtime to the API", "we need notifications now", "turn on temporal", "add an admin console", "can we get charts", "I want the PWA bits", or asks what features a project could still take. Not for a project stacks did not generate (no stack.json), and not for removing a feature.
+description: Add an optional template feature to a project the templates already generated — realtime, notifications, temporal, feature flags, graphql, marketing, admin, pwa, charts, a shop on a next-site and the rest — by merging exactly what that feature changes into the project with `stack add`, keeping the project's own edits. USE THIS when someone wants to add or enable a feature in an existing stacks project: "add realtime to the API", "we need notifications now", "turn on temporal", "add an admin console", "can we get charts", "I want the PWA bits", "turn the website into a shop", or asks what features a project could still take. Not for a project stacks did not generate (no stack.json), and not for removing a feature.
 ---
 
 # Adding a feature to a generated project
@@ -58,6 +58,12 @@ Use `AskUserQuestion` only for choices that change what gets added: the pair,
 or a feature whose description says it changes structure (`marketing` moves a
 `react-app`'s authenticated routes under `/app`).
 
+`shop` on a `next-site` is one service, no pair, but it changes the live
+site: it adds customer accounts and public sign-up, a Shop link and cart to the
+header, and products to search. Confirm the currency (`src/lib/currency.ts`,
+GHS by default) before its migration is created, because the price column is
+named after it.
+
 ## 3. Dry run, then add
 
 The project must be a git repository with a clean tree, so the feature lands as
@@ -102,7 +108,14 @@ Say plainly what is left, per feature:
   needs (a Temporal address, a GrowthBook key).
 - **Migrations.** A feature that adds Prisma models (`notifications`) needs
   `yarn db:migrate` in the API; the worker then needs the updated schema copied
-  in and `yarn db:generate`.
+  in and `yarn db:generate`. On a `next-site`, a feature that adds collections
+  (`shop`, `search`, `redirects`) needs `yarn payload migrate:create
+  add-<feature>` committed before the next deploy; the hooks already
+  regenerated `payload-types.ts` and the admin import map.
+- **Admin content.** `next-site` features arrive empty: `shop` needs its
+  products, the payment instructions and new-order email in Shop settings, and
+  a Shop menu link (Header in the admin); `search` indexes pages the next time
+  each is saved.
 - **Generated client types.** A feature that adds API endpoints changes the
   OpenAPI document: run `yarn gen` in the frontend against the running API.
 - **Wiring it into the product.** The feature arrives as infrastructure (a

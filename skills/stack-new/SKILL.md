@@ -1,6 +1,6 @@
 ---
 name: stack-new
-description: Scaffold a new project from the house templates — a NestJS API, an API + Node worker monorepo sharing one Prisma package, a single-app React frontend, a Turborepo React monorepo, a Node background worker, or a Python worker — choosing which optional features to include. USE THIS whenever someone is starting a new codebase and says "new backend", "new API", "spin up a project", "start a new app", "scaffold", "bootstrap a service", "I need a worker", or names one of the templates. Also use when asked what templates or features are available. It runs the `stack` CLI; it does not hand-write boilerplate.
+description: Scaffold a new project from the house templates — a NestJS API, an API + Node worker monorepo sharing one Prisma package, a single-app React frontend, a Turborepo React monorepo, a Next.js + Payload CMS site (business website or small shop), a Node background worker, or a Python worker — choosing which optional features to include. USE THIS whenever someone is starting a new codebase and says "new backend", "new API", "spin up a project", "start a new app", "scaffold", "bootstrap a service", "I need a worker", "a website for a client", "a quick online store", or names one of the templates. Also use when asked what templates or features are available. It runs the `stack` CLI; it does not hand-write boilerplate.
 ---
 
 # Scaffolding a new project
@@ -55,6 +55,15 @@ Run `node ${CLAUDE_PLUGIN_ROOT}/cli/stack.mjs list` and, for the likely template
   `react-monorepo` earns its extra moving parts when surfaces genuinely ship on
   different cadences, or one needs to scale or be locked down on its own. If
   they cannot say that is true, it isn't.
+
+  A **site that its owner edits** (a business website, a portfolio, a small
+  shop, typically built for a client) is `next-site`: Next.js with Payload CMS
+  inside it, no separate API. The owner manages pages, menus and images at
+  `/admin`. `--with shop` adds products, cart, checkout and orders; the
+  built-in `manual` payment method has the owner mark orders paid. Choose it
+  over `react-app` + `nest-api` when the product *is* the site. When the
+  product needs its own API (mobile clients, background jobs, domain logic
+  beyond content and orders), it is the React templates and `nest-api`.
 - **Project name and directory.** The name defaults to the directory's
   basename; `--scope` (npm scope, no `@`) defaults to the name.
 - **Which optional features.** Present the opt-in list and the defaults you
@@ -94,12 +103,19 @@ Print the template's `nextSteps`, then say plainly:
 - for `react-app` / `react-monorepo`: `VITE_APP_API_URL` must point at the
   backend. Vite inlines it at build time, so a built image is pinned to one
   environment — that is a build arg, not runtime config.
+- for `next-site`: generation already wrote `.env` with fresh
+  `PAYLOAD_SECRET` / `PREVIEW_SECRET`. `yarn dc:up` starts Postgres and
+  Mailpit, `yarn dev` serves the site, and the first visit to `/admin` creates
+  the owner's account. Payload owns the schema: there is no migrate step in
+  development, but `yarn payload migrate:create initial` must run before the
+  first deploy. With `shop`, the currency is GHS unless changed in
+  `src/lib/currency.ts` **before** that first migration.
 
 Offer the `stack-setup` skill to do that setup and verify the project boots.
 
 The generated project records what produced it in `stack.json`, and ships its
 own guidance: a `CLAUDE.md` with its commands, layout and rules, and task
-skills in `.claude/skills/` (`add-resource`, `add-screen`, `add-worker`…)
+skills in `.claude/skills/` (`add-resource`, `add-screen`, `add-worker`, `add-block`…)
 covering only the features it has. Point at them: they are how the next
 session builds in the project the template's way.
 

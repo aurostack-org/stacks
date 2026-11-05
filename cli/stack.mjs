@@ -112,6 +112,7 @@ ${c.bold('extract options')}
 ${c.bold('Examples')}
   stack new nest-api ~/Projects/acme/api --with realtime,media
   stack new react-monorepo ~/Projects/acme/web --with app-landing,app-admin
+  stack new next-site ~/Projects/acme/site --with shop
   stack add realtime notifications --dir ~/Projects/acme/api
   stack extract nest-api --source ~/Projects/acme/web/backend
 `;

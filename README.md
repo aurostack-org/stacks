@@ -107,6 +107,7 @@ stage only. The `npm` GitHub environment is restricted to `v*` tags.
 | `nest-monorepo` | `nest-api` and `node-worker` as one Yarn 4 + Turborepo workspace: both apps import one Prisma package (`packages/db`), one compose stack, turbo-pruned images with a migrate target. Derived from the two by `templates/nest-monorepo/derive.sh` |
 | `react-monorepo` | Yarn workspaces + Turborepo; Vite/React 19 apps over shared packages — one RTK Query `baseApi`, better-auth session handling, a shadcn-style UI kit with light/dark theming, layouts, generated OpenAPI types |
 | `react-app` | The same stack as one Vite app: shared code under `src/shared`, auth screens as routes, optional marketing site and admin console. One deployment instead of four |
+| `next-site` | Next.js 16 with Payload CMS 3 built in, on Postgres: a site its owner edits at `/admin` (pages from blocks, menus, forms, SEO, search, redirects). `--with shop` adds products, cart, checkout and orders, paid outside the site and marked paid by the owner. No separate API; one Docker image |
 | `node-worker` | Standalone TypeScript worker — BullMQ consumers, Prisma against the API's database, pino, PM2 + Docker |
 | `py-worker` | Python BullMQ worker over the same queues, SQLAlchemy models on the same Postgres |
 
@@ -127,6 +128,15 @@ The shared code is literally the same files: `templates/react-app/derive.sh`
 re-flattens `packages/*` into `src/shared/*` and rewrites the import specifiers,
 so a fix in one lands in the other. See that template's README.
 
+### A site or an app
+
+`next-site` is for the site a business runs itself: a company website, a small
+shop. Payload is inside the Next.js app and owns its database, so there is no
+API to build or deploy. When the product needs an API of its own (mobile or
+third-party clients, background jobs, domain logic beyond content and orders),
+it is `react-app` with `nest-api` instead. `next-site` shares the house UI kit
+and theme with the React templates (`templates/next-site/derive-ui.sh`).
+
 ### Observability
 
 Every template ships with OpenTelemetry (backend) or OpenObserve RUM (browser)
@@ -139,6 +149,7 @@ connected; unset, the SDKs are never even loaded.
 | `nest-api` | Traces (HTTP, GraphQL, Prisma, pg, ioredis, BullMQ jobs), logs with trace ids, runtime/HTTP/queue metrics |
 | `node-worker` | Job traces, Prisma/Redis spans, logs, metrics |
 | `py-worker` | One trace per job, Redis spans, logs, metrics |
+| `next-site` | Server traces (Next's request and render spans, outgoing HTTP, Postgres), logs, metrics; and the browser RUM below |
 | `react-app` / `react-monorepo` | Page views, errors (including the error boundary's), slow resources, user actions, the signed-in user id, console errors as logs. API calls carry `traceparent`, so a click links to the backend trace it caused |
 
 To connect a project to its OpenObserve organization:
@@ -149,7 +160,9 @@ To connect a project to its OpenObserve organization:
    (`OPENOBSERVE_URL` defaults to `https://o2.aurostack.co`). Each service
    writes to its own stream, named after `OTEL_SERVICE_NAME`.
 3. **Frontend:** from Ingestion → RUM, copy the RUM token and set
-   `VITE_OPENOBSERVE_ORG` and `VITE_OPENOBSERVE_CLIENT_TOKEN`. It is a
+   `VITE_OPENOBSERVE_ORG` and `VITE_OPENOBSERVE_CLIENT_TOKEN` (`next-site`:
+   `NEXT_PUBLIC_OPENOBSERVE_ORG` and `NEXT_PUBLIC_OPENOBSERVE_CLIENT_TOKEN`,
+   passed as Docker build arguments). It is a
    write-only token built to ship in a bundle. Never put the backend's
    ingestion token there.
 4. Add each app origin to the instance's `ZO_CORS_ALLOWED_ORIGINS`, or the
