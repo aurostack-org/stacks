@@ -13,6 +13,7 @@ generated together as one monorepo.
 |---|---|
 | An HTTP API, auth, a database | `nest-api` |
 | A web front end | `react-app` (or `react-monorepo`, below) |
+| A site its owner edits, or a small shop, with no API of its own | `next-site`, on its own ([below](#a-site-or-an-app)) |
 | Slow or heavy jobs outside the API process | `node-worker` |
 | The API and a Node worker sharing one database | `nest-monorepo` (one repository, one Prisma package; [why](nest-monorepo/#a-monorepo-or-two-repositories)) |
 | Jobs that need Python libraries | `py-worker` |
@@ -36,6 +37,22 @@ the monorepo's packages. The choice is about deployment, not code.
 Start with **react-app**. Move to the monorepo when surfaces genuinely need to
 ship on different schedules, scale separately, or be locked down on their own
 (an admin console reachable only from a VPN, a marketing site edited daily).
+
+## A site or an app
+
+[`next-site`](next-site/) stands alone: Next.js with Payload CMS built in, its
+own Postgres, its own auth, no API to generate or deploy. It is for the site a
+business edits itself: company pages, a portfolio, a small shop
+(`--with shop`) paid outside the site. Choose the API and front-end templates
+above instead when the product needs an API of its own: mobile or third-party
+clients, background jobs, roles and workflows beyond content and orders.
+
+| | next-site | react-app + nest-api |
+|---|---|---|
+| Repositories and deployments | one | two or more |
+| Content edited by | the owner, in Payload's admin | developers, or an admin you build |
+| Data model | Payload collections | Prisma models behind an API |
+| Payments | `manual` built in, others as adapters | yours to build |
 
 ## How they connect
 

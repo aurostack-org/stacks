@@ -67,7 +67,8 @@ exclusion (`upgradeExcluded`): the project then does not fully match the new
 release, and the next upgrade will not offer those changes again. Say so when
 the user excludes something.
 
-Then the template's hooks run again (install, format, Prisma generate).
+Then the template's hooks run again (install, format, Prisma generate, or
+Payload's types and import map on a `next-site`).
 
 ## 4. Resolve and check
 
@@ -83,7 +84,8 @@ Then the template's hooks run again (install, format, Prisma generate).
   which to update (use `stack-setup`'s env helper, never print values).
 - **New `.env` keys** arrive with placeholders; name what each needs.
 - **Beyond code**: a migration (Prisma schema files changed: `yarn
-  db:migrate`), a Node or Python version bump (`.nvmrc`, Dockerfile base
+  db:migrate`; on a `next-site`, a collection, global or block changed:
+  `yarn payload migrate:create <name>`, committed before the next deploy), a Node or Python version bump (`.nvmrc`, Dockerfile base
   image), new CI secrets, a dependency major bump. List each as an action.
 
 Run the project's checks: `yarn typecheck` (or `yarn build`), `yarn lint`,

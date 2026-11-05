@@ -50,6 +50,17 @@ Environment page explains its variables in detail.
       `src/features/seo/routes.ts`, `VITE_APP_SUPPORT_EMAIL`.
 - [ ] Legal pages (`src/routes/legal/`) written: they ship as placeholders.
 
+## next-site
+
+- [ ] The first migration created and committed (`yarn payload migrate:create initial`); the server runs pending migrations when it starts. [Deployment](../../templates/next-site/deployment/).
+- [ ] `PAYLOAD_SECRET` set per environment (not the development value).
+- [ ] `NEXT_PUBLIC_SERVER_URL` = the public origin, passed as a Docker build argument.
+- [ ] A volume mounted at `/app/media`.
+- [ ] [SMTP](../../services/smtp/) and a `MAIL_FROM_ADDRESS` on a domain the provider may send for.
+- [ ] The owner's account created with a strong password; demo content not seeded (seeding is refused in production).
+- [ ] `SITE_NAME`, the logo (Header → Logo in the admin) and the menus set.
+- [ ] With `shop`: the currency confirmed in `src/lib/currency.ts` before the first migration; Shop settings filled (payment instructions, new-order email).
+
 ## react-monorepo
 
 - [ ] Each `apps/*/.env`: `VITE_APP_API_URL` and the sibling `VITE_APP_*_HOST` origins.

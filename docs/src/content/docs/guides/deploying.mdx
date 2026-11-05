@@ -14,6 +14,7 @@ builds and pushes it on every push to `main`.
 | nest-monorepo | one image per app, built from the repo root, plus a `migrate` image | the API on its `PORT`; the worker, no port ([details](../../templates/nest-monorepo/deployment/)) |
 | react-app | nginx | the static bundle on port 80, `/healthz` |
 | react-monorepo | nginx, one image per app | each app on port 80, `/healthz` |
+| next-site | Node, Next's standalone `server.js`, migrations at start | the site and its admin on port 3000, `/api/health`; uploads on a volume at `/app/media` ([details](../../templates/next-site/deployment/)) |
 | node-worker | Node (Debian with Temporal), PM2 or plain Node | no port |
 | py-worker | Python, `python worker.py` | no port |
 

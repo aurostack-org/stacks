@@ -92,6 +92,19 @@ Environment docs for what each key means.
   origins; the API's `FRONTEND_HOST` + `MISC_CORS_ORIGINS` must list every
   app's origin, or sign-in bounces.
 
+**next-site**
+- `PAYLOAD_SECRET` and `PREVIEW_SECRET` were generated at scaffold time; if
+  `status` reports them empty, `yarn env:init` (or `$ENV generate`) fills them.
+- `DATABASE_URL` and SMTP default to the project's own `compose.yml`
+  (Postgres on 5432, Mailpit on 1025 with its UI on 8025). If those ports are
+  taken, often by another project's Postgres or an existing Mailpit, either
+  reuse the running Mailpit (`$ENV set site SMTP_PORT=<its SMTP port>` and
+  start only `docker compose up -d database`) or change the published port in
+  `compose.yml` and `DATABASE_URL` together.
+- `SITE_NAME`, `COMPANY_NAME`, `MAIL_FROM_*`: the business's names; non-secret,
+  `set` them if the user gives them.
+- It talks to no other service: nothing to copy from an API.
+
 **The links between services** must agree on both ends: the frontend's API
 URL and the API's `FRONTEND_HOST`; the same Redis and queue names for API and
 workers; `TEMPORAL_*` on the API and the worker that runs its workflows. The
@@ -116,6 +129,29 @@ yarn db:seed
 - With `testing`: `yarn test:dc:reinstall` then `yarn test` proves the test
   stack too (e2e is optional here; say whether it ran).
 - Leave the API running while the workers and frontend are checked.
+
+**next-site** (instead of the API steps; it has no separate API):
+
+```sh
+yarn dc:up        # Postgres + Mailpit
+yarn dev          # in the background
+```
+
+- There is no migrate step in development: Payload creates the tables when the
+  server starts. Check `curl -fsS localhost:3000/api/health` returns
+  `{"status":"ok"}`, and that `/` and `/admin` answer 200.
+- The owner account is created in the browser: ask the user to open
+  `/admin` and register the first user (it becomes the admin), then press
+  **Seed** on the dashboard if they want demo content. Seeding deletes
+  existing content; never offer it on a database that holds real pages.
+- With `testing`: `yarn test:int` runs the integration tests against
+  `DATABASE_URL` (use a scratch database: `docker exec <db container> psql -U
+  root -c 'create database test'` and point `DATABASE_URL` at it for the run).
+- With `shop`: after seeding, a checkout as a guest (`/shop` → a product →
+  cart → checkout → Place order) should land on the order page with a payment
+  reference, and Mailpit should show the order emails.
+- `yarn typecheck && yarn lint && yarn build` pass on the untouched project;
+  the build needs no database.
 
 ## 5. Workers
 
@@ -166,6 +202,12 @@ Write `SETUP.md` at the product root (or the project root), per service:
   and the project id in every `infisical.jsonc`, CI repository secrets, OpenObserve orgs and
   tokens, a Temporal namespace, DNS and TLS. Each item links to its doc page
   and is an unticked box: this skill does not do them.
+- For **next-site** also: the first migration (`yarn payload migrate:create
+  initial`, committed) before the first deploy; `NEXT_PUBLIC_SERVER_URL` as the
+  image's build argument; a volume at `/app/media`; a `MAIL_FROM_ADDRESS` on a
+  domain the SMTP provider may send for; a strong owner password; and, with
+  `shop`, the payment instructions and new-order email in the admin's Shop
+  settings, and the currency confirmed before that first migration.
 
 ## 8. Hand over
 

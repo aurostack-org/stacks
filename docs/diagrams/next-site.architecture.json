@@ -1,0 +1,209 @@
+{
+	"schema_version": 1,
+	"diagram_type": "architecture",
+	"meta": {
+		"title": "next-site",
+		"quality_profile": "showcase"
+	},
+	"components": [
+		{
+			"id": "visitor",
+			"type": "external",
+			"label": "Visitor",
+			"sublabel": "browser",
+			"pos": [
+				40,
+				110
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "owner",
+			"type": "external",
+			"label": "Owner",
+			"sublabel": "/admin",
+			"pos": [
+				40,
+				270
+			],
+			"size": [
+				150,
+				64
+			]
+		},
+		{
+			"id": "site",
+			"type": "frontend",
+			"label": "Storefront",
+			"sublabel": "src/app/(app)",
+			"pos": [
+				280,
+				110
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "admin",
+			"type": "security",
+			"label": "Admin + /api",
+			"sublabel": "src/app/(payload)",
+			"pos": [
+				280,
+				270
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "payload",
+			"type": "backend",
+			"label": "Payload",
+			"sublabel": "collections · hooks",
+			"pos": [
+				540,
+				190
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "db",
+			"type": "database",
+			"label": "PostgreSQL",
+			"sublabel": "schema · migrations",
+			"pos": [
+				800,
+				110
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "media",
+			"type": "database",
+			"label": "Media volume",
+			"sublabel": "MEDIA_DIR",
+			"pos": [
+				800,
+				270
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "smtp",
+			"type": "external",
+			"label": "SMTP",
+			"sublabel": "orders · forms",
+			"pos": [
+				540,
+				370
+			],
+			"size": [
+				160,
+				64
+			]
+		},
+		{
+			"id": "o2",
+			"type": "external",
+			"label": "OpenObserve",
+			"sublabel": "traces · logs · RUM",
+			"pos": [
+				540,
+				20
+			],
+			"size": [
+				160,
+				64
+			]
+		}
+	],
+	"connections": [
+		{
+			"from": "visitor",
+			"to": "site",
+			"label": "HTTPS",
+			"variant": "emphasis"
+		},
+		{
+			"from": "owner",
+			"to": "admin",
+			"label": "sign in",
+			"variant": "security"
+		},
+		{
+			"from": "site",
+			"to": "payload",
+			"label": "Local API",
+			"variant": "emphasis"
+		},
+		{
+			"from": "admin",
+			"to": "payload"
+		},
+		{
+			"from": "payload",
+			"to": "db",
+			"variant": "emphasis"
+		},
+		{
+			"from": "payload",
+			"to": "media"
+		},
+		{
+			"from": "payload",
+			"to": "smtp",
+			"variant": "dashed"
+		},
+		{
+			"from": "payload",
+			"to": "o2",
+			"label": "OTel",
+			"variant": "dashed"
+		}
+	],
+	"cards": [
+		{
+			"dot": "cyan",
+			"title": "One app",
+			"items": [
+				"Payload runs inside the Next.js server",
+				"No separate API to build or deploy",
+				"One Docker image, built without a database"
+			]
+		},
+		{
+			"dot": "emerald",
+			"title": "Owner-edited",
+			"items": [
+				"Pages from blocks, menus, logo, forms",
+				"Edits show on the next page view",
+				"With the shop: products, orders, payments"
+			]
+		},
+		{
+			"dot": "amber",
+			"title": "Schema",
+			"items": [
+				"Payload owns the tables",
+				"Dev pushes changes; prod runs migrations",
+				"Create the first migration before deploying"
+			]
+		}
+	]
+}

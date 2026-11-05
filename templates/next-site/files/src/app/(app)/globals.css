@@ -1,0 +1,110 @@
+/*
+ * The site's stylesheet. Colours, radii, fonts and the light/dark themes come
+ * from the house UI kit (src/components/ui/styles: globals.css for the
+ * semantic tokens, theme.css for the brand palette); restyle the site there.
+ * This file only adds what the site's own components need on top.
+ */
+@import '../../components/ui/styles/globals.css';
+@import 'tw-animate-css';
+
+@plugin '@tailwindcss/typography';
+
+/* Classes the admin can produce through block settings (column widths, banner
+   styles), which no source file spells out in full. */
+@source inline("lg:col-span-4");
+@source inline("lg:col-span-6");
+@source inline("lg:col-span-8");
+@source inline("lg:col-span-12");
+@source inline("border-border");
+@source inline("bg-card");
+@source inline("border-negative");
+@source inline("bg-negative/30");
+@source inline("border-positive");
+@source inline("bg-positive/30");
+@source inline("border-warning");
+@source inline("bg-warning/30");
+
+@theme {
+	--breakpoint-sm: 40rem;
+	--breakpoint-md: 48rem;
+	--breakpoint-lg: 64rem;
+	--breakpoint-xl: 80rem;
+	--breakpoint-2xl: 86rem;
+}
+
+@layer base {
+	/* Headings take their size from the component or `prose`, not the browser. */
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-weight: unset;
+		font-size: unset;
+	}
+
+	body {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+}
+
+@layer utilities {
+	.container {
+		width: 100%;
+		margin-inline: auto;
+		padding-inline: 1rem;
+	}
+
+	@variant sm {
+		.container {
+			max-width: var(--breakpoint-sm);
+		}
+	}
+
+	@variant md {
+		.container {
+			max-width: var(--breakpoint-md);
+			padding-inline: 2rem;
+		}
+	}
+
+	@variant lg {
+		.container {
+			max-width: var(--breakpoint-lg);
+		}
+	}
+
+	@variant xl {
+		.container {
+			max-width: var(--breakpoint-xl);
+		}
+	}
+
+	@variant 2xl {
+		.container {
+			max-width: var(--breakpoint-2xl);
+		}
+	}
+
+	/* Rich text from the CMS, on the theme's colours. */
+	.prose {
+		--tw-prose-body: var(--color-foreground);
+		--tw-prose-headings: var(--color-foreground);
+		--tw-prose-links: inherit;
+		--tw-prose-bold: var(--color-foreground);
+		--tw-prose-quotes: var(--color-foreground);
+		--tw-prose-counters: var(--color-muted-foreground);
+		--tw-prose-bullets: var(--color-muted-foreground);
+		--tw-prose-hr: var(--color-border);
+		--tw-prose-code: var(--color-foreground);
+	}
+
+	.prose h1 {
+		font-size: 4rem;
+		font-weight: normal;
+		margin-bottom: 0.25em;
+	}
+}

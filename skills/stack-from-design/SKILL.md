@@ -68,6 +68,25 @@ notes for the plan:
 
 ## 3. From the inventory to stacks
 
+### A site, or an app?
+
+First decide whether the design is a **site its owner edits** or an
+**application**. A site is mostly public pages (home, about, services,
+contact), maybe a blog-like list or a small catalogue with a cart, and the
+people who change it are the business, not developers. That is `next-site`:
+one Next.js app with Payload CMS inside, no separate API, nothing else from
+the tables below. `--with shop` when the design has products, a cart and a
+checkout; `search` and `redirects` are on by default. Its storefront pages
+(shop, product, cart, checkout, account) already exist, so the plan restyles
+them to the design rather than building them.
+
+It is an application when the design has signed-in work beyond buying
+(dashboards, workflows, user-generated content, roles), mobile or third-party
+clients, or real-time and background work. Then it is the React templates and
+`nest-api` below. If the design mixes the two (a marketing site in front of an
+app), say so and recommend the application stack with its `marketing` feature;
+do not generate both.
+
 ### Frontend
 
 | The design has | Generate |
@@ -207,7 +226,12 @@ the kit's; those go in the plan.
 
 The theme lives in four files. Paths are for `react-monorepo`; in `react-app`
 the same files are under `src/shared/ui/` (and the brand tokens are
-`src/shared/ui/styles/theme.css`):
+`src/shared/ui/styles/theme.css`); in `next-site` they are under
+`src/components/ui/` (`styles/globals.css`, `styles/theme.css`,
+`theme/theme-colors.ts`), and there is no `brand.ts`: the display name is
+`SITE_NAME` in `.env` and the logo is uploaded in the admin (Header → Logo).
+`next-site`'s storefront components use the semantic tokens only, so mapping
+`globals.css` themes them too:
 
 | File | Holds |
 |---|---|

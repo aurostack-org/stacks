@@ -1,0 +1,28 @@
+---
+title: next-site architecture
+description: How Payload and Next.js share one app, and why pages render per request.
+sidebar:
+  label: Architecture
+---
+
+import Diagram from '../../../../components/Diagram.astro';
+
+<Diagram name="next-site" title="next-site: one Next.js app with Payload inside, and what it talks to" height={560} />
+
+Payload runs inside the Next.js server. `src/app/(payload)/` holds the admin
+and the REST and GraphQL API at `/api`; `src/app/(app)/` is the public site,
+which reads content through Payload's Local API (in process, no HTTP).
+
+- **One database, owned by Payload.** The Postgres adapter creates and changes
+  tables from the collection config. In development it pushes changes
+  straight to the database; in production the server applies pending
+  migrations from `src/migrations/` when it starts.
+- **Auth is Payload's.** The `users` collection signs in admins (and, with the
+  shop, customers). The first user to register is made an admin.
+- **Pages render per request.** The Docker image is built without a database,
+  so nothing is prerendered, and an owner's edit shows on the next page view.
+  Header, footer and redirects are read once per request.
+- **Uploads** are stored in `MEDIA_DIR` and served through
+  `/api/media/file/*`.
+- **Email** goes through SMTP; with no `SMTP_HOST` it is written to the server
+  log instead of sent.

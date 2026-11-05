@@ -1,0 +1,46 @@
+---
+title: next-site
+description: A Next.js site with Payload CMS built in, edited by its owner; a business website by default, a small shop with --with shop.
+sidebar:
+  label: Overview
+---
+
+One Next.js 16 app with Payload CMS 3 inside it, on Postgres. The site's owner
+edits pages, images, menus and (with the shop) products and orders at
+`/admin`; there is no separate backend.
+
+```sh
+stack new next-site ./kofi-bakery                # business website
+stack new next-site ./ama-shop --with shop       # with a store
+```
+
+**Stack:** Next.js 16, React 19, Payload CMS 3 (Postgres adapter, Lexical
+editor, form builder, SEO, search, redirects, ecommerce), Tailwind CSS 4 with
+the house UI kit, OpenTelemetry and OpenObserve RUM. One Node server in Docker.
+
+## At a glance
+
+| | |
+|---|---|
+| Dev server | `yarn dev` on port 3000; the admin at `/admin` |
+| Content model | `src/collections/`, `src/globals/`, page blocks in `src/blocks/` |
+| Public site | `src/app/(app)/`; any CMS page renders at `/<slug>`, `/` is `home` |
+| Database | Postgres through Payload; migrations in `src/migrations/` |
+| Payments (shop) | adapters in `src/payments/`; `manual` built in |
+
+## When to use it
+
+For a site its owner runs: a business website, a portfolio, a small shop. When
+the product needs an API of its own (mobile clients, background jobs, complex
+domain logic), use [react-app](../react-app/) with [nest-api](../nest-api/)
+instead.
+
+## The shop
+
+`--with shop` adds products with variants and stock, a cart, checkout,
+customer accounts and guest order lookup. Prices are in one currency (GHS by
+default, `src/lib/currency.ts`). The built-in `manual` payment method places
+the order as **awaiting payment**, shows the payment instructions the owner
+writes in Shop settings, and emails the customer and the owner; the owner marks
+the order paid in the admin once the money arrives. Other payment providers
+are adapters beside it (the project's `add-payment-provider` skill).

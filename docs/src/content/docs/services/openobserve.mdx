@@ -16,6 +16,7 @@ Everything here is on by default; drop it with `--without observability`
 | nest-api | Traces (HTTP, GraphQL, Prisma, PostgreSQL, Redis, BullMQ jobs), logs with trace ids, runtime, HTTP and queue metrics |
 | node-worker | Job traces, Prisma and Redis spans, logs, metrics |
 | py-worker | One trace per job, Redis spans, logs, metrics; with Temporal, a span per workflow and activity |
+| next-site | Server traces (Next's request and render spans, outgoing HTTP, Postgres), logs and metrics; in the browser the same as below, with `NEXT_PUBLIC_OPENOBSERVE_*` as build arguments |
 | react-app, react-monorepo | Page views, errors, slow resources, user actions, the signed-in user id, console errors as logs; `traceparent` on API calls |
 
 <Internal id="openobserve" />
