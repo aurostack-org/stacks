@@ -65,7 +65,8 @@
 				"dependencies": [
 					"@temporalio/activity",
 					"@temporalio/worker",
-					"@temporalio/workflow"
+					"@temporalio/workflow",
+					"protobufjs"
 				]
 			}
 		},
