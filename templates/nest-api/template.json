@@ -327,7 +327,8 @@
 			],
 			"packageJson": {
 				"dependencies": [
-					"@temporalio/client"
+					"@temporalio/client",
+					"protobufjs"
 				]
 			}
 		},
