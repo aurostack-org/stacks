@@ -1,0 +1,20 @@
+---
+title: next-site environment
+description: Every variable in next-site's .env, and which ones are fixed at build time.
+sidebar:
+  label: Environment
+---
+
+import EnvTable from '../../../../components/EnvTable.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="NEXT_PUBLIC_ values are public and fixed at build time">
+Next.js inlines every `NEXT_PUBLIC_*` variable into the build, in the browser
+bundle and on the server alike. Never put a secret there, and pass them as
+Docker build arguments: an image is pinned to the values it was built with.
+</Aside>
+
+Generation creates `.env` from `.env.example` and fills `PAYLOAD_SECRET` and
+`PREVIEW_SECRET` with random values (`yarn env:init` does the same later).
+
+<EnvTable template="next-site" />

@@ -31,6 +31,7 @@ export const sidebar = [
 			template('nest-monorepo', 'nest-monorepo'),
 			template('react-app', 'react-app'),
 			template('react-monorepo', 'react-monorepo'),
+			template('next-site', 'next-site'),
 			template('node-worker', 'node-worker'),
 			template('py-worker', 'py-worker')
 		]

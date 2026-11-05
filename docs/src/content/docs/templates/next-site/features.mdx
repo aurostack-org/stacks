@@ -1,0 +1,20 @@
+---
+title: next-site features
+description: Every next-site feature, its default, and what it adds.
+sidebar:
+  label: Features
+---
+
+import FeatureTable from '../../../../components/FeatureTable.astro';
+
+Generated from `templates/next-site/template.json`.
+
+<FeatureTable template="next-site" />
+
+## Notes
+
+- **`shop`** is off by default. `stack add shop` adds it to a site generated
+  without it.
+- **`search`** indexes pages (and products) as they are saved; content that
+  existed before the feature was added is indexed the next time it is saved.
+- **`redirects`** are checked only when a page is not found.

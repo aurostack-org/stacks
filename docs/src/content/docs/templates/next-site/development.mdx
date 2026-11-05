@@ -1,0 +1,56 @@
+---
+title: next-site development
+description: Running next-site locally, changing the content model, and testing.
+sidebar:
+  label: Development
+---
+
+```sh
+yarn dc:up          # Postgres + Mailpit (emails at http://localhost:8025)
+yarn dev            # http://localhost:3000, admin at /admin
+```
+
+The first visit to `/admin` creates the owner's account. **Seed** on the
+dashboard fills a development database with demo content (and deletes what is
+there); it is disabled in production.
+
+## Changing the content model
+
+After changing a collection, global, field or block:
+
+```sh
+yarn generate:types       # src/payload-types.ts
+yarn generate:importmap   # after adding an admin component
+```
+
+Before deploying a schema change, create a migration against a database with
+the previous schema and commit it:
+
+```sh
+yarn payload migrate:create add-events
+```
+
+The project's skills cover the common changes: `add-block`, `add-collection`
+and, with the shop, `add-payment-provider`.
+
+## Building with Claude Code
+
+The project ships its own guidance, stripped to the features it has:
+
+- **`CLAUDE.md`** at the root: commands, layout and rules (Payload owns the
+  schema, migrations before deploy, access enforced in collections, pages
+  rendered per request, `NEXT_PUBLIC_*` inlined at build time; with the shop,
+  one currency and `paymentStatus` as the record of money received).
+- **Task skills** in `.claude/skills/`: `add-block` (a page-builder section),
+  `add-collection` (a new kind of content in the admin) and, with the shop,
+  `add-payment-provider`. Ask for the task in plain words.
+
+See [Building with Claude Code](../../../guides/claude-code/) for the whole
+workflow.
+
+## Checks and tests
+
+```sh
+yarn typecheck && yarn lint && yarn format:check && yarn build
+yarn test:int       # integration tests against the Postgres in DATABASE_URL
+```

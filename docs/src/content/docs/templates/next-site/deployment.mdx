@@ -1,0 +1,25 @@
+---
+title: next-site deployment
+description: Building and running next-site's Docker image.
+sidebar:
+  label: Deployment
+---
+
+The image is Next's standalone server with Payload inside. It builds without a
+database.
+
+```sh
+docker build --build-arg NEXT_PUBLIC_SERVER_URL=https://example.com -t site .
+docker run -p 3000:3000 --env-file .env.production -v site-media:/app/media site
+```
+
+- **Runtime:** `DATABASE_URL`, `PAYLOAD_SECRET`, and the SMTP settings.
+- **Build:** `NEXT_PUBLIC_SERVER_URL` (and the `NEXT_PUBLIC_OPENOBSERVE_*`
+  values for browser monitoring). `build.sh <env>` reads them from the env file.
+- **Volume:** `/app/media`, or uploads are lost with the container.
+- **Migrations** run when the server starts. Create the first one
+  (`yarn payload migrate:create initial`) before the first deploy.
+- **Health:** `GET /api/health` answers 200 when the server and database are up.
+
+See [Email (SMTP)](../../../services/smtp/) and
+[PostgreSQL](../../../services/postgres/) for the services it connects to.

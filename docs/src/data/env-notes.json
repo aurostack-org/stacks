@@ -314,5 +314,75 @@
 	},
 	"VITE_APP_ADMIN_HOST": {
 		"production": "The admin app's origin, e.g. `https://admin.example.com`."
+	},
+	"next-site:DATABASE_URL": {
+		"production": "`postgresql://<user>:<password>@<host>:5432/<db>?sslmode=require`.",
+		"source": "Your PostgreSQL provider.",
+		"notes": "Payload's own database. In development Payload pushes schema changes straight to it; in production pending migrations run when the server starts. See [PostgreSQL](/services/postgres/)."
+	},
+	"PAYLOAD_SECRET": {
+		"production": "A long random string, different per environment.",
+		"source": "`openssl rand -hex 32`; `yarn env:init` fills an empty one.",
+		"notes": "Signs Payload's session tokens. Changing it signs everyone out, owner and customers alike."
+	},
+	"PREVIEW_SECRET": {
+		"production": "A random string.",
+		"source": "`yarn env:init` fills an empty one.",
+		"notes": "Lets the admin's live preview open draft pages. Anyone holding it can view drafts."
+	},
+	"NEXT_PUBLIC_SERVER_URL": {
+		"production": "The site's public origin, e.g. `https://example.com`.",
+		"notes": "Inlined at build time (a Docker build argument, not runtime env), so an image is pinned to one origin. Used for absolute links in emails, SEO metadata and previews."
+	},
+	"next-site:SMTP_PORT": {
+		"production": "`465` (TLS) or `587`.",
+		"notes": "`1025` for the compose stack's Mailpit. Port 465 turns on TLS."
+	},
+	"next-site:SMTP_USER": {
+		"production": "The SMTP username.",
+		"source": "Your mail provider.",
+		"notes": "Optional: leave empty for a server without authentication, such as Mailpit."
+	},
+	"SMTP_PASS": {
+		"production": "The SMTP password.",
+		"source": "Your mail provider.",
+		"notes": "Only sent when `SMTP_USER` is set."
+	},
+	"MAIL_FROM_ADDRESS": {
+		"production": "An address on a domain your mail provider is allowed to send for.",
+		"notes": "The sender of every email the site sends (orders, form submissions, password resets). A domain without SPF/DKIM for your provider lands in spam."
+	},
+	"MAIL_FROM_NAME": {
+		"production": "The business's name.",
+		"notes": "Shown as the sender name in inboxes."
+	},
+	"COMPANY_NAME": {
+		"production": "The legal or trading name.",
+		"notes": "Shown in the footer copyright line; falls back to `SITE_NAME`."
+	},
+	"SITE_NAME": {
+		"production": "The business's display name.",
+		"notes": "The default page title, link-preview site name, and the header text until the owner uploads a logo."
+	},
+	"MEDIA_DIR": {
+		"production": "Leave unset in the Docker image (`/app/media`).",
+		"notes": "Where uploads are stored; defaults to `./media`. In Docker, mount a volume at `/app/media` or uploads vanish with the container."
+	},
+	"next-site:OTEL_SERVICE_NAME": {
+		"production": "A distinct name per site, e.g. `kofi-bakery`.",
+		"notes": "The service name on every server span and the default stream name. Browser data is sent as `<name>-web`."
+	},
+	"NEXT_PUBLIC_OPENOBSERVE_URL": {
+		"production": "Your OpenObserve instance.",
+		"notes": "Browser monitoring is on only when the URL, org and client token are all set. Inlined at build time. See [OpenObserve](/services/openobserve/)."
+	},
+	"NEXT_PUBLIC_OPENOBSERVE_ORG": {
+		"production": "The project's organization identifier.",
+		"source": "OpenObserve → organization settings."
+	},
+	"NEXT_PUBLIC_OPENOBSERVE_CLIENT_TOKEN": {
+		"production": "A RUM client token.",
+		"source": "OpenObserve → Ingestion → RUM.",
+		"notes": "Write-only and meant to ship in the bundle. Never the server's ingestion token. The instance must list the site's origin in `ZO_CORS_ALLOWED_ORIGINS`."
 	}
 }
