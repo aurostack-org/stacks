@@ -26,7 +26,16 @@
 	},
 	"files": [
 		"cli/",
-		"templates/"
+		"templates/",
+		"!templates/**/.env",
+		"!templates/**/node_modules",
+		"!templates/**/.yarn",
+		"!templates/**/*.tsbuildinfo",
+		"!templates/next-site/files/.next",
+		"!templates/next-site/files/media",
+		"!templates/next-site/files/AGENTS.md",
+		"!templates/next-site/files/next-env.d.ts",
+		"!templates/next-site/files/yarn.lock"
 	],
 	"engines": {
 		"node": ">=20.19"

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Fail unless the npm package would ship every git-tracked template file and no
- * maintainer-local config. npm silently drops some files (nested .gitignore,
+ * Fail unless the npm package would ship every git-tracked template file and
+ * nothing else from templates/: no maintainer-local config, and nothing a
+ * template run in place leaves behind (a .env, a build, uploads), which the
+ * package.json "files" field must exclude because npm ignores .gitignore for
+ * paths that field includes. npm silently drops some files (nested .gitignore,
  * .npmrc), which is why templates store those under an underscore alias.
  */
 import { execSync } from 'node:child_process';
@@ -15,7 +18,10 @@ const packed = new Set(pkg.files.map((f) => f.path));
 const tracked = execSync('git ls-files templates', { encoding: 'utf8' }).trim().split('\n');
 
 const missing = tracked.filter((f) => !packed.has(f));
-const leaked = [...packed].filter((f) => f.includes('stacks.local'));
+const trackedSet = new Set(tracked);
+const leaked = [...packed].filter(
+	(f) => f.includes('stacks.local') || (f.startsWith('templates/') && !trackedSet.has(f))
+);
 
 if (missing.length || leaked.length) {
 	if (missing.length) console.error('Not in the package:\n  ' + missing.join('\n  '));
